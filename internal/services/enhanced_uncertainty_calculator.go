@@ -6,6 +6,27 @@ import (
 	"usl-server/internal/config"
 )
 
+// Enhanced uncertainty calculation constants
+const (
+	// Experience-based factors
+	MaxGamesForCertainty      = 1000.0
+	MinGamesThreshold         = 10
+	LowActivityGamesThreshold = 50
+
+	// Uncertainty bounds
+	MinUncertaintyFactor     = 0.3
+	MaxUncertaintyFactor     = 1.0
+	DefaultUncertaintyFactor = 0.5
+
+	// Playlist diversity factors
+	TotalPlaylistCount     = 3.0
+	VariancePenaltyDivisor = 10000.0
+	MaxDistributionPenalty = 0.2
+
+	// Precision for rounding
+	UncertaintyPrecision = 1000.0
+)
+
 // EnhancedUncertaintyCalculator provides advanced uncertainty (TrueSkill σ) calculations
 // that go beyond simple game count. It incorporates playlist diversity, skill consistency,
 // recency factors, and all-time peak analysis.
@@ -82,7 +103,7 @@ func (c *EnhancedUncertaintyCalculator) CalculateEnhancedUncertainty(trackerData
 	enhancedSigma := sigmaMax - (combinedFactor * (sigmaMax - sigmaMin))
 	finalSigma := math.Max(sigmaMin, math.Min(sigmaMax, enhancedSigma))
 
-	return math.Round(finalSigma*1000) / 1000, nil
+	return math.Round(finalSigma*UncertaintyPrecision) / UncertaintyPrecision, nil
 }
 
 // parseTrackerData parses tracker data into structured breakdown
@@ -112,8 +133,7 @@ func (c *EnhancedUncertaintyCalculator) calculateTotalGames(breakdown TrackerBre
 
 // calculateExperienceFactor calculates experience factor based on total games
 func (c *EnhancedUncertaintyCalculator) calculateExperienceFactor(totalGames int) float64 {
-	maxGames := 1000.0 // Games needed for maximum certainty
-	return math.Min(float64(totalGames)/maxGames, 1.0)
+	return math.Min(float64(totalGames)/MaxGamesForCertainty, MaxUncertaintyFactor)
 }
 
 // calculatePlaylistDiversityFactor calculates diversity factor based on active playlists
@@ -124,18 +144,18 @@ func (c *EnhancedUncertaintyCalculator) calculatePlaylistDiversityFactor(breakdo
 	playlists := []TrackerPlaylistBreakdown{breakdown.Ones, breakdown.Twos, breakdown.Threes}
 	for _, playlist := range playlists {
 		totalGames := playlist.Current.Games + playlist.Previous.Games
-		if totalGames >= 10 {
+		if totalGames >= MinGamesThreshold {
 			activePlaylistCount++
 			gameDistribution = append(gameDistribution, totalGames)
 		}
 	}
 
 	if activePlaylistCount == 0 {
-		return 0.3 // Low certainty for no activity
+		return MinUncertaintyFactor
 	}
 
 	// Base diversity factor
-	diversityBonus := float64(activePlaylistCount) / 3.0
+	diversityBonus := float64(activePlaylistCount) / TotalPlaylistCount
 
 	// Calculate game distribution variance penalty
 	if len(gameDistribution) > 1 {
@@ -152,11 +172,11 @@ func (c *EnhancedUncertaintyCalculator) calculatePlaylistDiversityFactor(breakdo
 		variance /= float64(len(gameDistribution))
 
 		// High variance in game distribution reduces certainty
-		distributionPenalty := math.Min(variance/10000.0, 0.2)
+		distributionPenalty := math.Min(variance/VariancePenaltyDivisor, MaxDistributionPenalty)
 		diversityBonus *= (1.0 - distributionPenalty)
 	}
 
-	return math.Max(0.3, math.Min(1.0, diversityBonus))
+	return math.Max(MinUncertaintyFactor, math.Min(MaxUncertaintyFactor, diversityBonus))
 }
 
 // calculatePercentileSkillConsistency calculates skill consistency across playlists
@@ -164,8 +184,8 @@ func (c *EnhancedUncertaintyCalculator) calculatePercentileSkillConsistency(brea
 	// This is a simplified version - in practice, would need percentile calculations
 	// For now, return a reasonable default based on game activity
 	totalGames := c.calculateTotalGames(breakdown)
-	if totalGames < 50 {
-		return 0.5
+	if totalGames < LowActivityGamesThreshold {
+		return DefaultUncertaintyFactor
 	}
 	return 0.8
 }

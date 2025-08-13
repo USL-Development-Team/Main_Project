@@ -10,65 +10,91 @@ import (
 	"usl-server/internal/repositories"
 )
 
-// UserHandler handles HTTP requests for user management
 type UserHandler struct {
-	userRepo  *repositories.UserRepository
-	templates *template.Template
+	userRepository *repositories.UserRepository
+	templates      *template.Template
 }
 
-// NewUserHandler creates a new user handler
 func NewUserHandler(userRepo *repositories.UserRepository, templates *template.Template) *UserHandler {
 	return &UserHandler{
-		userRepo:  userRepo,
-		templates: templates,
+		userRepository: userRepo,
+		templates:      templates,
 	}
+}
+
+// Helper methods for common operations
+
+func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request, allowedMethod string) bool {
+	if r.Method != allowedMethod {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return false
+	}
+	return true
+}
+
+func (h *UserHandler) renderTemplate(w http.ResponseWriter, templateName string, data any) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := h.templates.ExecuteTemplate(w, templateName, data); err != nil {
+		log.Printf("Template rendering error (%s): %v", templateName, err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func (h *UserHandler) renderErrorPage(w http.ResponseWriter, title, message string, statusCode int) {
+	w.WriteHeader(statusCode)
+	errorData := struct {
+		Title   string
+		Message string
+	}{
+		Title:   title,
+		Message: message,
+	}
+	h.renderTemplate(w, "error.html", errorData)
+}
+
+type PageData struct {
+	Title string
+	Users []*models.User
+}
+
+type FormData struct {
+	Title string
+	User  *models.User
 }
 
 // ListUsers displays all users in HTML format
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !h.validateHTTPMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	users, err := h.userRepo.GetAllUsers(false) // Get all users, including inactive
+	users, err := h.userRepository.GetAllUsers(false)
 	if err != nil {
-		log.Printf("Error getting users: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		log.Printf("Failed to retrieve users: %v", err)
+		h.renderErrorPage(w, "Error", "Unable to load users", http.StatusInternalServerError)
 		return
 	}
 
-	data := struct {
-		Title string
-		Users []*models.User
-	}{
-		Title: "User Management",
+	pageData := &PageData{
+		Title: "User Management - USL Server",
 		Users: users,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "users.html", data); err != nil {
-		log.Printf("Error executing template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	h.renderTemplate(w, "users.html", pageData)
 }
 
 // NewUserForm displays the form for creating a new user
 func (h *UserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !h.validateHTTPMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	data := struct {
-		Title string
-	}{
-		Title: "Create New User",
+	formData := &FormData{
+		Title: "Create New User - USL Server",
+		User:  nil,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "user_form.html", data); err != nil {
-		log.Printf("Error executing template: %v", err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-	}
+	h.renderTemplate(w, "user_form.html", formData)
 }
 
 // CreateUser handles the creation of a new user
@@ -99,7 +125,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		MMR:       mmr,
 	}
 
-	user, err := h.userRepo.CreateUser(userData)
+	user, err := h.userRepository.CreateUser(userData)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
 		http.Error(w, "Failed to create user: "+err.Error(), http.StatusBadRequest)
@@ -123,7 +149,7 @@ func (h *UserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepo.FindUserByDiscordID(discordID)
+	user, err := h.userRepository.FindUserByDiscordID(discordID)
 	if err != nil {
 		log.Printf("Error finding user: %v", err)
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -178,7 +204,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		MMR:       mmr,
 	}
 
-	user, err := h.userRepo.UpdateUser(originalDiscordID, userData)
+	user, err := h.userRepository.UpdateUser(originalDiscordID, userData)
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		http.Error(w, "Failed to update user: "+err.Error(), http.StatusBadRequest)
@@ -202,7 +228,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepo.DeleteUser(discordID)
+	user, err := h.userRepository.DeleteUser(discordID)
 	if err != nil {
 		log.Printf("Error deleting user: %v", err)
 		http.Error(w, "Failed to delete user: "+err.Error(), http.StatusBadRequest)
@@ -226,7 +252,7 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.userRepo.SearchUsers(query, 50)
+	users, err := h.userRepository.SearchUsers(query, 50)
 	if err != nil {
 		log.Printf("Error searching users: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -256,7 +282,7 @@ func (h *UserHandler) ListUsersAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.userRepo.GetAllUsers(false)
+	users, err := h.userRepository.GetAllUsers(false)
 	if err != nil {
 		log.Printf("Error getting users: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
