@@ -17,7 +17,6 @@ type UserRepository struct {
 	config *config.Config
 }
 
-// NewUserRepository creates a new user repository instance
 func NewUserRepository(client *supabase.Client, cfg *config.Config) *UserRepository {
 	return &UserRepository{
 		client: client,
@@ -25,18 +24,14 @@ func NewUserRepository(client *supabase.Client, cfg *config.Config) *UserReposit
 	}
 }
 
-// CreateUser creates a new user, matching JavaScript createUser()
 func (r *UserRepository) CreateUser(userData models.UserCreateRequest) (*models.User, error) {
-	// Check for existing user by Discord ID
 	existingUser, err := r.FindUserByDiscordID(userData.DiscordID)
 	if err == nil && existingUser != nil {
 		return nil, fmt.Errorf("user with Discord ID %s already exists", userData.DiscordID)
 	}
 
-	// Get TrueSkill defaults from config
 	initialMu, initialSigma := r.config.GetTrueSkillDefaults()
 
-	// Prepare insert data using generated types
 	insertData := models.PublicUsersInsert{
 		Name:                 userData.Name,
 		DiscordId:            userData.DiscordID,
@@ -48,13 +43,11 @@ func (r *UserRepository) CreateUser(userData models.UserCreateRequest) (*models.
 		TrueskillLastUpdated: func() *string { now := time.Now().Format(time.RFC3339); return &now }(),
 	}
 
-	// Insert using Supabase client - exact pattern from documentation
 	data, _, err := r.client.From("users").Insert(insertData, false, "", "", "").Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	// Parse the returned data
 	var result []models.PublicUsersSelect
 	err = json.Unmarshal(data, &result)
 	if err != nil {
@@ -65,12 +58,10 @@ func (r *UserRepository) CreateUser(userData models.UserCreateRequest) (*models.
 		return nil, fmt.Errorf("no user returned after creation")
 	}
 
-	// Convert to internal User model
 	createdUser := r.convertToUser(result[0])
 	return &createdUser, nil
 }
 
-// FindUserByDiscordID finds user by Discord ID using Supabase client
 func (r *UserRepository) FindUserByDiscordID(discordID string) (*models.User, error) {
 	data, _, err := r.client.From("users").
 		Select("*", "", false).
@@ -96,15 +87,12 @@ func (r *UserRepository) FindUserByDiscordID(discordID string) (*models.User, er
 	return &user, nil
 }
 
-// UpdateUser updates an existing user using Supabase client
 func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdateRequest) (*models.User, error) {
-	// Check if user exists
 	_, err := r.FindUserByDiscordID(discordID)
 	if err != nil {
 		return nil, fmt.Errorf("user with Discord ID %s not found", discordID)
 	}
 
-	// Check for Discord ID conflicts if changing Discord ID
 	if userData.DiscordID != discordID {
 		conflictUser, err := r.FindUserByDiscordID(userData.DiscordID)
 		if err == nil && conflictUser != nil {
@@ -112,7 +100,6 @@ func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdate
 		}
 	}
 
-	// Prepare update data
 	updateData := models.PublicUsersUpdate{
 		Name:      &userData.Name,
 		DiscordId: &userData.DiscordID,
@@ -121,7 +108,6 @@ func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdate
 		Mmr:       func() *int32 { mmr := int32(userData.MMR); return &mmr }(),
 	}
 
-	// Update using Supabase client
 	data, _, err := r.client.From("users").
 		Update(updateData, "", "").
 		Eq("discord_id", discordID).
@@ -147,13 +133,11 @@ func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdate
 
 // DeleteUser marks user as inactive using Supabase client
 func (r *UserRepository) DeleteUser(discordID string) (*models.User, error) {
-	// Check if user exists
 	_, err := r.FindUserByDiscordID(discordID)
 	if err != nil {
 		return nil, fmt.Errorf("user with Discord ID %s not found", discordID)
 	}
 
-	// Mark as inactive
 	inactive := false
 	updateData := models.PublicUsersUpdate{
 		Active: &inactive,
