@@ -143,3 +143,6 @@ func (ut *UserTracker) HasGameData() bool {
 func (ut *UserTracker) IsValidTracker() bool {
 	return ut.Valid && ut.HasGameData()
 }
+
+// Tracker is an alias for UserTracker to match service naming conventions
+type Tracker = UserTracker

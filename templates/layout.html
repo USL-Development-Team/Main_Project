@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - USL Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        .btn-group-sm > .btn, .btn-sm {
+            margin-right: 0.25rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            border-radius: 0.25rem;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-active { background-color: #d4edda; color: #155724; }
+        .status-inactive { background-color: #f8d7da; color: #721c24; }
+        .status-banned { background-color: #fff3cd; color: #856404; }
+        .status-valid { background-color: #d1ecf1; color: #0c5460; }
+        .status-invalid { background-color: #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-rocket"></i> USL Management
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/users">
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/trackers">
+                            <i class="fas fa-chart-line"></i> Trackers
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-calculator"></i> TrueSkill
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/trueskill/stats">
+                                <i class="fas fa-info-circle"></i> Statistics
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="updateAllTrueSkill()">
+                                <i class="fas fa-sync-alt"></i> Update All TrueSkill
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="recalculateAllTrueSkill()">
+                                <i class="fas fa-redo"></i> Recalculate All
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {{block "content" .}}{{end}}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateAllTrueSkill() {
+            if (confirm('This will update TrueSkill values for all users. This may take a while. Continue?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/trueskill/update-all';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function recalculateAllTrueSkill() {
+            if (confirm('This will recalculate TrueSkill values for all users. This may take a while. Continue?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/trueskill/recalculate';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function confirmDelete(message) {
+            return confirm(message || 'Are you sure you want to delete this item?');
+        }
+    </script>
+</body>
+</html>

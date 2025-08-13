@@ -1,0 +1,132 @@
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-calculator"></i> {{.Title}}</h1>
+    <a href="/users" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle"></i> Update Complete
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-4">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <div class="fs-3 fw-bold text-primary">{{.Result.ProcessedCount}}</div>
+                            <div class="small text-muted">Users Processed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <div class="fs-3 fw-bold text-success">{{.Result.TrackerBasedCount}}</div>
+                            <div class="small text-muted">From Trackers</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <div class="fs-3 fw-bold text-info">{{.Result.DefaultCount}}</div>
+                            <div class="small text-muted">Default Values</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="fs-3 fw-bold {{if gt (len .Result.Errors) 0}}text-warning{{else}}text-success{{end}}">{{len .Result.Errors}}</div>
+                        <div class="small text-muted">Errors</div>
+                    </div>
+                </div>
+
+                {{if gt (len .Result.Errors) 0}}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Errors Occurred</h6>
+                    <p class="mb-2">The following users encountered errors during processing:</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Discord ID</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{range .Result.Errors}}
+                                <tr>
+                                    <td>{{.User}}</td>
+                                    <td><code>{{.DiscordID}}</code></td>
+                                    <td class="text-danger">{{.Error}}</td>
+                                </tr>
+                                {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {{else}}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    All users were processed successfully without errors!
+                </div>
+                {{end}}
+
+                <div class="d-flex justify-content-between">
+                    <a href="/users" class="btn btn-primary">
+                        <i class="fas fa-users"></i> View Users
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="updateAllTrueSkill()">
+                            <i class="fas fa-sync-alt"></i> Run Again
+                        </button>
+                        <a href="/trueskill/stats" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar"></i> View Stats
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Process Summary</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-calculator text-success"></i>
+                        <strong>{{.Result.TrackerBasedCount}} users</strong> had their TrueSkill calculated from tracker data
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-user-clock text-info"></i>
+                        <strong>{{.Result.DefaultCount}} users</strong> were given default TrueSkill values
+                    </li>
+                    {{if gt (len .Result.Errors) 0}}
+                    <li class="mb-2">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <strong>{{len .Result.Errors}} users</strong> encountered processing errors
+                    </li>
+                    {{end}}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">What This Means</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small text-muted">
+                    <li><i class="fas fa-info-circle"></i> Users with valid tracker data got updated TrueSkill values</li>
+                    <li><i class="fas fa-info-circle"></i> Users without trackers kept their existing values or got defaults</li>
+                    <li><i class="fas fa-info-circle"></i> TrueSkill μ (mu) represents skill level</li>
+                    <li><i class="fas fa-info-circle"></i> TrueSkill σ (sigma) represents uncertainty</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,158 @@
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-cog"></i> {{.Title}}</h1>
+    <a href="/users" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header {{if .Result.Success}}bg-success{{else}}bg-warning{{end}} text-white">
+                <h5 class="card-title mb-0">
+                    {{if .Result.Success}}
+                        <i class="fas fa-check-circle"></i> Update Successful
+                    {{else}}
+                        <i class="fas fa-exclamation-triangle"></i> Update Failed
+                    {{end}}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>User:</strong> <code>{{.DiscordID}}</code>
+                </div>
+
+                {{if .Result.Success}}
+                    {{if .Result.HadTrackers}}
+                        <div class="alert alert-success">
+                            <i class="fas fa-chart-line"></i>
+                            <strong>TrueSkill updated from tracker data!</strong>
+                        </div>
+                        
+                        {{if .Result.TrueSkillResult}}
+                        <div class="row text-center mb-4">
+                            <div class="col-md-6">
+                                <div class="border-end">
+                                    <div class="fs-3 fw-bold text-primary">{{printf "%.1f" .Result.TrueSkillResult.Mu}}</div>
+                                    <div class="small text-muted">New TrueSkill μ</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fs-3 fw-bold text-info">{{printf "%.2f" .Result.TrueSkillResult.Sigma}}</div>
+                                <div class="small text-muted">New TrueSkill σ</div>
+                            </div>
+                        </div>
+
+                        {{if .Result.TrueSkillResult.SkillResult}}
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Calculation Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Normalized Skill:</strong> {{printf "%.1f" .Result.TrueSkillResult.SkillResult.NormalizedSkill}}%
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Total Games:</strong> {{.Result.TrueSkillResult.SkillResult.TotalGames}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                        {{end}}
+                    {{else}}
+                        <div class="alert alert-info">
+                            <i class="fas fa-user-clock"></i>
+                            <strong>No tracker data found.</strong> User kept existing TrueSkill values.
+                        </div>
+                    {{end}}
+                {{else}}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Update failed:</strong> {{.Result.Error}}
+                    </div>
+                    
+                    {{if .Result.HadTrackers}}
+                        <p class="text-muted">
+                            This user has tracker data, but there was an error processing it. 
+                            Please check the tracker data and try again.
+                        </p>
+                    {{else}}
+                        <p class="text-muted">
+                            This user doesn't have any tracker data. Add tracker data first, then try updating TrueSkill.
+                        </p>
+                    {{end}}
+                {{end}}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="/users" class="btn btn-primary">
+                        <i class="fas fa-users"></i> Back to Users
+                    </a>
+                    <div>
+                        <a href="/users/edit?discord_id={{.DiscordID}}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-edit"></i> Edit User
+                        </a>
+                        <a href="/trackers?discord_id={{.DiscordID}}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line"></i> View Trackers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">TrueSkill Explanation</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="fas fa-arrow-up text-primary"></i>
+                        <strong>μ (Mu)</strong> represents the player's estimated skill level
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-question-circle text-info"></i>
+                        <strong>σ (Sigma)</strong> represents uncertainty in that skill estimate
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-chart-bar text-success"></i>
+                        Higher μ = higher estimated skill
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-crosshairs text-warning"></i>
+                        Lower σ = more confident in the estimate
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        {{if not .Result.Success}}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Next Steps</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small">
+                    <li class="mb-2">
+                        <i class="fas fa-plus-circle"></i>
+                        <a href="/trackers/new">Add tracker data</a> for this user
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-sync-alt"></i>
+                        Try updating TrueSkill again after adding tracker data
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-users"></i>
+                        Or run a <a href="#" onclick="updateAllTrueSkill()">batch update</a> for all users
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

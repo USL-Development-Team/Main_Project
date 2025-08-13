@@ -122,3 +122,13 @@ func getEnvFloat(key string, defaultValue float64) float64 {
 func (c *Config) GetTrueSkillDefaults() (float64, float64) {
 	return c.TrueSkill.InitialMu, c.TrueSkill.InitialSigma
 }
+
+// GetTrueSkillSigmaRange returns the sigma min and max values
+func (c *Config) GetTrueSkillSigmaRange() (float64, float64) {
+	return c.TrueSkill.SigmaMax, c.TrueSkill.SigmaMin
+}
+
+// GetMMRConfig returns the MMR configuration
+func (c *Config) GetMMRConfig() MMRConfig {
+	return c.MMR
+}

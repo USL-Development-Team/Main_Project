@@ -1,0 +1,131 @@
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user-edit"></i> {{.Title}}</h1>
+    <a href="/users" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Edit User Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/users/update">
+                    <input type="hidden" name="original_discord_id" value="{{.User.DiscordID}}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required 
+                                   placeholder="Enter user name" maxlength="50" value="{{.User.Name}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="discord_id" class="form-label">Discord ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="discord_id" name="discord_id" required 
+                                   placeholder="Enter Discord ID" minlength="17" maxlength="19" pattern="[0-9]+"
+                                   value="{{.User.DiscordID}}">
+                            <div class="form-text">Discord IDs are 17-19 digits long</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="mmr" class="form-label">MMR</label>
+                            <input type="number" class="form-control" id="mmr" name="mmr" 
+                                   placeholder="Enter MMR (optional)" min="0" max="3000" value="{{.User.MMR}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="active" name="active" 
+                                           value="true" {{if .User.Active}}checked{{end}}>
+                                    <label class="form-check-label" for="active">Active</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" id="banned" name="banned" 
+                                           value="true" {{if .User.Banned}}checked{{end}}>
+                                    <label class="form-check-label" for="banned">Banned</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/users" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Current TrueSkill Values</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <div class="fs-4 fw-bold text-primary">{{printf "%.1f" .User.TrueSkillMu}}</div>
+                            <div class="small text-muted">μ (Skill)</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fs-4 fw-bold text-info">{{printf "%.2f" .User.TrueSkillSigma}}</div>
+                        <div class="small text-muted">σ (Uncertainty)</div>
+                    </div>
+                </div>
+                <hr>
+                <div class="small text-muted">
+                    <i class="fas fa-clock"></i> Last Updated: {{.User.TrueSkillLastUpdated.Format "2006-01-02 15:04"}}
+                </div>
+                <div class="mt-2">
+                    <form method="POST" action="/trueskill/update-user?discord_id={{.User.DiscordID}}">
+                        <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                            <i class="fas fa-sync-alt"></i> Update TrueSkill
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Notes</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small text-muted">
+                    <li><i class="fas fa-info-circle"></i> Changing Discord ID may affect tracker links</li>
+                    <li><i class="fas fa-info-circle"></i> TrueSkill values are updated separately</li>
+                    <li><i class="fas fa-info-circle"></i> MMR is for display purposes</li>
+                    <li><i class="fas fa-warning text-warning"></i> Banned users cannot participate in matches</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('banned').addEventListener('change', function() {
+    const activeCheckbox = document.getElementById('active');
+    if (this.checked) {
+        activeCheckbox.checked = false;
+    }
+});
+
+document.getElementById('active').addEventListener('change', function() {
+    const bannedCheckbox = document.getElementById('banned');
+    if (this.checked) {
+        bannedCheckbox.checked = false;
+    }
+});
+</script>
+{{end}}

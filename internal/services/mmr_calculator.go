@@ -28,6 +28,11 @@ type PlayerMMRData struct {
 	Threes PlaylistData `json:"threes"`
 }
 
+// Type aliases for TrueSkill service compatibility
+type PlayerData = PlayerMMRData
+type PlaylistSeasonData = PlaylistSeason
+type PercentileSkillResult = SkillCalculationResult
+
 // PlaylistBreakdown represents the calculation breakdown for each playlist
 type PlaylistBreakdown struct {
 	EffectiveMMR    float64  `json:"effectiveMMR"`
