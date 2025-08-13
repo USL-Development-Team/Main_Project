@@ -1,0 +1,10 @@
+# Run Go formatting
+echo "Running go fmt..."
+go fmt ./...
+
+# Run Go vet
+echo "Running go vet..."
+go vet ./...
+
+# Stage any formatting changes
+git add -u

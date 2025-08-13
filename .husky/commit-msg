@@ -1,0 +1,9 @@
+# Check for Claude/Anthropic attribution
+if grep -i -E "(claude|anthropic|co-authored-by.*claude|generated with.*claude)" "$1"; then
+    echo "❌ Commit message contains Claude/Anthropic attribution."
+    echo "Please remove any references to Claude, Anthropic, or AI assistance."
+    exit 1
+fi
+
+# Run commitlint
+npx --no -- commitlint --edit $1
