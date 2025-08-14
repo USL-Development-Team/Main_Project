@@ -114,12 +114,7 @@ func (m *UserGuildMembership) AddPermission(permission string) {
 
 // RemovePermission removes a USL permission if present
 func (m *UserGuildMembership) RemovePermission(permission string) {
-	for i, p := range m.USLPermissions {
-		if p == permission {
-			m.USLPermissions = append(m.USLPermissions[:i], m.USLPermissions[i+1:]...)
-			break
-		}
-	}
+	m.USLPermissions = removeStringFromSlice(m.USLPermissions, permission)
 }
 
 // AddDiscordRole adds a Discord role if not already present
@@ -131,10 +126,15 @@ func (m *UserGuildMembership) AddDiscordRole(roleID string) {
 
 // RemoveDiscordRole removes a Discord role if present
 func (m *UserGuildMembership) RemoveDiscordRole(roleID string) {
-	for i, r := range m.DiscordRoles {
-		if r == roleID {
-			m.DiscordRoles = append(m.DiscordRoles[:i], m.DiscordRoles[i+1:]...)
-			break
+	m.DiscordRoles = removeStringFromSlice(m.DiscordRoles, roleID)
+}
+
+// removeStringFromSlice removes the first occurrence of a string from a slice
+func removeStringFromSlice(slice []string, item string) []string {
+	for i, s := range slice {
+		if s == item {
+			return append(slice[:i], slice[i+1:]...)
 		}
 	}
+	return slice
 }

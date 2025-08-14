@@ -8,6 +8,19 @@ import (
 	"usl-server/internal/services"
 )
 
+const (
+	// Template names
+	TrueSkillResultTemplate     = "trueskill_result.html"
+	UserTrueSkillResultTemplate = "user_trueskill_result.html"
+	TrueSkillStatsTemplate      = "trueskill_stats.html"
+
+	// Page titles
+	TrueSkillUpdateCompleteTitle = "TrueSkill Update Complete"
+	TrueSkillRecalculationTitle  = "TrueSkill Recalculation Complete"
+	UserTrueSkillUpdateTitle     = "User TrueSkill Update"
+	TrueSkillStatsTitle          = "TrueSkill Statistics"
+)
+
 // TrueSkillHandler handles HTTP requests for TrueSkill calculations
 type TrueSkillHandler struct {
 	trueSkillService *services.UserTrueSkillService
@@ -43,11 +56,11 @@ func (h *TrueSkillHandler) UpdateAllUserTrueSkill(w http.ResponseWriter, r *http
 		Title  string
 		Result *services.BatchUpdateResult
 	}{
-		Title:  "TrueSkill Update Complete",
+		Title:  TrueSkillUpdateCompleteTitle,
 		Result: result,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "trueskill_result.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, TrueSkillResultTemplate, data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -78,7 +91,7 @@ func (h *TrueSkillHandler) UpdateUserTrueSkill(w http.ResponseWriter, r *http.Re
 		Result:    result,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "user_trueskill_result.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, UserTrueSkillResultTemplate, data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -108,7 +121,7 @@ func (h *TrueSkillHandler) RecalculateAllUserTrueSkill(w http.ResponseWriter, r 
 		Result: result,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "trueskill_result.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, TrueSkillResultTemplate, data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -131,7 +144,7 @@ func (h *TrueSkillHandler) GetTrueSkillStats(w http.ResponseWriter, r *http.Requ
 		Stats: stats,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "trueskill_stats.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, TrueSkillStatsTemplate, data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

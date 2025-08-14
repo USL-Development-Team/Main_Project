@@ -5,6 +5,17 @@ import (
 	"regexp"
 )
 
+const (
+	// Default bot command prefix for new guilds
+	DefaultBotCommandPrefix = "!usl"
+
+	// Maximum length for bot command prefix
+	MaxBotCommandPrefixLength = 5
+
+	// Discord snowflake ID validation pattern (17-19 digits)
+	DiscordSnowflakePattern = `^\d{17,19}$`
+)
+
 // GuildConfig represents the JSONB configuration for a Discord guild
 type GuildConfig struct {
 	Discord     DiscordConfig    `json:"discord"`
@@ -24,38 +35,65 @@ type PermissionConfig struct {
 	ModeratorRoleIDs []string `json:"moderator_role_ids"`
 }
 
-// Discord snowflake ID validation (18-19 digits)
-var discordSnowflakeRegex = regexp.MustCompile(`^\d{17,19}$`)
+// Discord snowflake ID validation regex
+var discordSnowflakeRegex = regexp.MustCompile(DiscordSnowflakePattern)
 
 // Validate ensures the guild configuration is valid
 func (gc *GuildConfig) Validate() error {
-	// Set sensible defaults
-	if gc.Discord.BotCommandPrefix == "" {
-		gc.Discord.BotCommandPrefix = "!usl"
+	gc.setDefaults()
+
+	if err := gc.validateRoleIDs(); err != nil {
+		return err
 	}
 
-	// Validate Discord snowflake IDs format
+	if err := gc.validateChannelIDs(); err != nil {
+		return err
+	}
+
+	return gc.validateBotCommandPrefix()
+}
+
+// setDefaults applies sensible default values to the configuration
+func (gc *GuildConfig) setDefaults() {
+	if gc.Discord.BotCommandPrefix == "" {
+		gc.Discord.BotCommandPrefix = DefaultBotCommandPrefix
+	}
+}
+
+// validateRoleIDs validates all role IDs in the configuration
+func (gc *GuildConfig) validateRoleIDs() error {
 	allRoleIDs := append(gc.Permissions.AdminRoleIDs, gc.Permissions.ModeratorRoleIDs...)
 	for _, roleID := range allRoleIDs {
 		if !isValidDiscordSnowflake(roleID) {
 			return fmt.Errorf("invalid Discord role ID format: %s", roleID)
 		}
 	}
+	return nil
+}
 
-	// Validate channel IDs if provided
-	if gc.Discord.AnnouncementChannelID != nil && !isValidDiscordSnowflake(*gc.Discord.AnnouncementChannelID) {
-		return fmt.Errorf("invalid Discord announcement channel ID: %s", *gc.Discord.AnnouncementChannelID)
+// validateChannelIDs validates channel IDs if they are provided
+func (gc *GuildConfig) validateChannelIDs() error {
+	if err := validateOptionalChannelID(gc.Discord.AnnouncementChannelID, "announcement"); err != nil {
+		return err
 	}
 
-	if gc.Discord.LeaderboardChannelID != nil && !isValidDiscordSnowflake(*gc.Discord.LeaderboardChannelID) {
-		return fmt.Errorf("invalid Discord leaderboard channel ID: %s", *gc.Discord.LeaderboardChannelID)
-	}
+	return validateOptionalChannelID(gc.Discord.LeaderboardChannelID, "leaderboard")
+}
 
-	// Validate command prefix
-	if len(gc.Discord.BotCommandPrefix) > 5 {
-		return fmt.Errorf("bot command prefix too long (max 5 characters): %s", gc.Discord.BotCommandPrefix)
+// validateBotCommandPrefix validates the bot command prefix
+func (gc *GuildConfig) validateBotCommandPrefix() error {
+	if len(gc.Discord.BotCommandPrefix) > MaxBotCommandPrefixLength {
+		return fmt.Errorf("bot command prefix too long (max %d characters): %s",
+			MaxBotCommandPrefixLength, gc.Discord.BotCommandPrefix)
 	}
+	return nil
+}
 
+// validateOptionalChannelID validates a channel ID if it's provided
+func validateOptionalChannelID(channelID *string, channelType string) error {
+	if channelID != nil && !isValidDiscordSnowflake(*channelID) {
+		return fmt.Errorf("invalid Discord %s channel ID: %s", channelType, *channelID)
+	}
 	return nil
 }
 
@@ -75,14 +113,20 @@ func (gc *GuildConfig) HasModeratorRole(userRoleIDs []string) bool {
 	return hasAnyRole(userRoleIDs, allModRoles)
 }
 
-// hasAnyRole checks if any user role matches any allowed role
+// hasAnyRole efficiently checks if any user role matches any allowed role
 func hasAnyRole(userRoles, allowedRoles []string) bool {
+	// Create a set of allowed roles for O(1) lookup
+	allowedSet := make(map[string]bool, len(allowedRoles))
+	for _, role := range allowedRoles {
+		allowedSet[role] = true
+	}
+
+	// Check if any user role exists in the allowed set
 	for _, userRole := range userRoles {
-		for _, allowedRole := range allowedRoles {
-			if userRole == allowedRole {
-				return true
-			}
+		if allowedSet[userRole] {
+			return true
 		}
 	}
+
 	return false
 }

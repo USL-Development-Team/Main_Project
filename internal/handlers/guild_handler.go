@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -9,6 +10,12 @@ import (
 	"usl-server/internal/models"
 	"usl-server/internal/repositories"
 	"usl-server/internal/services"
+)
+
+const (
+	// Number parsing constants
+	ParseIntBase    = 10
+	ParseIntBitSize = 64
 )
 
 type GuildHandler struct {
@@ -64,6 +71,21 @@ func (h *GuildHandler) renderJSONResponse(w http.ResponseWriter, data any, statu
 	}
 }
 
+// parseGuildIDFromQuery extracts and validates guild ID from query parameters
+func (h *GuildHandler) parseGuildIDFromQuery(r *http.Request) (int64, error) {
+	guildIDStr := r.URL.Query().Get("id")
+	if guildIDStr == "" {
+		return 0, fmt.Errorf("Guild ID is required")
+	}
+
+	guildID, err := strconv.ParseInt(guildIDStr, ParseIntBase, ParseIntBitSize)
+	if err != nil {
+		return 0, fmt.Errorf("Invalid guild ID")
+	}
+
+	return guildID, nil
+}
+
 // Guild management endpoints
 
 // GetGuildConfig handles GET /guilds/{id}/config
@@ -72,15 +94,9 @@ func (h *GuildHandler) GetGuildConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guildIDStr := r.URL.Query().Get("id")
-	if guildIDStr == "" {
-		http.Error(w, "Guild ID is required", http.StatusBadRequest)
-		return
-	}
-
-	guildID, err := strconv.ParseInt(guildIDStr, 10, 64)
+	guildID, err := h.parseGuildIDFromQuery(r)
 	if err != nil {
-		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -100,15 +116,9 @@ func (h *GuildHandler) UpdateGuildConfig(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	guildIDStr := r.URL.Query().Get("id")
-	if guildIDStr == "" {
-		http.Error(w, "Guild ID is required", http.StatusBadRequest)
-		return
-	}
-
-	guildID, err := strconv.ParseInt(guildIDStr, 10, 64)
+	guildID, err := h.parseGuildIDFromQuery(r)
 	if err != nil {
-		http.Error(w, "Invalid guild ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

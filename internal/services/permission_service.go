@@ -5,6 +5,14 @@ import (
 	"usl-server/internal/repositories"
 )
 
+const (
+	// Permission level constants for display
+	PermissionLevelAdmin     = "Admin"
+	PermissionLevelModerator = "Moderator"
+	PermissionLevelMember    = "Member"
+	PermissionLevelNone      = "None"
+)
+
 // GuildConfigProvider interface for getting guild configurations
 type GuildConfigProvider interface {
 	GetConfig(guildID int64) (*models.GuildConfig, error)
@@ -23,39 +31,30 @@ func NewPermissionService(guildRepo *repositories.GuildRepository) *PermissionSe
 }
 
 func (s *PermissionService) CanAddUsers(userRoles []string, guildID int64) bool {
-	config, err := s.guildRepo.GetConfig(guildID)
-	if err != nil {
-		return false // fail secure
-	}
-
-	return config.HasModeratorRole(userRoles)
+	return s.hasPermission(userRoles, guildID, (*models.GuildConfig).HasModeratorRole)
 }
 
 func (s *PermissionService) CanAddTrackers(userRoles []string, guildID int64) bool {
-	config, err := s.guildRepo.GetConfig(guildID)
-	if err != nil {
-		return false // fail secure
-	}
-
-	return config.HasModeratorRole(userRoles)
+	return s.hasPermission(userRoles, guildID, (*models.GuildConfig).HasModeratorRole)
 }
 
 func (s *PermissionService) CanRunAdminCommands(userRoles []string, guildID int64) bool {
-	config, err := s.guildRepo.GetConfig(guildID)
-	if err != nil {
-		return false // fail secure
-	}
-
-	return config.HasAdminRole(userRoles)
+	return s.hasPermission(userRoles, guildID, (*models.GuildConfig).HasAdminRole)
 }
 
 func (s *PermissionService) CanManageGuildConfig(userRoles []string, guildID int64) bool {
+	return s.hasPermission(userRoles, guildID, (*models.GuildConfig).HasAdminRole)
+}
+
+// hasPermission is a helper method that implements the common permission checking pattern
+func (s *PermissionService) hasPermission(userRoles []string, guildID int64,
+	checkFunc func(*models.GuildConfig, []string) bool) bool {
 	config, err := s.guildRepo.GetConfig(guildID)
 	if err != nil {
 		return false // fail secure
 	}
 
-	return config.HasAdminRole(userRoles)
+	return checkFunc(config, userRoles)
 }
 
 // GetUserPermissions returns a summary of what the user can do in the guild
@@ -99,13 +98,13 @@ func (up UserPermissions) HasAnyPermissions() bool {
 
 func (up UserPermissions) PermissionLevel() string {
 	if up.IsAdmin {
-		return "Admin"
+		return PermissionLevelAdmin
 	}
 	if up.IsModerator {
-		return "Moderator"
+		return PermissionLevelModerator
 	}
 	if up.HasAnyPermissions() {
-		return "Member"
+		return PermissionLevelMember
 	}
-	return "None"
+	return PermissionLevelNone
 }

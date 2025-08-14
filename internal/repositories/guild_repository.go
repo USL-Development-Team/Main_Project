@@ -11,6 +11,22 @@ import (
 	"github.com/supabase-community/supabase-go"
 )
 
+const (
+	// Database table names
+	GuildsTable = "guilds"
+
+	// Default values for guild creation
+	DefaultGuildActiveStatus = true
+
+	// Error messages
+	ErrGuildAlreadyExists     = "guild with Discord ID %s already exists"
+	ErrConfigValidationFailed = "config validation failed: %w"
+	ErrGuildCreationFailed    = "failed to create guild: %w"
+	ErrGuildParsingFailed     = "failed to parse created guild: %w"
+	ErrNoGuildReturned        = "no guild returned after creation"
+	ErrGuildConversionFailed  = "failed to convert guild: %w"
+)
+
 // GuildRepository handles all guild data access operations using Supabase Go client
 type GuildRepository struct {
 	client *supabase.Client
@@ -29,7 +45,7 @@ func (r *GuildRepository) CreateGuild(guildData models.GuildCreateRequest) (*mod
 	// Check if guild already exists
 	existingGuild, err := r.FindGuildByDiscordID(guildData.DiscordGuildID)
 	if err == nil && existingGuild != nil {
-		return nil, fmt.Errorf("guild with Discord ID %s already exists", guildData.DiscordGuildID)
+		return nil, fmt.Errorf(ErrGuildAlreadyExists, guildData.DiscordGuildID)
 	}
 
 	// Validate configuration
@@ -41,11 +57,11 @@ func (r *GuildRepository) CreateGuild(guildData models.GuildCreateRequest) (*mod
 	insertData := map[string]interface{}{
 		"discord_guild_id": guildData.DiscordGuildID,
 		"name":             guildData.Name,
-		"active":           true,
+		"active":           DefaultGuildActiveStatus,
 		"config":           guildData.Config,
 	}
 
-	data, _, err := r.client.From("guilds").Insert(insertData, false, "", "", "").Execute()
+	data, _, err := r.client.From(GuildsTable).Insert(insertData, false, "", "", "").Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create guild: %w", err)
 	}
