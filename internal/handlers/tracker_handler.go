@@ -315,7 +315,6 @@ func (h *TrackerHandler) SearchTrackers(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// ListTrackersAPI returns trackers in JSON format for API calls
 func (h *TrackerHandler) ListTrackersAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

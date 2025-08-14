@@ -29,8 +29,6 @@ func (h *TrueSkillHandler) UpdateAllUserTrueSkill(w http.ResponseWriter, r *http
 		return
 	}
 
-	log.Println("Starting batch TrueSkill update for all users")
-
 	result, err := h.trueSkillService.UpdateAllUserTrueSkill()
 	if err != nil {
 		log.Printf("Error updating TrueSkill for all users: %v", err)
@@ -68,8 +66,6 @@ func (h *TrueSkillHandler) UpdateUserTrueSkill(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	log.Printf("Updating TrueSkill for user: %s", discordID)
-
 	result := h.trueSkillService.UpdateUserTrueSkillFromTrackers(discordID)
 
 	data := struct {
@@ -94,8 +90,6 @@ func (h *TrueSkillHandler) RecalculateAllUserTrueSkill(w http.ResponseWriter, r 
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	log.Println("Starting TrueSkill recalculation for all users")
 
 	result, err := h.trueSkillService.RecalculateAllUserTrueSkill()
 	if err != nil {
@@ -149,8 +143,6 @@ func (h *TrueSkillHandler) UpdateAllUserTrueSkillAPI(w http.ResponseWriter, r *h
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	log.Println("API: Starting batch TrueSkill update for all users")
 
 	result, err := h.trueSkillService.UpdateAllUserTrueSkill()
 	if err != nil {

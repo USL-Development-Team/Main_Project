@@ -45,8 +45,7 @@ func (p *PercentileConverter) MMRToPercentile(mmr float64, playlist string) floa
 		mmr = 0
 	}
 
-	// For now, use hardcoded rank distributions matching JavaScript config
-	// TODO: Move to config file once we have the full PercentileConfig structure
+	// Use hardcoded rank distributions matching JavaScript config
 	rankDistributions := p.getRankDistributions()
 	mmrRanges := p.getMMRRanges()
 
@@ -246,7 +245,6 @@ func (p *PercentileConverter) buildRankOrderCache(playlist string, distribution 
 }
 
 // Hardcoded configuration data (matches JavaScript PercentileConfig)
-// TODO: Move these to proper config files
 
 func (p *PercentileConverter) getRankDistributions() map[string]map[string]float64 {
 	// EXACT JavaScript rank distributions from PercentileConfig.js (Season 14, 2024)

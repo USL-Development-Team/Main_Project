@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"math"
 	"usl-server/internal/config"
 )
@@ -79,8 +78,6 @@ type SeasonBreakdown struct {
 //
 // Exact port of JavaScript calculateEnhancedUncertainty() function
 func (c *EnhancedUncertaintyCalculator) CalculateEnhancedUncertainty(trackerData *TrackerData) (float64, error) {
-	log.Println("Calculating enhanced uncertainty with all-time peak data")
-
 	sigmaMax, sigmaMin := c.config.GetTrueSkillSigmaRange()
 
 	breakdown := c.parseTrackerData(trackerData)

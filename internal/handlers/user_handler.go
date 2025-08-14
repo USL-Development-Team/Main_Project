@@ -275,7 +275,6 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ListUsersAPI returns users in JSON format for API calls
 func (h *UserHandler) ListUsersAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
