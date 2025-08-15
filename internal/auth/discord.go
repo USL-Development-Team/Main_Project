@@ -22,8 +22,6 @@ type DiscordAuth struct {
 
 // NewDiscordAuth creates a new unified Discord authentication handler
 func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string) *DiscordAuth {
-	log.Printf("DEBUG: NewDiscordAuth called with %d admin IDs", len(adminDiscordIDs))
-	log.Printf("DEBUG: Supabase URL: %s, Public URL: %s", supabaseURL, publicURL)
 	return &DiscordAuth{
 		supabaseClient:  supabaseClient,
 		adminDiscordIDs: adminDiscordIDs,
@@ -36,7 +34,6 @@ func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, s
 // LoginForm displays the Discord OAuth login form
 // This works for both main app and USL routes
 func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
-	log.Printf("DEBUG: LoginForm called for path: %s", r.URL.Path)
 
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -334,8 +331,6 @@ func (a *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (a *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
 	// Use the main Supabase client with the user's access token
-	log.Printf("DEBUG: Validating token using URL: %s", a.supabaseURL)
-	log.Printf("DEBUG: Access token (first 20 chars): %s...", accessToken[:20])
 
 	// Create an authenticated client with the user's token
 	userClient := a.supabaseClient.Auth.WithToken(accessToken)
@@ -363,42 +358,29 @@ func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
 	discordID := ""
 
 	// Debug: Log the entire user object to see what we're working with
-	log.Printf("DEBUG: Full user object: %+v", user)
 
 	// Try to get Discord ID from various possible locations
 	if metadata, ok := user["user_metadata"].(map[string]interface{}); ok {
-		log.Printf("DEBUG: user_metadata: %+v", metadata)
 		if id, exists := metadata["provider_id"].(string); exists {
 			discordID = id
-			log.Printf("DEBUG: Found Discord ID in provider_id: %s", discordID)
 		} else if id, exists := metadata["sub"].(string); exists {
 			discordID = id
-			log.Printf("DEBUG: Found Discord ID in sub: %s", discordID)
 		} else if id, exists := metadata["discord_id"].(string); exists {
 			discordID = id
-			log.Printf("DEBUG: Found Discord ID in discord_id: %s", discordID)
 		}
 	}
 
-	log.Printf("DEBUG: Extracted Discord ID: '%s'", discordID)
-	log.Printf("DEBUG: Admin IDs configured: %v", a.adminDiscordIDs)
-
 	if discordID == "" {
-		log.Printf("DEBUG: No Discord ID found in user metadata")
 		return false
 	}
 
 	// Check if Discord ID is in admin list
 	for _, adminID := range a.adminDiscordIDs {
-		log.Printf("DEBUG: Comparing '%s' with admin ID '%s'", discordID, adminID)
 		if discordID == adminID {
-			log.Printf("DEBUG: User authorized! Discord ID %s matches admin ID %s", discordID, adminID)
 			return true
 		}
 	}
 
-	log.Printf("DEBUG: User NOT authorized. Discord ID '%s' not in admin list: %v", discordID, a.adminDiscordIDs)
-	log.Printf("DEBUG: TEMP - To authorize this user, add their Discord ID '%s' to USL_ADMIN_DISCORD_IDS", discordID)
 	return false
 }
 
