@@ -64,7 +64,6 @@ type USLUserTracker struct {
 	UpdatedAt                       time.Time `json:"updated_at" db:"updated_at"`
 }
 
-// CSV parsing structs (for import)
 type USLUserCSV struct {
 	Name                 string `csv:"name"`
 	DiscordID            string `csv:"discord id"`
@@ -98,8 +97,6 @@ type USLUserTrackerCSV struct {
 	Valid                           string `csv:"valid"`
 	MMR                             string `csv:"mmr"`
 }
-
-// Helper methods
 
 // IsValidForPlay checks if user can participate in matches
 func (u *USLUser) IsValidForPlay() bool {

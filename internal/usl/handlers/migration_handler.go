@@ -9,7 +9,6 @@ import (
 	"usl-server/internal/usl"
 )
 
-// USL-specific constants
 const (
 	USL_DISCORD_GUILD_ID = "1390537743385231451" // USL Discord Guild ID
 )
@@ -29,8 +28,6 @@ func NewMigrationHandler(uslRepo *usl.USLRepository, templates *template.Templat
 		templates: templates,
 	}
 }
-
-// User Management - USL Only
 
 func (h *MigrationHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -230,8 +227,6 @@ func (h *MigrationHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
 }
 
-// Tracker Management - USL Only
-
 func (h *MigrationHandler) ListTrackers(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -291,7 +286,6 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Helper function to parse int from form
 	parseInt := func(value string) int {
 		if value == "" {
 			return 0
@@ -339,8 +333,6 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, "/usl/trackers", http.StatusSeeOther)
 }
 
-// Admin Tools - USL Only
-
 func (h *MigrationHandler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -379,8 +371,6 @@ func (h *MigrationHandler) ImportData(w http.ResponseWriter, r *http.Request) {
 
 	h.renderTemplate(w, "usl_import.html", data)
 }
-
-// API endpoints for USL (simple JSON responses)
 
 func (h *MigrationHandler) ListUsersAPI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -429,8 +419,6 @@ func (h *MigrationHandler) GetLeaderboardAPI(w http.ResponseWriter, r *http.Requ
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
-
-// Helper methods
 
 // NOTE: Authentication methods removed - now handled by unified Discord OAuth system in main.go
 

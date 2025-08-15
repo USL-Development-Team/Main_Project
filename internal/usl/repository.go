@@ -26,8 +26,6 @@ func NewUSLRepository(client *supabase.Client, config *config.Config, logger *sl
 	}
 }
 
-// User operations
-
 func (r *USLRepository) GetAllUsers() ([]*USLUser, error) {
 	var users []*USLUser
 
@@ -46,7 +44,6 @@ func (r *USLRepository) GetAllUsers() ([]*USLUser, error) {
 func (r *USLRepository) SearchUsers(query string) ([]*USLUser, error) {
 	var users []*USLUser
 
-	// Search by name (case-insensitive) or exact Discord ID match
 	_, err := r.client.From("usl_users").
 		Select("*", "", false).
 		Or(fmt.Sprintf("name.ilike.%%%s%%,discord_id.eq.%s", query, query), "").
@@ -147,8 +144,6 @@ func (r *USLRepository) DeleteUser(id int64) error {
 	return nil
 }
 
-// Tracker operations
-
 func (r *USLRepository) GetAllTrackers() ([]*USLUserTracker, error) {
 	var trackers []*USLUserTracker
 
@@ -233,22 +228,17 @@ func (r *USLRepository) CreateTracker(tracker *USLUserTracker) (*USLUserTracker,
 	return &created, nil
 }
 
-// Combined operations
-
 func (r *USLRepository) GetUsersWithTrackers() ([]*USLUser, map[string][]*USLUserTracker, error) {
-	// Get all users
 	users, err := r.GetAllUsers()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get users: %w", err)
 	}
 
-	// Get all trackers
 	allTrackers, err := r.GetAllTrackers()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get trackers: %w", err)
 	}
 
-	// Group trackers by discord_id
 	trackersByDiscord := make(map[string][]*USLUserTracker)
 	for _, tracker := range allTrackers {
 		trackersByDiscord[tracker.DiscordID] = append(trackersByDiscord[tracker.DiscordID], tracker)
@@ -260,7 +250,6 @@ func (r *USLRepository) GetUsersWithTrackers() ([]*USLUser, map[string][]*USLUse
 func (r *USLRepository) GetLeaderboard() ([]*USLUser, error) {
 	var users []*USLUser
 
-	// Get users ordered by TrueSkill Mu (descending)
 	_, err := r.client.From("usl_users").
 		Select("*", "", false).
 		Eq("active", "true").
