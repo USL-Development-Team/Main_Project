@@ -32,7 +32,6 @@ func NewMigrationHandler(
 	trueskillService *services.UserTrueSkillService,
 	config *config.Config,
 ) *MigrationHandler {
-	// NOTE: auth is now handled by unified Discord OAuth system in main.go
 	return &MigrationHandler{
 		uslRepo:          uslRepo,
 		templates:        templates,
@@ -343,7 +342,6 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("Created USL tracker for Discord ID: %s (ID: %d)", created.DiscordID, created.ID)
 
-	// NEW: Trigger TrueSkill update with comprehensive error handling
 	h.performTrueSkillUpdate(created)
 
 	http.Redirect(w, r, "/usl/trackers", http.StatusSeeOther)
@@ -443,11 +441,9 @@ func (h *MigrationHandler) performTrueSkillUpdate(tracker *usl.USLUserTracker) {
 		return
 	}
 
-	// Step 1: Transform tracker data
 	trackerData := h.mapUSLTrackerToTrackerData(tracker)
 	log.Printf("Starting TrueSkill update for %s (tracker ID: %d)", tracker.DiscordID, tracker.ID)
 
-	// Step 2: Attempt TrueSkill calculation
 	result := h.trueskillService.UpdateUserTrueSkillFromTrackerData(trackerData)
 
 	if !result.Success {
@@ -457,11 +453,9 @@ func (h *MigrationHandler) performTrueSkillUpdate(tracker *usl.USLUserTracker) {
 		return
 	}
 
-	// Step 3: TrueSkill calculation succeeded - log results
 	log.Printf("SUCCESS: TrueSkill calculated for %s: μ=%.1f, σ=%.2f",
 		tracker.DiscordID, result.TrueSkillResult.Mu, result.TrueSkillResult.Sigma)
 
-	// Step 4: Attempt to sync results to USL user table
 	err := h.uslRepo.UpdateUserTrueSkill(
 		tracker.DiscordID,
 		result.TrueSkillResult.Mu,

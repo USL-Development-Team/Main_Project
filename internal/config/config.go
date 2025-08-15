@@ -150,7 +150,6 @@ func getEnvStringSlice(key string, defaultValue []string) []string {
 		return defaultValue
 	}
 
-	// Split by comma and trim whitespace
 	parts := strings.Split(value, ",")
 	result := make([]string, len(parts))
 	for i, part := range parts {
