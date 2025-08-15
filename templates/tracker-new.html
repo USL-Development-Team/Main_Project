@@ -1,0 +1,207 @@
+{{define "tracker-new-page"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - USL Management</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="/static/dist/output.css" rel="stylesheet">
+    
+    <!-- HTMX -->
+    <script src="/static/htmx.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    {{template "navigation" .}}
+    
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">New Tracker</h1>
+                <p class="mt-2 text-gray-600">Add a new Rocket League tracker to the USL system</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <form action="/usl/trackers/create" method="POST" class="space-y-6 p-6">
+                
+                <!-- Basic Information -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="discord_id" class="block text-sm font-medium text-gray-700 mb-2">Discord ID *</label>
+                            <input type="text" id="discord_id" name="discord_id" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="url" class="block text-sm font-medium text-gray-700 mb-2">Profile URL</label>
+                            <input type="url" id="url" name="url"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1v1 Stats -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">1v1 (Ones) Stats</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="ones_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
+                            <input type="number" id="ones_current_peak" name="ones_current_peak" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ones_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
+                            <input type="number" id="ones_previous_peak" name="ones_previous_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ones_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="ones_all_time_peak" name="ones_all_time_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="ones_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
+                            <input type="number" id="ones_current_games" name="ones_current_games" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ones_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <input type="number" id="ones_previous_games" name="ones_previous_games" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2v2 Stats -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">2v2 (Twos) Stats</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="twos_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
+                            <input type="number" id="twos_current_peak" name="twos_current_peak" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="twos_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
+                            <input type="number" id="twos_previous_peak" name="twos_previous_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="twos_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="twos_all_time_peak" name="twos_all_time_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="twos_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
+                            <input type="number" id="twos_current_games" name="twos_current_games" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="twos_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <input type="number" id="twos_previous_games" name="twos_previous_games" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3v3 Stats -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">3v3 (Threes) Stats</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="threes_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
+                            <input type="number" id="threes_current_peak" name="threes_current_peak" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="threes_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
+                            <input type="number" id="threes_previous_peak" name="threes_previous_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="threes_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="threes_all_time_peak" name="threes_all_time_peak" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="threes_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
+                            <input type="number" id="threes_current_games" name="threes_current_games" min="0" onchange="calculateMMR()"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="threes_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <input type="number" id="threes_previous_games" name="threes_previous_games" min="0"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div class="pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="valid" class="block text-sm font-medium text-gray-700 mb-2">Valid Entry</label>
+                            <select id="valid" name="valid" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                        <div class="text-sm font-medium text-blue-900">Calculated MMR: <span id="mmrValue" class="text-blue-700 font-bold">0</span></div>
+                        <div class="text-xs text-blue-600 mt-1">This value is calculated automatically based on current season peaks and games played</div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="/usl/trackers" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Create Tracker
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function calculateMMR() {
+            const onesCurrentPeak = parseInt(document.getElementById('ones_current_peak').value) || 0;
+            const onesCurrentGames = parseInt(document.getElementById('ones_current_games').value) || 0;
+            const twosCurrentPeak = parseInt(document.getElementById('twos_current_peak').value) || 0;
+            const twosCurrentGames = parseInt(document.getElementById('twos_current_games').value) || 0;
+            const threesCurrentPeak = parseInt(document.getElementById('threes_current_peak').value) || 0;
+            const threesCurrentGames = parseInt(document.getElementById('threes_current_games').value) || 0;
+
+            const weightedSum = (onesCurrentPeak * onesCurrentGames) + (twosCurrentPeak * twosCurrentGames) + (threesCurrentPeak * threesCurrentGames);
+            const totalGames = onesCurrentGames + twosCurrentGames + threesCurrentGames;
+
+            let effectiveMMR = 0;
+            if (totalGames > 0) {
+                effectiveMMR = Math.round(weightedSum / totalGames);
+            }
+
+            document.getElementById('mmrValue').textContent = effectiveMMR;
+        }
+
+        // Calculate initial MMR on page load
+        calculateMMR();
+    </script>
+</body>
+</html>
+{{end}}

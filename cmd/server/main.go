@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"usl-server/internal/auth"
 	"usl-server/internal/config"
 	"usl-server/internal/handlers"
@@ -23,6 +25,7 @@ type AppDependencies struct {
 	Config           *config.Config
 	UserRepo         *repositories.UserRepository
 	TrackerRepo      *repositories.TrackerRepository
+	GuildRepo        *repositories.GuildRepository
 	TrueSkillService *services.UserTrueSkillService
 	Templates        *template.Template
 	Logger           *slog.Logger
@@ -54,6 +57,7 @@ func initializeApplication(appLogger *slog.Logger) *AppDependencies {
 		Config:           configuration,
 		UserRepo:         repositories.UserRepo,
 		TrackerRepo:      repositories.TrackerRepo,
+		GuildRepo:        repositories.GuildRepo,
 		TrueSkillService: services,
 		Templates:        templates,
 		Logger:           appLogger,
@@ -90,6 +94,7 @@ func createSupabaseClient(configuration *config.Config, logger *slog.Logger) *su
 type RepositoryCollection struct {
 	UserRepo    *repositories.UserRepository
 	TrackerRepo *repositories.TrackerRepository
+	GuildRepo   *repositories.GuildRepository
 }
 
 func setupRepositories(client *supabase.Client, config *config.Config, logger *slog.Logger) *RepositoryCollection {
@@ -97,6 +102,7 @@ func setupRepositories(client *supabase.Client, config *config.Config, logger *s
 	return &RepositoryCollection{
 		UserRepo:    repositories.NewUserRepository(client, config),
 		TrackerRepo: repositories.NewTrackerRepository(client, config),
+		GuildRepo:   repositories.NewGuildRepository(client, config),
 	}
 }
 
@@ -119,7 +125,71 @@ func setupServices(config *config.Config, repos *RepositoryCollection, logger *s
 
 func loadTemplates(logger *slog.Logger) *template.Template {
 	logger.Info("Loading templates")
-	return template.Must(template.ParseGlob("templates/*.html"))
+
+	// Load all templates from our new nested structure
+	tmpl := template.New("app")
+
+	// Add template functions
+	tmpl = tmpl.Funcs(template.FuncMap{
+		"dict": func(values ...interface{}) map[string]interface{} {
+			dict := make(map[string]interface{})
+			for i := 0; i < len(values); i += 2 {
+				if i+1 < len(values) {
+					dict[values[i].(string)] = values[i+1]
+				}
+			}
+			return dict
+		},
+		"slice": func(values ...interface{}) []interface{} {
+			return values
+		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"sub": func(a, b float64) float64 {
+			return a - b
+		},
+		"mul": func(a, b float64) float64 {
+			return a * b
+		},
+		"printf": func(format string, args ...interface{}) string {
+			return fmt.Sprintf(format, args...)
+		},
+		"lt": func(a, b float64) bool {
+			return a < b
+		},
+		"substr": func(s string, start, length int) string {
+			if start >= len(s) {
+				return ""
+			}
+			end := start + length
+			if end > len(s) {
+				end = len(s)
+			}
+			return s[start:end]
+		},
+	})
+
+	// Parse all template files
+	patterns := []string{
+		"templates/*.html",
+	}
+
+	for _, pattern := range patterns {
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			logger.Error("Failed to glob templates", "pattern", pattern, "error", err)
+			os.Exit(1)
+		}
+
+		if len(matches) > 0 {
+			logger.Info("Loading templates", "pattern", pattern, "count", len(matches))
+			tmpl = template.Must(tmpl.ParseFiles(matches...))
+		}
+	}
+
+	logger.Info("Templates loaded successfully")
+	return tmpl
 }
 
 func setupHTTPServer(deps *AppDependencies) http.Handler {
@@ -128,20 +198,32 @@ func setupHTTPServer(deps *AppDependencies) http.Handler {
 	setupStaticRoutes(mux)
 	setupAuthRoutes(mux, deps) // Unified Discord OAuth routes
 	setupHomeRoute(mux)
-	setupUserRoutes(mux, deps)
-	setupTrackerRoutes(mux, deps)
-	setupTrueSkillRoutes(mux, deps)
+	setupGuildAwareRoutes(mux, deps) // New guild-aware routes
+	setupUserRoutes(mux, deps)       // Legacy routes
+	setupTrackerRoutes(mux, deps)    // Legacy routes
+	setupTrueSkillRoutes(mux, deps)  // Legacy routes
 	setupAPIRoutes(mux, deps)
 	setupUSLRoutes(mux, deps) // USL-specific temporary migration routes
 
-	// Wrap with logging middleware
-	loggedHandler := middleware.LoggingMiddleware(deps.Logger)(mux)
+	// Create guild context middleware
+	guildMiddleware := middleware.NewGuildContextMiddleware(deps.GuildRepo, deps.Logger)
 
-	return loggedHandler
+	// Apply middleware chain
+	handler := middleware.LoggingMiddleware(deps.Logger)(mux)
+	// Apply guild context middleware globally now that it handles missing schema gracefully
+	handler = guildMiddleware.GuildContext()(handler)
+
+	return handler
 }
 
 func setupStaticRoutes(mux *http.ServeMux) {
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+}
+
+func setupGuildAwareRoutes(mux *http.ServeMux, deps *AppDependencies) {
+	// Create new guild-aware handlers for future guild support
+	// Currently no routes registered here to avoid conflicts with USL routes
+	// TODO: Add support for dynamic guild slugs when needed
 }
 
 func setupAuthRoutes(mux *http.ServeMux, deps *AppDependencies) {
@@ -180,16 +262,28 @@ func setupHomeRoute(mux *http.ServeMux) {
 }
 
 func setupUserRoutes(mux *http.ServeMux, deps *AppDependencies) {
-	userHandler := handlers.NewUserHandler(deps.UserRepo, deps.Templates)
-
-	// Main app user routes - protected by unified Discord OAuth
-	mux.HandleFunc("/users", deps.Auth.RequireAuth(userHandler.ListUsers))
-	mux.HandleFunc("/users/new", deps.Auth.RequireAuth(userHandler.NewUserForm))
-	mux.HandleFunc("/users/create", deps.Auth.RequireAuth(userHandler.CreateUser))
-	mux.HandleFunc("/users/edit", deps.Auth.RequireAuth(userHandler.EditUserForm))
-	mux.HandleFunc("/users/update", deps.Auth.RequireAuth(userHandler.UpdateUser))
-	mux.HandleFunc("/users/delete", deps.Auth.RequireAuth(userHandler.DeleteUser))
-	mux.HandleFunc("/users/search", deps.Auth.RequireAuth(userHandler.SearchUsers))
+	// Legacy routes - redirect to guild-aware routes
+	mux.HandleFunc("/users", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/new", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/new", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/create", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/create", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/edit", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/edit", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/update", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/update", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/delete", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/delete", http.StatusMovedPermanently)
+	}))
+	mux.HandleFunc("/users/search", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/users/search", http.StatusMovedPermanently)
+	}))
 }
 
 func setupTrackerRoutes(mux *http.ServeMux, deps *AppDependencies) {
@@ -265,20 +359,18 @@ func setupUSLRoutes(mux *http.ServeMux, deps *AppDependencies) {
 	// USL User Management Routes (protected by unified Discord OAuth)
 	mux.HandleFunc("/usl/users", deps.Auth.RequireAuth(uslHandler.ListUsers))
 	mux.HandleFunc("/usl/users/search", deps.Auth.RequireAuth(uslHandler.SearchUsers))
-	mux.HandleFunc("/usl/users/new", deps.Auth.RequireAuth(uslHandler.NewUserForm))
-	mux.HandleFunc("/usl/users/create", deps.Auth.RequireAuth(uslHandler.CreateUser))
-	mux.HandleFunc("/usl/users/edit", deps.Auth.RequireAuth(uslHandler.EditUserForm))
-	mux.HandleFunc("/usl/users/update", deps.Auth.RequireAuth(uslHandler.UpdateUser))
-	mux.HandleFunc("/usl/users/delete", deps.Auth.RequireAuth(uslHandler.DeleteUser))
+	mux.HandleFunc("/usl/users/detail", deps.Auth.RequireAuth(uslHandler.UserDetail))
 
 	// USL Tracker Management Routes (protected by unified Discord OAuth)
 	mux.HandleFunc("/usl/trackers", deps.Auth.RequireAuth(uslHandler.ListTrackers))
+	mux.HandleFunc("/usl/trackers/detail", deps.Auth.RequireAuth(uslHandler.TrackerDetail))
 	mux.HandleFunc("/usl/trackers/new", deps.Auth.RequireAuth(uslHandler.NewTrackerForm))
 	mux.HandleFunc("/usl/trackers/create", deps.Auth.RequireAuth(uslHandler.CreateTracker))
+	mux.HandleFunc("/usl/trackers/edit", deps.Auth.RequireAuth(uslHandler.EditTrackerForm))
+	mux.HandleFunc("/usl/trackers/update", deps.Auth.RequireAuth(uslHandler.UpdateTracker))
 
 	// USL Admin Routes (protected by unified Discord OAuth)
 	mux.HandleFunc("/usl/admin", deps.Auth.RequireAuth(uslHandler.AdminDashboard))
-	mux.HandleFunc("/usl/import", deps.Auth.RequireAuth(uslHandler.ImportData))
 
 	// USL API Routes (protected by unified Discord OAuth)
 	mux.HandleFunc("/usl/api/users", deps.Auth.RequireAuth(uslHandler.ListUsersAPI))

@@ -115,6 +115,7 @@ type PublicGuildsSelect struct {
 	DiscordGuildId string      `json:"discord_guild_id"`
 	Id             int64       `json:"id"`
 	Name           string      `json:"name"`
+	Slug           string      `json:"slug"`
 	UpdatedAt      string      `json:"updated_at"`
 }
 
@@ -125,6 +126,7 @@ type PublicGuildsInsert struct {
 	DiscordGuildId string      `json:"discord_guild_id"`
 	Id             *int64      `json:"id"`
 	Name           string      `json:"name"`
+	Slug           string      `json:"slug"`
 	UpdatedAt      *string     `json:"updated_at"`
 }
 
@@ -135,6 +137,7 @@ type PublicGuildsUpdate struct {
 	DiscordGuildId *string     `json:"discord_guild_id"`
 	Id             *int64      `json:"id"`
 	Name           *string     `json:"name"`
+	Slug           *string     `json:"slug"`
 	UpdatedAt      *string     `json:"updated_at"`
 }
 

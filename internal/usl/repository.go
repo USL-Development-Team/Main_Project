@@ -340,3 +340,55 @@ func (r *USLRepository) UpdateUserTrueSkill(discordID string, mu, sigma float64)
 
 	return nil
 }
+
+func (r *USLRepository) GetTrackerByID(id int64) (*USLUserTracker, error) {
+	var tracker USLUserTracker
+	_, err := r.client.
+		From("usl_user_trackers").
+		Select("*", "", false).
+		Eq("id", fmt.Sprintf("%d", id)).
+		Single().
+		ExecuteTo(&tracker)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tracker by ID: %v", err)
+	}
+
+	return &tracker, nil
+}
+
+func (r *USLRepository) UpdateTracker(tracker *USLUserTracker) error {
+	updateData := map[string]interface{}{
+		"discord_id":                          tracker.DiscordID,
+		"url":                                 tracker.URL,
+		"ones_current_season_peak":            tracker.OnesCurrentSeasonPeak,
+		"ones_previous_season_peak":           tracker.OnesPreviousSeasonPeak,
+		"ones_all_time_peak":                  tracker.OnesAllTimePeak,
+		"ones_current_season_games_played":    tracker.OnesCurrentSeasonGamesPlayed,
+		"ones_previous_season_games_played":   tracker.OnesPreviousSeasonGamesPlayed,
+		"twos_current_season_peak":            tracker.TwosCurrentSeasonPeak,
+		"twos_previous_season_peak":           tracker.TwosPreviousSeasonPeak,
+		"twos_all_time_peak":                  tracker.TwosAllTimePeak,
+		"twos_current_season_games_played":    tracker.TwosCurrentSeasonGamesPlayed,
+		"twos_previous_season_games_played":   tracker.TwosPreviousSeasonGamesPlayed,
+		"threes_current_season_peak":          tracker.ThreesCurrentSeasonPeak,
+		"threes_previous_season_peak":         tracker.ThreesPreviousSeasonPeak,
+		"threes_all_time_peak":                tracker.ThreesAllTimePeak,
+		"threes_current_season_games_played":  tracker.ThreesCurrentSeasonGamesPlayed,
+		"threes_previous_season_games_played": tracker.ThreesPreviousSeasonGamesPlayed,
+		"valid":                               tracker.Valid,
+		"mmr":                                 tracker.MMR,
+	}
+
+	_, _, err := r.client.
+		From("usl_user_trackers").
+		Update(updateData, "", "").
+		Eq("id", fmt.Sprintf("%d", tracker.ID)).
+		Execute()
+
+	if err != nil {
+		return fmt.Errorf("failed to update tracker: %w", err)
+	}
+
+	return nil
+}

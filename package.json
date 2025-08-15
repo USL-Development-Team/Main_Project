@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build-css": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --watch",
+    "build-css-prod": "tailwindcss -i ./static/src/input.css -o ./static/dist/output.css --minify"
   },
   "repository": {
     "type": "git",
@@ -21,6 +23,11 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "tailwindcss": "^3.4.0"
+  },
+  "dependencies": {
+    "htmx.org": "^1.9.0",
+    "@tailwindcss/forms": "^0.5.7"
   }
 }

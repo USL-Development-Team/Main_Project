@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component classes for reusability */
+@layer components {
+  /* Form Components */
+  .form-input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-platform-500 focus:border-platform-500 transition-colors;
+  }
+  
+  .form-select {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-platform-500 focus:border-platform-500 transition-colors;
+  }
+  
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  
+  .form-error {
+    @apply text-red-600 text-sm mt-1;
+  }
+  
+  .form-help {
+    @apply text-gray-500 text-sm mt-1;
+  }
+
+  /* Button Components */
+  .btn-primary {
+    @apply bg-platform-600 text-white px-4 py-2 rounded-lg hover:bg-platform-700 focus:ring-2 focus:ring-platform-500 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-success {
+    @apply bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors;
+  }
+  
+  .btn-sm {
+    @apply px-3 py-1 text-sm rounded;
+  }
+
+  /* Status Components */
+  .status-active {
+    @apply bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-banned {
+    @apply bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-inactive {
+    @apply bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-valid {
+    @apply bg-platform-100 text-platform-800 px-2 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-invalid {
+    @apply bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  /* Table Components */
+  .table-header {
+    @apply bg-gray-50 border-b border-gray-200 px-4 py-3 text-left text-sm font-medium text-gray-700 uppercase tracking-wider;
+  }
+  
+  .table-row {
+    @apply border-b border-gray-100 hover:bg-gray-50 transition-colors;
+  }
+  
+  .table-cell {
+    @apply px-4 py-3 text-sm text-gray-900;
+  }
+  
+  .table-cell-secondary {
+    @apply px-4 py-3 text-sm text-gray-500;
+  }
+
+  /* Layout Components */
+  .card {
+    @apply bg-white rounded-lg shadow border p-6;
+  }
+  
+  .card-header {
+    @apply border-b border-gray-200 pb-4 mb-4;
+  }
+  
+  .stat-card {
+    @apply bg-white p-6 rounded-lg shadow border-l-4 border-platform-500;
+  }
+  
+  .stat-card-success {
+    @apply border-green-500;
+  }
+  
+  .stat-card-warning {
+    @apply border-yellow-500;
+  }
+  
+  .stat-card-danger {
+    @apply border-red-500;
+  }
+
+  /* Navigation Components */
+  .nav-link {
+    @apply text-gray-700 hover:text-platform-600 hover:bg-platform-50 px-3 py-2 rounded-md text-sm font-medium transition-colors;
+  }
+  
+  .nav-link-active {
+    @apply text-platform-600 bg-platform-50;
+  }
+
+  /* Loading and Animation Components */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-6 w-6 border-b-2 border-platform-600;
+  }
+  
+  .fade-in {
+    @apply transition-opacity duration-300 ease-in-out;
+  }
+  
+  .htmx-indicator {
+    @apply opacity-0 transition-opacity duration-300;
+  }
+  
+  .htmx-request .htmx-indicator {
+    @apply opacity-100;
+  }
+  
+  .htmx-request.loading-spinner {
+    @apply opacity-100;
+  }
+}

@@ -1,0 +1,29 @@
+{{define "status-badge"}}
+<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{.Class}}">
+    {{.Text}}
+</span>
+{{end}}
+
+{{define "user-status-badge"}}
+{{if .Active}}
+    {{template "status-badge" dict "Class" "bg-green-100 text-green-800" "Text" "Active"}}
+{{else}}
+    {{template "status-badge" dict "Class" "bg-red-100 text-red-800" "Text" "Inactive"}}
+{{end}}
+{{end}}
+
+{{define "ban-status-badge"}}
+{{if .Banned}}
+    {{template "status-badge" dict "Class" "bg-red-100 text-red-800" "Text" "Banned"}}
+{{else}}
+    {{template "status-badge" dict "Class" "bg-green-100 text-green-800" "Text" "Good Standing"}}
+{{end}}
+{{end}}
+
+{{define "tracker-status-badge"}}
+{{if .Valid}}
+    {{template "status-badge" dict "Class" "bg-green-100 text-green-800" "Text" "Valid"}}
+{{else}}
+    {{template "status-badge" dict "Class" "bg-red-100 text-red-800" "Text" "Invalid"}}
+{{end}}
+{{end}}

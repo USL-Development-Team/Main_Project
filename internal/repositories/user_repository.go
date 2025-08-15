@@ -82,6 +82,31 @@ func (r *UserRepository) FindUserByDiscordID(discordID string) (*models.User, er
 	return &user, nil
 }
 
+func (r *UserRepository) FindUserByID(userID int64) (*models.User, error) {
+	data, _, err := r.client.From("users").
+		Select("*", "", false).
+		Eq("id", fmt.Sprintf("%d", userID)).
+		Single().
+		Execute()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var result []models.PublicUsersSelect
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse user data: %w", err)
+	}
+
+	if len(result) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	user := r.convertToUser(result[0])
+	return &user, nil
+}
+
 func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdateRequest) (*models.User, error) {
 	_, err := r.FindUserByDiscordID(discordID)
 	if err != nil {

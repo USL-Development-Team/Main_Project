@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"time"
 	"usl-server/internal/config"
+	"usl-server/internal/models"
 	"usl-server/internal/services"
 	"usl-server/internal/usl"
 )
@@ -50,13 +52,14 @@ const (
 type TemplateName string
 
 const (
-	TemplateUSLUsers          TemplateName = "usl_users.html"
-	TemplateUSLUserForm       TemplateName = "usl_user_form.html"
-	TemplateUSLUserEditForm   TemplateName = "usl_user_edit_form.html"
-	TemplateUSLTrackers       TemplateName = "usl_trackers.html"
-	TemplateUSLTrackerForm    TemplateName = "usl_tracker_form.html"
-	TemplateUSLAdminDashboard TemplateName = "usl_admin_dashboard.html"
-	TemplateUSLImport         TemplateName = "usl_import.html"
+	TemplateUSLUsers          TemplateName = "users-list-page"
+	TemplateUSLUsersTable     TemplateName = "users-table-fragment"
+	TemplateUSLUserDetail     TemplateName = "user-detail-page"
+	TemplateUSLTrackers       TemplateName = "trackers-list-page"
+	TemplateUSLTrackerDetail  TemplateName = "tracker-detail-page"
+	TemplateUSLTrackerNew     TemplateName = "tracker-new-page"
+	TemplateUSLTrackerEdit    TemplateName = "tracker-edit-page"
+	TemplateUSLAdminDashboard TemplateName = "admin-dashboard-page"
 )
 
 // parseIntField safely converts a form field to int, returning 0 for empty or invalid values
@@ -228,13 +231,39 @@ func (h *MigrationHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title string
-		Users []*usl.USLUser
-		Query string
+		Title        string
+		CurrentPage  string
+		Users        []*usl.USLUser
+		SearchConfig struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}
 	}{
-		Title: "USL Users",
-		Users: users,
-		Query: "", // Empty query for full user list
+		Title:       "Users",
+		CurrentPage: "users",
+		Users:       users,
+		SearchConfig: struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}{
+			SearchPlaceholder: "Search by name or Discord ID...",
+			SearchURL:         "/usl/users/search",
+			SearchTarget:      "#users-table",
+			ClearURL:          "/usl/users",
+			ShowFilters:       true,
+			Query:             "",
+			StatusFilter:      "",
+		},
 	}
 
 	h.renderTemplate(w, TemplateUSLUsers, data)
@@ -259,153 +288,40 @@ func (h *MigrationHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := struct {
-		Title string
-		Users []*usl.USLUser
-		Query string
+		Title        string
+		Users        []*usl.USLUser
+		SearchConfig struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}
 	}{
-		Title: "USL User Search Results",
+		Title: "Users",
 		Users: users,
-		Query: query,
+		SearchConfig: struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}{
+			SearchPlaceholder: "Search by name or Discord ID...",
+			SearchURL:         "/usl/users/search",
+			SearchTarget:      "#users-table",
+			ClearURL:          "/usl/users",
+			ShowFilters:       true,
+			Query:             query,
+			StatusFilter:      "",
+		},
 	}
 
-	h.renderTemplate(w, TemplateUSLUsers, data)
-}
-
-func (h *MigrationHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	data := struct {
-		Title string
-	}{
-		Title: "Add USL User",
-	}
-
-	h.renderTemplate(w, TemplateUSLUserForm, data)
-}
-
-func (h *MigrationHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
-		return
-	}
-
-	name := h.getFormValue(r, FormFieldName)
-	discordID := h.getFormValue(r, FormFieldDiscordID)
-	active := h.getFormBoolValue(r, FormFieldActive)
-	banned := h.getFormBoolValue(r, FormFieldBanned)
-
-	if name == "" || discordID == "" {
-		http.Error(w, "Name and Discord ID are required", http.StatusBadRequest)
-		return
-	}
-
-	user, err := h.uslRepo.CreateUser(name, discordID, active, banned)
-	if err != nil {
-		h.handleDatabaseError(w, "create user", err)
-		return
-	}
-
-	log.Printf("[USL-HANDLER] Created user: %s (ID: %d, Discord: %s)", user.Name, user.ID, user.DiscordID)
-	http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
-}
-
-func (h *MigrationHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.handleMethodNotAllowed(w, r)
-		return
-	}
-
-	userIDStr := r.URL.Query().Get(string(FormFieldID))
-	if userIDStr == "" {
-		h.handleInvalidID(w, "User ID")
-		return
-	}
-
-	userID, err := h.parseUserID(userIDStr)
-	if err != nil {
-		h.handleParseError(w, "user ID")
-		return
-	}
-
-	user, err := h.uslRepo.GetUserByID(userID)
-	if err != nil {
-		log.Printf("[USL-HANDLER] User lookup failed: ID=%d, error=%v", userID, err)
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	data := struct {
-		Title string
-		User  *usl.USLUser
-	}{
-		Title: "Edit USL User",
-		User:  user,
-	}
-
-	h.renderTemplate(w, TemplateUSLUserEditForm, data)
-}
-
-func (h *MigrationHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.handleMethodNotAllowed(w, r)
-		return
-	}
-
-	if err := r.ParseForm(); err != nil {
-		h.handleInvalidFormData(w, err)
-		return
-	}
-
-	userIDStr := h.getFormValue(r, FormFieldID)
-	userID, err := h.parseUserID(userIDStr)
-	if err != nil {
-		h.handleParseError(w, "user ID")
-		return
-	}
-
-	name := h.getFormValue(r, FormFieldName)
-	active := h.getFormBoolValue(r, FormFieldActive)
-	banned := h.getFormBoolValue(r, FormFieldBanned)
-
-	user, err := h.uslRepo.UpdateUser(userID, name, active, banned)
-	if err != nil {
-		h.handleDatabaseError(w, "update user", err)
-		return
-	}
-
-	log.Printf("[USL-HANDLER] Updated user: %s (ID: %d, Discord: %s)", user.Name, user.ID, user.DiscordID)
-	http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
-}
-
-func (h *MigrationHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		h.handleMethodNotAllowed(w, r)
-		return
-	}
-
-	userIDStr := h.getFormValue(r, FormFieldID)
-	userID, err := h.parseUserID(userIDStr)
-	if err != nil {
-		h.handleParseError(w, "user ID")
-		return
-	}
-
-	err = h.uslRepo.DeleteUser(userID)
-	if err != nil {
-		h.handleDatabaseError(w, "delete user", err)
-		return
-	}
-
-	log.Printf("[USL-HANDLER] Deleted user: ID=%d", userID)
-	http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
+	h.renderTemplate(w, TemplateUSLUsersTable, data)
 }
 
 func (h *MigrationHandler) ListTrackers(w http.ResponseWriter, r *http.Request) {
@@ -421,14 +337,134 @@ func (h *MigrationHandler) ListTrackers(w http.ResponseWriter, r *http.Request) 
 	}
 
 	data := struct {
-		Title    string
-		Trackers []*usl.USLUserTracker
+		Title        string
+		CurrentPage  string
+		Trackers     []*usl.USLUserTracker
+		SearchConfig struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}
 	}{
-		Title:    "USL Trackers",
-		Trackers: trackers,
+		Title:       "Trackers",
+		CurrentPage: "trackers",
+		Trackers:    trackers,
+		SearchConfig: struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}{
+			SearchPlaceholder: "Search by URL or Discord ID...",
+			SearchURL:         "/usl/trackers/search",
+			SearchTarget:      "#trackers-table",
+			ClearURL:          "/usl/trackers",
+			ShowFilters:       false, // Trackers don't have status filters like users
+			Query:             "",
+			StatusFilter:      "",
+		},
 	}
 
 	h.renderTemplate(w, TemplateUSLTrackers, data)
+}
+
+func (h *MigrationHandler) UserDetail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("id")
+	if userIDStr == "" {
+		h.handleInvalidID(w, "User ID")
+		return
+	}
+
+	userID, err := h.parseUserID(userIDStr)
+	if err != nil {
+		h.handleParseError(w, "user ID")
+		return
+	}
+
+	user, err := h.uslRepo.GetUserByID(userID)
+	if err != nil {
+		h.handleDatabaseError(w, "load user", err)
+		return
+	}
+
+	// Get user's trackers
+	userTrackers, err := h.uslRepo.GetTrackersByDiscordID(user.DiscordID)
+	if err != nil {
+		h.handleDatabaseError(w, "load user trackers", err)
+		return
+	}
+
+	data := struct {
+		Title        string
+		CurrentPage  string
+		User         *usl.USLUser
+		UserTrackers []*usl.USLUserTracker
+	}{
+		Title:        user.Name,
+		CurrentPage:  "users",
+		User:         user,
+		UserTrackers: userTrackers,
+	}
+
+	h.renderTemplate(w, TemplateUSLUserDetail, data)
+}
+
+func (h *MigrationHandler) TrackerDetail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	trackerIDStr := r.URL.Query().Get("id")
+	if trackerIDStr == "" {
+		h.handleInvalidID(w, "Tracker ID")
+		return
+	}
+
+	trackerID, err := strconv.ParseInt(trackerIDStr, 10, 64)
+	if err != nil {
+		h.handleParseError(w, "tracker ID")
+		return
+	}
+
+	tracker, err := h.uslRepo.GetTrackerByID(trackerID)
+	if err != nil {
+		h.handleDatabaseError(w, "load tracker", err)
+		return
+	}
+
+	// Get user associated with this tracker for display name
+	user, err := h.uslRepo.GetUserByDiscordID(tracker.DiscordID)
+	if err != nil {
+		h.handleDatabaseError(w, "load associated user", err)
+		return
+	}
+
+	data := struct {
+		Title       string
+		CurrentPage string
+		Tracker     *usl.USLUserTracker
+		User        *usl.USLUser
+	}{
+		Title:       "Tracker Details",
+		CurrentPage: "trackers",
+		Tracker:     tracker,
+		User:        user,
+	}
+
+	h.renderTemplate(w, TemplateUSLTrackerDetail, data)
 }
 
 func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request) {
@@ -437,21 +473,15 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	users, err := h.uslRepo.GetAllUsers()
-	if err != nil {
-		h.handleDatabaseError(w, "load users", err)
-		return
-	}
-
 	data := struct {
-		Title string
-		Users []*usl.USLUser
+		Title       string
+		CurrentPage string
 	}{
-		Title: "Add USL Tracker",
-		Users: users,
+		Title:       "New Tracker",
+		CurrentPage: "trackers",
 	}
 
-	h.renderTemplate(w, TemplateUSLTrackerForm, data)
+	h.renderTemplate(w, TemplateUSLTrackerNew, data)
 }
 
 func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request) {
@@ -460,28 +490,209 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Parse form data
 	if err := r.ParseForm(); err != nil {
 		h.handleInvalidFormData(w, err)
 		return
 	}
 
-	tracker := h.buildTrackerFromForm(r)
-
-	if !h.validateTrackerRequired(w, tracker) {
+	// Extract and validate required fields
+	discordID := r.FormValue("discord_id")
+	if discordID == "" {
+		http.Error(w, "Discord ID is required", http.StatusBadRequest)
 		return
 	}
 
-	created, err := h.uslRepo.CreateTracker(tracker)
+	// Parse integer fields with helper function
+	parseInt := func(value string) int {
+		if value == "" {
+			return 0
+		}
+		if i, err := strconv.Atoi(value); err == nil {
+			return i
+		}
+		return 0
+	}
+
+	// Parse boolean field
+	parseBool := func(value string) bool {
+		return value == "true"
+	}
+
+	// Create tracker with all MMR fields
+	tracker := &usl.USLUserTracker{
+		DiscordID:                       discordID,
+		URL:                             r.FormValue("url"),
+		OnesCurrentSeasonPeak:           parseInt(r.FormValue("ones_current_peak")),
+		OnesPreviousSeasonPeak:          parseInt(r.FormValue("ones_previous_peak")),
+		OnesAllTimePeak:                 parseInt(r.FormValue("ones_all_time_peak")),
+		OnesCurrentSeasonGamesPlayed:    parseInt(r.FormValue("ones_current_games")),
+		OnesPreviousSeasonGamesPlayed:   parseInt(r.FormValue("ones_previous_games")),
+		TwosCurrentSeasonPeak:           parseInt(r.FormValue("twos_current_peak")),
+		TwosPreviousSeasonPeak:          parseInt(r.FormValue("twos_previous_peak")),
+		TwosAllTimePeak:                 parseInt(r.FormValue("twos_all_time_peak")),
+		TwosCurrentSeasonGamesPlayed:    parseInt(r.FormValue("twos_current_games")),
+		TwosPreviousSeasonGamesPlayed:   parseInt(r.FormValue("twos_previous_games")),
+		ThreesCurrentSeasonPeak:         parseInt(r.FormValue("threes_current_peak")),
+		ThreesPreviousSeasonPeak:        parseInt(r.FormValue("threes_previous_peak")),
+		ThreesAllTimePeak:               parseInt(r.FormValue("threes_all_time_peak")),
+		ThreesCurrentSeasonGamesPlayed:  parseInt(r.FormValue("threes_current_games")),
+		ThreesPreviousSeasonGamesPlayed: parseInt(r.FormValue("threes_previous_games")),
+		Valid:                           parseBool(r.FormValue("valid")),
+	}
+
+	// Calculate effective MMR using the same logic as the JavaScript form
+	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
+		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
+		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
+
+	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
+
+	if totalGames > 0 {
+		tracker.MMR = weightedSum / totalGames
+	} else {
+		tracker.MMR = 0
+	}
+
+	createdTracker, err := h.uslRepo.CreateTracker(tracker)
 	if err != nil {
 		h.handleDatabaseError(w, "create tracker", err)
 		return
 	}
 
-	log.Printf("[USL-HANDLER] Created tracker: Discord=%s, ID=%d, URL=%s", created.DiscordID, created.ID, created.URL)
+	// Redirect to tracker detail
+	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", createdTracker.ID), http.StatusSeeOther)
+}
 
-	h.performTrueSkillUpdate(created)
+func (h *MigrationHandler) EditTrackerForm(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
 
-	http.Redirect(w, r, "/usl/trackers", http.StatusSeeOther)
+	trackerIDStr := r.URL.Query().Get("id")
+	if trackerIDStr == "" {
+		h.handleInvalidID(w, "Tracker ID")
+		return
+	}
+
+	trackerID, err := strconv.ParseInt(trackerIDStr, 10, 64)
+	if err != nil {
+		h.handleParseError(w, "tracker ID")
+		return
+	}
+
+	tracker, err := h.uslRepo.GetTrackerByID(trackerID)
+	if err != nil {
+		h.handleDatabaseError(w, "load tracker", err)
+		return
+	}
+
+	data := struct {
+		Title       string
+		CurrentPage string
+		Tracker     *usl.USLUserTracker
+	}{
+		Title:       "Edit Tracker",
+		CurrentPage: "trackers",
+		Tracker:     tracker,
+	}
+
+	h.renderTemplate(w, TemplateUSLTrackerEdit, data)
+}
+
+func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	// Parse form data
+	if err := r.ParseForm(); err != nil {
+		h.handleInvalidFormData(w, err)
+		return
+	}
+
+	// Extract tracker ID
+	trackerIDStr := r.FormValue("id")
+	if trackerIDStr == "" {
+		h.handleInvalidID(w, "Tracker ID")
+		return
+	}
+
+	trackerID, err := strconv.ParseInt(trackerIDStr, 10, 64)
+	if err != nil {
+		h.handleParseError(w, "tracker ID")
+		return
+	}
+
+	// Extract and validate required fields
+	discordID := r.FormValue("discord_id")
+	if discordID == "" {
+		http.Error(w, "Discord ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Parse integer fields with helper function
+	parseInt := func(value string) int {
+		if value == "" {
+			return 0
+		}
+		if i, err := strconv.Atoi(value); err == nil {
+			return i
+		}
+		return 0
+	}
+
+	// Parse boolean field
+	parseBool := func(value string) bool {
+		return value == "true"
+	}
+
+	// Update tracker with all MMR fields
+	tracker := &usl.USLUserTracker{
+		ID:                              trackerID,
+		DiscordID:                       discordID,
+		URL:                             r.FormValue("url"),
+		OnesCurrentSeasonPeak:           parseInt(r.FormValue("ones_current_peak")),
+		OnesPreviousSeasonPeak:          parseInt(r.FormValue("ones_previous_peak")),
+		OnesAllTimePeak:                 parseInt(r.FormValue("ones_all_time_peak")),
+		OnesCurrentSeasonGamesPlayed:    parseInt(r.FormValue("ones_current_games")),
+		OnesPreviousSeasonGamesPlayed:   parseInt(r.FormValue("ones_previous_games")),
+		TwosCurrentSeasonPeak:           parseInt(r.FormValue("twos_current_peak")),
+		TwosPreviousSeasonPeak:          parseInt(r.FormValue("twos_previous_peak")),
+		TwosAllTimePeak:                 parseInt(r.FormValue("twos_all_time_peak")),
+		TwosCurrentSeasonGamesPlayed:    parseInt(r.FormValue("twos_current_games")),
+		TwosPreviousSeasonGamesPlayed:   parseInt(r.FormValue("twos_previous_games")),
+		ThreesCurrentSeasonPeak:         parseInt(r.FormValue("threes_current_peak")),
+		ThreesPreviousSeasonPeak:        parseInt(r.FormValue("threes_previous_peak")),
+		ThreesAllTimePeak:               parseInt(r.FormValue("threes_all_time_peak")),
+		ThreesCurrentSeasonGamesPlayed:  parseInt(r.FormValue("threes_current_games")),
+		ThreesPreviousSeasonGamesPlayed: parseInt(r.FormValue("threes_previous_games")),
+		Valid:                           parseBool(r.FormValue("valid")),
+	}
+
+	// Calculate effective MMR using the same logic as the JavaScript form
+	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
+		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
+		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
+
+	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
+
+	if totalGames > 0 {
+		tracker.MMR = weightedSum / totalGames
+	} else {
+		tracker.MMR = 0
+	}
+
+	err = h.uslRepo.UpdateTracker(tracker)
+	if err != nil {
+		h.handleDatabaseError(w, "update tracker", err)
+		return
+	}
+
+	// Redirect to tracker detail
+	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", trackerID), http.StatusSeeOther)
 }
 
 func (h *MigrationHandler) AdminDashboard(w http.ResponseWriter, r *http.Request) {
@@ -496,30 +707,28 @@ func (h *MigrationHandler) AdminDashboard(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Create a mock guild for USL compatibility
+	_ = &models.Guild{
+		ID:             1,
+		DiscordGuildID: USLDiscordGuildID,
+		Name:           "USL",
+		Slug:           "usl",
+		Active:         true,
+		Config:         models.GetDefaultGuildConfig(),
+		Theme:          models.GetDefaultTheme(),
+	}
+
 	data := struct {
-		Title string
-		Stats map[string]interface{}
+		Title       string
+		CurrentPage string
+		Stats       map[string]interface{}
 	}{
-		Title: "USL Admin Dashboard",
-		Stats: stats,
+		Title:       "Dashboard",
+		CurrentPage: "admin",
+		Stats:       stats,
 	}
 
 	h.renderTemplate(w, TemplateUSLAdminDashboard, data)
-}
-
-func (h *MigrationHandler) ImportData(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		h.handleMethodNotAllowed(w, r)
-		return
-	}
-
-	data := struct {
-		Title string
-	}{
-		Title: "Import USL Data",
-	}
-
-	h.renderTemplate(w, TemplateUSLImport, data)
 }
 
 func (h *MigrationHandler) ListUsersAPI(w http.ResponseWriter, r *http.Request) {
@@ -646,9 +855,16 @@ func (h *MigrationHandler) mapUSLTrackerToTrackerData(uslTracker *usl.USLUserTra
 // NOTE: Authentication methods removed - now handled by unified Discord OAuth system in main.go
 
 func (h *MigrationHandler) renderTemplate(w http.ResponseWriter, templateName TemplateName, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := h.templates.ExecuteTemplate(w, string(templateName), data); err != nil {
+	// Use buffer-based rendering to prevent partial output on errors (2025 best practice)
+	var buf bytes.Buffer
+	err := h.templates.ExecuteTemplate(&buf, string(templateName), data)
+	if err != nil {
 		log.Printf("[USL-HANDLER] Template rendering error: template=%s, error=%v", templateName, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
 	}
+
+	// Only write to ResponseWriter after successful rendering
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
 }

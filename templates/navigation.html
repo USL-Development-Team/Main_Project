@@ -1,0 +1,23 @@
+{{define "navigation"}}
+<nav class="bg-white shadow-sm border-b">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-8">
+                <h1 class="text-xl font-bold text-gray-900">USL Management</h1>
+                
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/usl/admin" class="{{if eq .CurrentPage "admin"}}text-blue-600 bg-blue-50 border-b-2 border-blue-600{{else}}text-gray-600 hover:text-gray-900{{end}} px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Dashboard
+                    </a>
+                    <a href="/usl/users" class="{{if eq .CurrentPage "users"}}text-blue-600 bg-blue-50 border-b-2 border-blue-600{{else}}text-gray-600 hover:text-gray-900{{end}} px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Users
+                    </a>
+                    <a href="/usl/trackers" class="{{if eq .CurrentPage "trackers"}}text-blue-600 bg-blue-50 border-b-2 border-blue-600{{else}}text-gray-600 hover:text-gray-900{{end}} px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Trackers
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+{{end}}
