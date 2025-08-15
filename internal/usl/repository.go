@@ -17,7 +17,6 @@ type USLRepository struct {
 	logger *slog.Logger
 }
 
-// NewUSLRepository creates a new USL-specific repository
 func NewUSLRepository(client *supabase.Client, config *config.Config, logger *slog.Logger) *USLRepository {
 	return &USLRepository{
 		client: client,

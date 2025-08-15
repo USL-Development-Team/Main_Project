@@ -20,7 +20,6 @@ type USLUser struct {
 	UpdatedAt            time.Time `json:"updated_at" db:"updated_at"`
 }
 
-// GetTrueSkillLastUpdatedFormatted returns a formatted date string for display
 func (u *USLUser) GetTrueSkillLastUpdatedFormatted() string {
 	if u.TrueSkillLastUpdated == nil || *u.TrueSkillLastUpdated == "" {
 		return "Never"
@@ -28,7 +27,6 @@ func (u *USLUser) GetTrueSkillLastUpdatedFormatted() string {
 	return *u.TrueSkillLastUpdated
 }
 
-// GetLastUpdatedFormatted returns a formatted date string for display
 func (t *USLUserTracker) GetLastUpdatedFormatted() string {
 	if t.LastUpdated == nil || *t.LastUpdated == "" {
 		return "Never"
@@ -108,7 +106,6 @@ func (u *USLUser) HasTrueSkillData() bool {
 	return u.TrueSkillMu != 25.0 || u.TrueSkillSigma != 8.333333
 }
 
-// DisplayName returns the user's display name for UI purposes
 func (u *USLUser) DisplayName() string {
 	if u.Name == "" {
 		return u.DiscordID
@@ -116,12 +113,10 @@ func (u *USLUser) DisplayName() string {
 	return u.Name
 }
 
-// IsValidTracker checks if tracker has enough data to be considered valid
 func (t *USLUserTracker) IsValidTracker() bool {
 	return t.Valid
 }
 
-// TotalGames calculates total games across all playlists
 func (t *USLUserTracker) TotalGames() int {
 	return t.OnesCurrentSeasonGamesPlayed + t.TwosCurrentSeasonGamesPlayed + t.ThreesCurrentSeasonGamesPlayed
 }
