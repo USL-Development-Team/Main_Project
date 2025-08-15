@@ -7,6 +7,7 @@ import (
 	"usl-server/internal/config"
 	"usl-server/internal/models"
 
+	"github.com/supabase-community/postgrest-go"
 	"github.com/supabase-community/supabase-go"
 )
 
@@ -297,4 +298,255 @@ func (r *UserRepository) convertToUser(userSelect models.PublicUsersSelect) mode
 		CreatedAt:            createdAt,
 		UpdatedAt:            updatedAt,
 	}
+}
+
+// GetUsersPaginated gets users with pagination and filtering using Supabase client
+func (r *UserRepository) GetUsersPaginated(params *models.PaginationParams, filters *models.UserFilters) ([]*models.User, *models.PaginationMetadata, error) {
+	// Build base query
+	query := r.client.From("users").Select("*", "", false)
+
+	// Apply filters
+	if filters != nil {
+		// Apply search filter (name or discord_id)
+		if filters.Search != "" {
+			searchPattern := "%" + filters.Search + "%"
+			query = query.Or(fmt.Sprintf("name.ilike.%s,discord_id.ilike.%s", searchPattern, searchPattern), "")
+		}
+
+		// Apply status filter
+		if filters.Status != "" {
+			switch filters.Status {
+			case "active":
+				query = query.Eq("active", "true").Eq("banned", "false")
+			case "inactive":
+				query = query.Eq("active", "false")
+			case "banned":
+				query = query.Eq("banned", "true")
+			}
+		}
+
+		// Apply date filters
+		if filters.CreatedAfter != nil {
+			query = query.Gte("created_at", filters.CreatedAfter.Format(time.RFC3339))
+		}
+		if filters.CreatedBefore != nil {
+			query = query.Lt("created_at", filters.CreatedBefore.Format(time.RFC3339))
+		}
+	}
+
+	// Get total count for pagination metadata
+	total, err := r.getUserCount(filters)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get user count: %w", err)
+	}
+
+	// Apply sorting
+	if params.Sort != "" {
+		if params.Order == "asc" {
+			query = query.Order(params.Sort, &postgrest.OrderOpts{Ascending: true})
+		} else {
+			query = query.Order(params.Sort, &postgrest.OrderOpts{Ascending: false})
+		}
+	}
+
+	// Apply pagination
+	offset := params.CalculateOffset()
+	query = query.Range(offset, offset+params.Limit-1, "")
+
+	// Execute query
+	data, _, err := query.Execute()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get paginated users: %w", err)
+	}
+
+	var result []models.PublicUsersSelect
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse paginated users: %w", err)
+	}
+
+	// Convert to internal model
+	users := make([]*models.User, len(result))
+	for i, userSelect := range result {
+		user := r.convertToUser(userSelect)
+		users[i] = &user
+	}
+
+	// Calculate pagination metadata
+	pagination := models.CalculatePagination(params, total)
+
+	return users, &pagination, nil
+}
+
+// getUserCount gets the total count of users with filters applied
+func (r *UserRepository) getUserCount(filters *models.UserFilters) (int64, error) {
+	query := r.client.From("users").Select("id", "count", false)
+
+	// Apply the same filters as the main query
+	if filters != nil {
+		// Apply search filter (name or discord_id)
+		if filters.Search != "" {
+			searchPattern := "%" + filters.Search + "%"
+			query = query.Or(fmt.Sprintf("name.ilike.%s,discord_id.ilike.%s", searchPattern, searchPattern), "")
+		}
+
+		// Apply status filter
+		if filters.Status != "" {
+			switch filters.Status {
+			case "active":
+				query = query.Eq("active", "true").Eq("banned", "false")
+			case "inactive":
+				query = query.Eq("active", "false")
+			case "banned":
+				query = query.Eq("banned", "true")
+			}
+		}
+
+		// Apply date filters
+		if filters.CreatedAfter != nil {
+			query = query.Gte("created_at", filters.CreatedAfter.Format(time.RFC3339))
+		}
+		if filters.CreatedBefore != nil {
+			query = query.Lt("created_at", filters.CreatedBefore.Format(time.RFC3339))
+		}
+	}
+
+	data, _, err := query.Execute()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user count: %w", err)
+	}
+
+	// Parse count result
+	var countResult []map[string]interface{}
+	err = json.Unmarshal(data, &countResult)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse user count: %w", err)
+	}
+
+	if len(countResult) == 0 {
+		return 0, nil
+	}
+
+	// Extract count from Supabase response
+	count, ok := countResult[0]["count"].(float64)
+	if !ok {
+		return int64(len(countResult)), nil // Fallback to result length
+	}
+
+	return int64(count), nil
+}
+
+// BulkUpdateUsers performs bulk updates on users
+func (r *UserRepository) BulkUpdateUsers(operation *models.BulkOperation) (*models.BulkOperationResponse, error) {
+	startTime := time.Now()
+	response := &models.BulkOperationResponse{
+		Results: make([]models.BulkOperationResult, 0),
+		Errors:  make([]string, 0),
+	}
+
+	switch operation.Operation {
+	case "update":
+		return r.bulkUpdateUsersUpdate(operation, response, startTime)
+	case "delete":
+		return r.bulkUpdateUsersDelete(operation, response, startTime)
+	default:
+		response.Errors = append(response.Errors, fmt.Sprintf("unsupported operation: %s", operation.Operation))
+		response.ProcessingTime = time.Since(startTime).String()
+		return response, nil
+	}
+}
+
+// bulkUpdateUsersUpdate handles bulk user updates
+func (r *UserRepository) bulkUpdateUsersUpdate(operation *models.BulkOperation, response *models.BulkOperationResponse, startTime time.Time) (*models.BulkOperationResponse, error) {
+	// If user IDs are specified, update those users
+	if len(operation.UserIDs) > 0 {
+		response.TotalRequested = len(operation.UserIDs)
+
+		for _, userID := range operation.UserIDs {
+			if err := r.updateSingleUser(userID, operation.Updates); err != nil {
+				response.Failed++
+				response.Results = append(response.Results, models.BulkOperationResult{
+					ID:     userID,
+					Status: "failed",
+					Error:  err.Error(),
+				})
+			} else {
+				response.Successful++
+				response.Results = append(response.Results, models.BulkOperationResult{
+					ID:     userID,
+					Status: "success",
+				})
+			}
+		}
+	} else {
+		// Update users based on filters
+		// TODO: Implement filter-based bulk updates
+		response.Errors = append(response.Errors, "filter-based bulk updates not yet implemented")
+	}
+
+	response.ProcessingTime = time.Since(startTime).String()
+	return response, nil
+}
+
+// bulkUpdateUsersDelete handles bulk user deletion (marking inactive)
+func (r *UserRepository) bulkUpdateUsersDelete(operation *models.BulkOperation, response *models.BulkOperationResponse, startTime time.Time) (*models.BulkOperationResponse, error) {
+	if len(operation.UserIDs) > 0 {
+		response.TotalRequested = len(operation.UserIDs)
+
+		for _, userID := range operation.UserIDs {
+			if _, err := r.DeleteUser(userID); err != nil {
+				response.Failed++
+				response.Results = append(response.Results, models.BulkOperationResult{
+					ID:     userID,
+					Status: "failed",
+					Error:  err.Error(),
+				})
+			} else {
+				response.Successful++
+				response.Results = append(response.Results, models.BulkOperationResult{
+					ID:     userID,
+					Status: "success",
+				})
+			}
+		}
+	}
+
+	response.ProcessingTime = time.Since(startTime).String()
+	return response, nil
+}
+
+// updateSingleUser updates a single user with the provided updates
+func (r *UserRepository) updateSingleUser(discordID string, updates map[string]interface{}) error {
+	// Validate and sanitize updates
+	allowedFields := map[string]bool{
+		"name":   true,
+		"active": true,
+		"banned": true,
+	}
+
+	sanitizedUpdates := make(map[string]interface{})
+	for key, value := range updates {
+		if allowedFields[key] {
+			sanitizedUpdates[key] = value
+		}
+	}
+
+	if len(sanitizedUpdates) == 0 {
+		return fmt.Errorf("no valid fields to update")
+	}
+
+	// Add updated_at timestamp
+	sanitizedUpdates["updated_at"] = time.Now().Format(time.RFC3339)
+
+	// Execute update
+	_, _, err := r.client.From("users").
+		Update(sanitizedUpdates, "", "").
+		Eq("discord_id", discordID).
+		Execute()
+
+	if err != nil {
+		return fmt.Errorf("failed to update user %s: %w", discordID, err)
+	}
+
+	return nil
 }

@@ -216,14 +216,25 @@ func setupTrueSkillRoutes(mux *http.ServeMux, deps *AppDependencies) {
 }
 
 func setupAPIRoutes(mux *http.ServeMux, deps *AppDependencies) {
+	// v1 API handlers (legacy)
 	userHandler := handlers.NewUserHandler(deps.UserRepo, deps.Templates)
 	trackerHandler := handlers.NewTrackerHandler(deps.TrackerRepo, deps.TrueSkillService, deps.Templates)
 	trueskillHandler := handlers.NewTrueSkillHandler(deps.TrueSkillService, deps.Templates)
 
-	// Main app API routes - protected by unified Discord OAuth
+	// v2 API handlers (modern with pagination, filtering, bulk operations)
+	v2UsersHandler := uslHandlers.NewV2UsersHandler(deps.UserRepo)
+	v2TrackersHandler := uslHandlers.NewV2TrackersHandler(deps.TrackerRepo)
+
+	// v1 API routes - protected by unified Discord OAuth (legacy)
 	mux.HandleFunc("/api/users", deps.Auth.RequireAuth(userHandler.ListUsersAPI))
 	mux.HandleFunc("/api/trackers", deps.Auth.RequireAuth(trackerHandler.ListTrackersAPI))
 	mux.HandleFunc("/api/trueskill/update-all", deps.Auth.RequireAuth(trueskillHandler.UpdateAllUserTrueSkillAPI))
+
+	// v2 API routes - modern paginated APIs (protected by unified Discord OAuth)
+	mux.HandleFunc("/api/v2/users", deps.Auth.RequireAuth(v2UsersHandler.HandleUsers))
+	mux.HandleFunc("/api/v2/users/bulk", deps.Auth.RequireAuth(v2UsersHandler.HandleUsersBulk))
+	mux.HandleFunc("/api/v2/trackers", deps.Auth.RequireAuth(v2TrackersHandler.HandleTrackers))
+	mux.HandleFunc("/api/v2/trackers/bulk", deps.Auth.RequireAuth(v2TrackersHandler.HandleTrackersBulk))
 }
 
 func setupUSLRoutes(mux *http.ServeMux, deps *AppDependencies) {
