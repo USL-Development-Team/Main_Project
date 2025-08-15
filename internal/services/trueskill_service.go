@@ -178,6 +178,48 @@ func (s *UserTrueSkillService) UpdateAllUserTrueSkill() (*BatchUpdateResult, err
 	return result, nil
 }
 
+// UpdateUserTrueSkillFromTrackerData updates TrueSkill for a single user from provided tracker data
+// This method bypasses the repository layer and accepts TrackerData directly
+func (s *UserTrueSkillService) UpdateUserTrueSkillFromTrackerData(trackerData *TrackerData) *TrueSkillUpdateResult {
+	// Validate tracker data
+	if err := s.dataTransformationService.ValidateTrackerData(trackerData); err != nil {
+		return &TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("invalid tracker data: %v", err),
+		}
+	}
+
+	// Calculate TrueSkill values directly from provided tracker data
+	trueSkillResult, err := s.calculateTrueSkillValues(trackerData)
+	if err != nil {
+		return &TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("failed to calculate TrueSkill: %v", err),
+		}
+	}
+
+	// Update user with new TrueSkill values
+	err = s.updateUserWithTrueSkillValues(trackerData.DiscordID, trueSkillResult)
+	if err != nil {
+		return &TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("failed to update user: %v", err),
+		}
+	}
+
+	log.Printf("UserTrueSkillService: Updated TrueSkill for user %s: μ=%.1f, σ=%.2f (from TrackerData)",
+		trackerData.DiscordID, trueSkillResult.Mu, trueSkillResult.Sigma)
+
+	return &TrueSkillUpdateResult{
+		Success:         true,
+		HadTrackers:     true,
+		TrueSkillResult: trueSkillResult,
+	}
+}
+
 // UpdateUserTrueSkillFromTrackers updates TrueSkill for a single user from their tracker data
 // Exact port of JavaScript updateUserTrueSkillFromTrackers() function
 func (s *UserTrueSkillService) UpdateUserTrueSkillFromTrackers(discordID string) *TrueSkillUpdateResult {

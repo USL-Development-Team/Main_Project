@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+	"usl-server/internal/config"
+	"usl-server/internal/services"
 	"usl-server/internal/usl"
 )
 
@@ -17,15 +20,24 @@ const (
 // This is a temporary migration solution - no multi-guild complexity
 // AUTH NOTE: This handler no longer manages auth - that's handled by unified Discord OAuth in main.go
 type MigrationHandler struct {
-	uslRepo   *usl.USLRepository
-	templates *template.Template
+	uslRepo          *usl.USLRepository
+	templates        *template.Template
+	trueskillService *services.UserTrueSkillService
+	config           *config.Config
 }
 
-func NewMigrationHandler(uslRepo *usl.USLRepository, templates *template.Template) *MigrationHandler {
+func NewMigrationHandler(
+	uslRepo *usl.USLRepository,
+	templates *template.Template,
+	trueskillService *services.UserTrueSkillService,
+	config *config.Config,
+) *MigrationHandler {
 	// NOTE: auth is now handled by unified Discord OAuth system in main.go
 	return &MigrationHandler{
-		uslRepo:   uslRepo,
-		templates: templates,
+		uslRepo:          uslRepo,
+		templates:        templates,
+		trueskillService: trueskillService,
+		config:           config,
 	}
 }
 
@@ -330,6 +342,10 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 	}
 
 	log.Printf("Created USL tracker for Discord ID: %s (ID: %d)", created.DiscordID, created.ID)
+
+	// NEW: Trigger TrueSkill update with comprehensive error handling
+	h.performTrueSkillUpdate(created)
+
 	http.Redirect(w, r, "/usl/trackers", http.StatusSeeOther)
 }
 
@@ -418,6 +434,82 @@ func (h *MigrationHandler) GetLeaderboardAPI(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
+}
+
+// performTrueSkillUpdate handles TrueSkill calculation and synchronization with comprehensive error handling
+func (h *MigrationHandler) performTrueSkillUpdate(tracker *usl.USLUserTracker) {
+	if tracker == nil {
+		log.Printf("ERROR: Cannot perform TrueSkill update - tracker is nil")
+		return
+	}
+
+	// Step 1: Transform tracker data
+	trackerData := h.mapUSLTrackerToTrackerData(tracker)
+	log.Printf("Starting TrueSkill update for %s (tracker ID: %d)", tracker.DiscordID, tracker.ID)
+
+	// Step 2: Attempt TrueSkill calculation
+	result := h.trueskillService.UpdateUserTrueSkillFromTrackerData(trackerData)
+
+	if !result.Success {
+		log.Printf("WARNING: TrueSkill update failed for %s: %s", tracker.DiscordID, result.Error)
+		log.Printf("  - Tracker was still created successfully (ID: %d)", tracker.ID)
+		log.Printf("  - Manual TrueSkill update may be required later")
+		return
+	}
+
+	// Step 3: TrueSkill calculation succeeded - log results
+	log.Printf("SUCCESS: TrueSkill calculated for %s: μ=%.1f, σ=%.2f",
+		tracker.DiscordID, result.TrueSkillResult.Mu, result.TrueSkillResult.Sigma)
+
+	// Step 4: Attempt to sync results to USL user table
+	err := h.uslRepo.UpdateUserTrueSkill(
+		tracker.DiscordID,
+		result.TrueSkillResult.Mu,
+		result.TrueSkillResult.Sigma,
+	)
+
+	if err != nil {
+		log.Printf("WARNING: Failed to sync TrueSkill to USL user table for %s: %v", tracker.DiscordID, err)
+		log.Printf("  - TrueSkill was calculated and stored in core tables")
+		log.Printf("  - USL table sync failed - data inconsistency possible")
+		log.Printf("  - Manual sync may be required")
+	} else {
+		log.Printf("SUCCESS: Full TrueSkill integration completed for %s", tracker.DiscordID)
+		log.Printf("  - Core tables updated: ✓")
+		log.Printf("  - USL tables updated: ✓")
+	}
+}
+
+// mapUSLTrackerToTrackerData converts USL tracker format to TrueSkill service input format
+func (h *MigrationHandler) mapUSLTrackerToTrackerData(uslTracker *usl.USLUserTracker) *services.TrackerData {
+	var lastUpdated time.Time
+	if uslTracker.LastUpdated != nil && *uslTracker.LastUpdated != "" {
+		if parsed, err := time.Parse(time.RFC3339, *uslTracker.LastUpdated); err == nil {
+			lastUpdated = parsed
+		} else {
+			lastUpdated = time.Now()
+		}
+	} else {
+		lastUpdated = time.Now()
+	}
+
+	return &services.TrackerData{
+		DiscordID:           uslTracker.DiscordID,
+		URL:                 uslTracker.URL,
+		OnesCurrentPeak:     uslTracker.OnesCurrentSeasonPeak,
+		OnesCurrentGames:    uslTracker.OnesCurrentSeasonGamesPlayed,
+		OnesPreviousPeak:    uslTracker.OnesPreviousSeasonPeak,
+		OnesPreviousGames:   uslTracker.OnesPreviousSeasonGamesPlayed,
+		TwosCurrentPeak:     uslTracker.TwosCurrentSeasonPeak,
+		TwosCurrentGames:    uslTracker.TwosCurrentSeasonGamesPlayed,
+		TwosPreviousPeak:    uslTracker.TwosPreviousSeasonPeak,
+		TwosPreviousGames:   uslTracker.TwosPreviousSeasonGamesPlayed,
+		ThreesCurrentPeak:   uslTracker.ThreesCurrentSeasonPeak,
+		ThreesCurrentGames:  uslTracker.ThreesCurrentSeasonGamesPlayed,
+		ThreesPreviousPeak:  uslTracker.ThreesPreviousSeasonPeak,
+		ThreesPreviousGames: uslTracker.ThreesPreviousSeasonGamesPlayed,
+		LastUpdated:         lastUpdated,
+	}
 }
 
 // NOTE: Authentication methods removed - now handled by unified Discord OAuth system in main.go

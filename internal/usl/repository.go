@@ -3,6 +3,7 @@ package usl
 import (
 	"fmt"
 	"log/slog"
+	"time"
 	"usl-server/internal/config"
 
 	"github.com/supabase-community/postgrest-go"
@@ -313,4 +314,29 @@ func (r *USLRepository) GetStats() (map[string]interface{}, error) {
 		"valid_trackers":       validTrackers,
 		"average_trueskill_mu": averageTrueSkillMu,
 	}, nil
+}
+
+// UpdateUserTrueSkill updates TrueSkill values for a user in USL tables
+func (r *USLRepository) UpdateUserTrueSkill(discordID string, mu, sigma float64) error {
+	updateData := map[string]interface{}{
+		"trueskill_mu":           mu,
+		"trueskill_sigma":        sigma,
+		"trueskill_last_updated": time.Now().Format(time.RFC3339),
+	}
+
+	_, _, err := r.client.From("usl_users").
+		Update(updateData, "", "").
+		Eq("discord_id", discordID).
+		Execute()
+
+	if err != nil {
+		return fmt.Errorf("failed to update TrueSkill for user %s: %w", discordID, err)
+	}
+
+	r.logger.Info("Updated USL user TrueSkill values",
+		"discord_id", discordID,
+		"mu", mu,
+		"sigma", sigma)
+
+	return nil
 }

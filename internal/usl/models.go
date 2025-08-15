@@ -2,6 +2,7 @@ package usl
 
 import (
 	"time"
+	"usl-server/internal/config"
 )
 
 // USLUser represents a user in the USL-specific migration table
@@ -102,8 +103,9 @@ func (u *USLUser) IsValidForPlay() bool {
 }
 
 // HasTrueSkillData checks if the user has been processed by TrueSkill engine
-func (u *USLUser) HasTrueSkillData() bool {
-	return u.TrueSkillMu != 25.0 || u.TrueSkillSigma != 8.333333
+func (u *USLUser) HasTrueSkillData(cfg *config.Config) bool {
+	defaultMu, defaultSigma := cfg.GetTrueSkillDefaults()
+	return u.TrueSkillMu != defaultMu || u.TrueSkillSigma != defaultSigma
 }
 
 func (u *USLUser) DisplayName() string {
@@ -122,6 +124,6 @@ func (t *USLUserTracker) TotalGames() int {
 }
 
 // HasEnoughGames checks if tracker has sufficient games for MMR calculation
-func (t *USLUserTracker) HasEnoughGames() bool {
-	return t.TotalGames() >= 10 // Arbitrary threshold
+func (t *USLUserTracker) HasEnoughGames(cfg *config.Config) bool {
+	return t.TotalGames() >= cfg.MMR.MinGamesThreshold
 }

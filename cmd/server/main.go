@@ -240,7 +240,7 @@ func setupUSLRoutes(mux *http.ServeMux, deps *AppDependencies) {
 
 	uslRepo := usl.NewUSLRepository(supabaseClient, deps.Config, deps.Logger)
 	// NOTE: USL handlers no longer need their own auth - they use the unified auth
-	uslHandler := uslHandlers.NewMigrationHandler(uslRepo, deps.Templates)
+	uslHandler := uslHandlers.NewMigrationHandler(uslRepo, deps.Templates, deps.TrueSkillService, deps.Config)
 
 	// USL Main Routes (redirect to login or admin based on auth status)
 	mux.HandleFunc("/usl/", func(w http.ResponseWriter, r *http.Request) {
