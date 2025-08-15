@@ -25,109 +25,76 @@ func NewV2UsersHandler(userRepo *repositories.UserRepository) *V2UsersHandler {
 func (h *V2UsersHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		h.getUsers(w, r)
+		h.handleGetUsers(w, r)
 	case http.MethodPost:
-		h.createUser(w, r)
+		h.handleCreateUser(w, r)
 	default:
-		h.writeErrorResponse(w, http.StatusMethodNotAllowed, "method not allowed", nil)
+		h.writeErrorResponse(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }
 
 // HandleUsersBulk handles bulk operations on users
 func (h *V2UsersHandler) HandleUsersBulk(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		h.writeErrorResponse(w, http.StatusMethodNotAllowed, "method not allowed", nil)
+		h.writeErrorResponse(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
 
-	var operation models.BulkOperation
-	if err := json.NewDecoder(r.Body).Decode(&operation); err != nil {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid request body", map[string]string{"error": err.Error()})
-		return
-	}
-
-	response, err := h.userRepo.BulkUpdateUsers(&operation)
+	bulkOperation, err := h.parseBulkOperationRequest(r)
 	if err != nil {
-		h.writeErrorResponse(w, http.StatusInternalServerError, "bulk operation failed", map[string]string{"error": err.Error()})
+		h.writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequestBody, map[string]string{"error": err.Error()})
+		return
+	}
+
+	response, err := h.userRepo.BulkUpdateUsers(bulkOperation)
+	if err != nil {
+		h.writeErrorResponse(w, http.StatusInternalServerError, msgBulkOperationFailed, map[string]string{"error": err.Error()})
 		return
 	}
 
 	h.writeJSONResponse(w, http.StatusOK, response)
 }
 
-// getUsers handles GET /api/v2/users with pagination and filtering
-func (h *V2UsersHandler) getUsers(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
+// handleGetUsers handles GET /api/v2/users with pagination and filtering
+func (h *V2UsersHandler) handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	requestStartTime := time.Now()
 
-	// Parse request parameters
-	parser := models.NewRequestParser()
-	params := parser.ParsePaginationParams(r)
-	filters := parser.ParseUserFilters(r)
-
-	// Check for validation errors
-	if parser.HasErrors() {
-		h.writeErrorResponse(w, http.StatusBadRequest, "validation failed", map[string]interface{}{
-			"errors": parser.GetErrors(),
-		})
+	// Parse and validate request parameters
+	paginationParams, userFilters, validationErr := h.parseAndValidateGetUsersRequest(r)
+	if validationErr != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, msgValidationFailed, validationErr)
 		return
 	}
 
-	// Validate sort field
-	if params.Sort != "" && !models.ValidateUserSortField(params.Sort) {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid sort field", map[string]string{
-			"field":   params.Sort,
-			"allowed": "id, name, discord_id, mmr, trueskill_mu, trueskill_sigma, created_at, updated_at, trueskill_last_updated",
-		})
-		return
-	}
-
-	// Get paginated users
-	users, pagination, err := h.userRepo.GetUsersPaginated(params, filters)
+	// Retrieve paginated users from repository
+	users, paginationMetadata, err := h.userRepo.GetUsersPaginated(paginationParams, userFilters)
 	if err != nil {
-		h.writeErrorResponse(w, http.StatusInternalServerError, "failed to get users", map[string]string{"error": err.Error()})
+		h.writeErrorResponse(w, http.StatusInternalServerError, msgFailedToGetUsers, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Build response metadata
-	meta := models.ResponseMetadata{
-		Sort:           params.Sort,
-		Order:          params.Order,
-		FiltersApplied: filters.ToFiltersApplied(),
-		QueryTime:      time.Since(startTime).String(),
-	}
-
-	// Build paginated response
-	response := models.PaginatedResponse[*models.User]{
-		Data:       users,
-		Pagination: *pagination,
-		Meta:       meta,
-	}
-
+	// Build and send response
+	response := h.buildPaginatedUsersResponse(users, paginationMetadata, paginationParams, userFilters, requestStartTime)
 	h.writeJSONResponse(w, http.StatusOK, response)
 }
 
-// createUser handles POST /api/v2/users
-func (h *V2UsersHandler) createUser(w http.ResponseWriter, r *http.Request) {
-	var userData models.UserCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&userData); err != nil {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid request body", map[string]string{"error": err.Error()})
+// handleCreateUser handles POST /api/v2/users
+func (h *V2UsersHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) {
+	userCreateRequest, err := h.parseUserCreateRequest(r)
+	if err != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequestBody, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Create user
-	user, err := h.userRepo.CreateUser(userData)
+	createdUser, err := h.userRepo.CreateUser(*userCreateRequest)
 	if err != nil {
-		if err.Error() == fmt.Sprintf("user with Discord ID %s already exists", userData.DiscordID) {
-			h.writeErrorResponse(w, http.StatusConflict, "user already exists", map[string]string{"discord_id": userData.DiscordID})
-			return
-		}
-		h.writeErrorResponse(w, http.StatusInternalServerError, "failed to create user", map[string]string{"error": err.Error()})
+		h.handleUserCreationError(w, err, userCreateRequest.DiscordID)
 		return
 	}
 
 	h.writeJSONResponse(w, http.StatusCreated, map[string]interface{}{
-		"user":    user,
-		"message": "user created successfully",
+		"user":    createdUser,
+		"message": msgUserCreatedSuccessfully,
 	})
 }
 
@@ -156,4 +123,83 @@ func (h *V2UsersHandler) writeErrorResponse(w http.ResponseWriter, status int, m
 	}
 
 	h.writeJSONResponse(w, status, errorResponse)
+}
+
+// Helper methods for improved code organization
+
+// parseBulkOperationRequest parses a bulk operation request from HTTP body
+func (h *V2UsersHandler) parseBulkOperationRequest(r *http.Request) (*models.BulkOperation, error) {
+	var bulkOperation models.BulkOperation
+	if err := json.NewDecoder(r.Body).Decode(&bulkOperation); err != nil {
+		return nil, err
+	}
+	return &bulkOperation, nil
+}
+
+// parseUserCreateRequest parses a user creation request from HTTP body
+func (h *V2UsersHandler) parseUserCreateRequest(r *http.Request) (*models.UserCreateRequest, error) {
+	var userCreateRequest models.UserCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&userCreateRequest); err != nil {
+		return nil, err
+	}
+	return &userCreateRequest, nil
+}
+
+// parseAndValidateGetUsersRequest parses and validates parameters for GET users request
+func (h *V2UsersHandler) parseAndValidateGetUsersRequest(r *http.Request) (*models.PaginationParams, *models.UserFilters, interface{}) {
+	requestParser := models.NewRequestParser()
+	paginationParams := requestParser.ParsePaginationParams(r)
+	userFilters := requestParser.ParseUserFilters(r)
+
+	// Check for validation errors
+	if requestParser.HasErrors() {
+		return nil, nil, map[string]interface{}{
+			"errors": requestParser.GetErrors(),
+		}
+	}
+
+	// Validate sort field
+	if paginationParams.Sort != "" && !models.ValidateUserSortField(paginationParams.Sort) {
+		return nil, nil, map[string]string{
+			"field":   paginationParams.Sort,
+			"allowed": allowedUserSortFields,
+		}
+	}
+
+	return paginationParams, userFilters, nil
+}
+
+// buildPaginatedUsersResponse constructs a paginated response for users
+func (h *V2UsersHandler) buildPaginatedUsersResponse(
+	users []*models.User,
+	paginationMetadata *models.PaginationMetadata,
+	paginationParams *models.PaginationParams,
+	userFilters *models.UserFilters,
+	requestStartTime time.Time,
+) models.PaginatedResponse[*models.User] {
+	responseMetadata := models.ResponseMetadata{
+		Sort:           paginationParams.Sort,
+		Order:          paginationParams.Order,
+		FiltersApplied: userFilters.ToFiltersApplied(),
+		QueryTime:      time.Since(requestStartTime).String(),
+	}
+
+	return models.PaginatedResponse[*models.User]{
+		Data:       users,
+		Pagination: *paginationMetadata,
+		Meta:       responseMetadata,
+	}
+}
+
+// handleUserCreationError handles errors that occur during user creation
+func (h *V2UsersHandler) handleUserCreationError(w http.ResponseWriter, err error, discordID string) {
+	errorMessage := err.Error()
+	expectedConflictMessage := fmt.Sprintf("user with Discord ID %s already exists", discordID)
+
+	if errorMessage == expectedConflictMessage {
+		h.writeErrorResponse(w, http.StatusConflict, msgUserAlreadyExists, map[string]string{"discord_id": discordID})
+		return
+	}
+
+	h.writeErrorResponse(w, http.StatusInternalServerError, msgFailedToCreateUser, map[string]string{"error": errorMessage})
 }

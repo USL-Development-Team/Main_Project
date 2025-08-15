@@ -39,23 +39,23 @@ func (r *TrackerRepository) CreateTracker(trackerData models.TrackerCreateReques
 	insertData := models.PublicUserTrackersInsert{
 		DiscordId:                 trackerData.DiscordID,
 		Url:                       trackerData.URL,
-		OnesCurrentSeasonPeak:     func() *int32 { v := int32(trackerData.OnesCurrentSeasonPeak); return &v }(),
-		OnesPreviousSeasonPeak:    func() *int32 { v := int32(trackerData.OnesPreviousSeasonPeak); return &v }(),
-		OnesAllTimePeak:           func() *int32 { v := int32(trackerData.OnesAllTimePeak); return &v }(),
-		OnesCurrentSeasonGames:    func() *int32 { v := int32(trackerData.OnesCurrentSeasonGames); return &v }(),
-		OnesPreviousSeasonGames:   func() *int32 { v := int32(trackerData.OnesPreviousSeasonGames); return &v }(),
-		TwosCurrentSeasonPeak:     func() *int32 { v := int32(trackerData.TwosCurrentSeasonPeak); return &v }(),
-		TwosPreviousSeasonPeak:    func() *int32 { v := int32(trackerData.TwosPreviousSeasonPeak); return &v }(),
-		TwosAllTimePeak:           func() *int32 { v := int32(trackerData.TwosAllTimePeak); return &v }(),
-		TwosCurrentSeasonGames:    func() *int32 { v := int32(trackerData.TwosCurrentSeasonGames); return &v }(),
-		TwosPreviousSeasonGames:   func() *int32 { v := int32(trackerData.TwosPreviousSeasonGames); return &v }(),
-		ThreesCurrentSeasonPeak:   func() *int32 { v := int32(trackerData.ThreesCurrentSeasonPeak); return &v }(),
-		ThreesPreviousSeasonPeak:  func() *int32 { v := int32(trackerData.ThreesPreviousSeasonPeak); return &v }(),
-		ThreesAllTimePeak:         func() *int32 { v := int32(trackerData.ThreesAllTimePeak); return &v }(),
-		ThreesCurrentSeasonGames:  func() *int32 { v := int32(trackerData.ThreesCurrentSeasonGames); return &v }(),
-		ThreesPreviousSeasonGames: func() *int32 { v := int32(trackerData.ThreesPreviousSeasonGames); return &v }(),
+		OnesCurrentSeasonPeak:     r.intToInt32Ptr(trackerData.OnesCurrentSeasonPeak),
+		OnesPreviousSeasonPeak:    r.intToInt32Ptr(trackerData.OnesPreviousSeasonPeak),
+		OnesAllTimePeak:           r.intToInt32Ptr(trackerData.OnesAllTimePeak),
+		OnesCurrentSeasonGames:    r.intToInt32Ptr(trackerData.OnesCurrentSeasonGames),
+		OnesPreviousSeasonGames:   r.intToInt32Ptr(trackerData.OnesPreviousSeasonGames),
+		TwosCurrentSeasonPeak:     r.intToInt32Ptr(trackerData.TwosCurrentSeasonPeak),
+		TwosPreviousSeasonPeak:    r.intToInt32Ptr(trackerData.TwosPreviousSeasonPeak),
+		TwosAllTimePeak:           r.intToInt32Ptr(trackerData.TwosAllTimePeak),
+		TwosCurrentSeasonGames:    r.intToInt32Ptr(trackerData.TwosCurrentSeasonGames),
+		TwosPreviousSeasonGames:   r.intToInt32Ptr(trackerData.TwosPreviousSeasonGames),
+		ThreesCurrentSeasonPeak:   r.intToInt32Ptr(trackerData.ThreesCurrentSeasonPeak),
+		ThreesPreviousSeasonPeak:  r.intToInt32Ptr(trackerData.ThreesPreviousSeasonPeak),
+		ThreesAllTimePeak:         r.intToInt32Ptr(trackerData.ThreesAllTimePeak),
+		ThreesCurrentSeasonGames:  r.intToInt32Ptr(trackerData.ThreesCurrentSeasonGames),
+		ThreesPreviousSeasonGames: r.intToInt32Ptr(trackerData.ThreesPreviousSeasonGames),
 		Valid:                     &trackerData.Valid,
-		LastUpdated:               func() *string { now := time.Now().Format(time.RFC3339); return &now }(),
+		LastUpdated:               r.currentTimeStringPtr(),
 	}
 
 	// Insert using Supabase client
@@ -116,23 +116,23 @@ func (r *TrackerRepository) UpdateTracker(trackerID int, trackerData models.Trac
 	// Prepare update data
 	updateData := models.PublicUserTrackersUpdate{
 		Url:                       &trackerData.URL,
-		OnesCurrentSeasonPeak:     func() *int32 { v := int32(trackerData.OnesCurrentSeasonPeak); return &v }(),
-		OnesPreviousSeasonPeak:    func() *int32 { v := int32(trackerData.OnesPreviousSeasonPeak); return &v }(),
-		OnesAllTimePeak:           func() *int32 { v := int32(trackerData.OnesAllTimePeak); return &v }(),
-		OnesCurrentSeasonGames:    func() *int32 { v := int32(trackerData.OnesCurrentSeasonGames); return &v }(),
-		OnesPreviousSeasonGames:   func() *int32 { v := int32(trackerData.OnesPreviousSeasonGames); return &v }(),
-		TwosCurrentSeasonPeak:     func() *int32 { v := int32(trackerData.TwosCurrentSeasonPeak); return &v }(),
-		TwosPreviousSeasonPeak:    func() *int32 { v := int32(trackerData.TwosPreviousSeasonPeak); return &v }(),
-		TwosAllTimePeak:           func() *int32 { v := int32(trackerData.TwosAllTimePeak); return &v }(),
-		TwosCurrentSeasonGames:    func() *int32 { v := int32(trackerData.TwosCurrentSeasonGames); return &v }(),
-		TwosPreviousSeasonGames:   func() *int32 { v := int32(trackerData.TwosPreviousSeasonGames); return &v }(),
-		ThreesCurrentSeasonPeak:   func() *int32 { v := int32(trackerData.ThreesCurrentSeasonPeak); return &v }(),
-		ThreesPreviousSeasonPeak:  func() *int32 { v := int32(trackerData.ThreesPreviousSeasonPeak); return &v }(),
-		ThreesAllTimePeak:         func() *int32 { v := int32(trackerData.ThreesAllTimePeak); return &v }(),
-		ThreesCurrentSeasonGames:  func() *int32 { v := int32(trackerData.ThreesCurrentSeasonGames); return &v }(),
-		ThreesPreviousSeasonGames: func() *int32 { v := int32(trackerData.ThreesPreviousSeasonGames); return &v }(),
+		OnesCurrentSeasonPeak:     r.intToInt32Ptr(trackerData.OnesCurrentSeasonPeak),
+		OnesPreviousSeasonPeak:    r.intToInt32Ptr(trackerData.OnesPreviousSeasonPeak),
+		OnesAllTimePeak:           r.intToInt32Ptr(trackerData.OnesAllTimePeak),
+		OnesCurrentSeasonGames:    r.intToInt32Ptr(trackerData.OnesCurrentSeasonGames),
+		OnesPreviousSeasonGames:   r.intToInt32Ptr(trackerData.OnesPreviousSeasonGames),
+		TwosCurrentSeasonPeak:     r.intToInt32Ptr(trackerData.TwosCurrentSeasonPeak),
+		TwosPreviousSeasonPeak:    r.intToInt32Ptr(trackerData.TwosPreviousSeasonPeak),
+		TwosAllTimePeak:           r.intToInt32Ptr(trackerData.TwosAllTimePeak),
+		TwosCurrentSeasonGames:    r.intToInt32Ptr(trackerData.TwosCurrentSeasonGames),
+		TwosPreviousSeasonGames:   r.intToInt32Ptr(trackerData.TwosPreviousSeasonGames),
+		ThreesCurrentSeasonPeak:   r.intToInt32Ptr(trackerData.ThreesCurrentSeasonPeak),
+		ThreesPreviousSeasonPeak:  r.intToInt32Ptr(trackerData.ThreesPreviousSeasonPeak),
+		ThreesAllTimePeak:         r.intToInt32Ptr(trackerData.ThreesAllTimePeak),
+		ThreesCurrentSeasonGames:  r.intToInt32Ptr(trackerData.ThreesCurrentSeasonGames),
+		ThreesPreviousSeasonGames: r.intToInt32Ptr(trackerData.ThreesPreviousSeasonGames),
 		Valid:                     &trackerData.Valid,
-		LastUpdated:               func() *string { now := time.Now().Format(time.RFC3339); return &now }(),
+		LastUpdated:               r.currentTimeStringPtr(),
 	}
 
 	// Update using Supabase client
@@ -630,4 +630,18 @@ func (r *TrackerRepository) convertToUserTracker(trackerSelect models.PublicUser
 		CreatedAt:                 createdAt,
 		UpdatedAt:                 updatedAt,
 	}
+}
+
+// Helper functions for improved code readability
+
+// intToInt32Ptr converts an int to a pointer to int32
+func (r *TrackerRepository) intToInt32Ptr(value int) *int32 {
+	converted := int32(value)
+	return &converted
+}
+
+// currentTimeStringPtr returns a pointer to the current time as RFC3339 string
+func (r *TrackerRepository) currentTimeStringPtr() *string {
+	now := time.Now().Format(time.RFC3339)
+	return &now
 }

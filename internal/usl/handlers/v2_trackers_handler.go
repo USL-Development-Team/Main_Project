@@ -25,109 +25,76 @@ func NewV2TrackersHandler(trackerRepo *repositories.TrackerRepository) *V2Tracke
 func (h *V2TrackersHandler) HandleTrackers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		h.getTrackers(w, r)
+		h.handleGetTrackers(w, r)
 	case http.MethodPost:
-		h.createTracker(w, r)
+		h.handleCreateTracker(w, r)
 	default:
-		h.writeErrorResponse(w, http.StatusMethodNotAllowed, "method not allowed", nil)
+		h.writeErrorResponse(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 	}
 }
 
 // HandleTrackersBulk handles bulk operations on trackers
 func (h *V2TrackersHandler) HandleTrackersBulk(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		h.writeErrorResponse(w, http.StatusMethodNotAllowed, "method not allowed", nil)
+		h.writeErrorResponse(w, http.StatusMethodNotAllowed, msgMethodNotAllowed, nil)
 		return
 	}
 
-	var operation models.BulkOperation
-	if err := json.NewDecoder(r.Body).Decode(&operation); err != nil {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid request body", map[string]string{"error": err.Error()})
-		return
-	}
-
-	response, err := h.trackerRepo.BulkUpdateTrackers(&operation)
+	bulkOperation, err := h.parseBulkOperationRequest(r)
 	if err != nil {
-		h.writeErrorResponse(w, http.StatusInternalServerError, "bulk operation failed", map[string]string{"error": err.Error()})
+		h.writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequestBody, map[string]string{"error": err.Error()})
+		return
+	}
+
+	response, err := h.trackerRepo.BulkUpdateTrackers(bulkOperation)
+	if err != nil {
+		h.writeErrorResponse(w, http.StatusInternalServerError, msgBulkOperationFailed, map[string]string{"error": err.Error()})
 		return
 	}
 
 	h.writeJSONResponse(w, http.StatusOK, response)
 }
 
-// getTrackers handles GET /api/v2/trackers with pagination and filtering
-func (h *V2TrackersHandler) getTrackers(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
+// handleGetTrackers handles GET /api/v2/trackers with pagination and filtering
+func (h *V2TrackersHandler) handleGetTrackers(w http.ResponseWriter, r *http.Request) {
+	requestStartTime := time.Now()
 
-	// Parse request parameters
-	parser := models.NewRequestParser()
-	params := parser.ParsePaginationParams(r)
-	filters := parser.ParseTrackerFilters(r)
-
-	// Check for validation errors
-	if parser.HasErrors() {
-		h.writeErrorResponse(w, http.StatusBadRequest, "validation failed", map[string]interface{}{
-			"errors": parser.GetErrors(),
-		})
+	// Parse and validate request parameters
+	paginationParams, trackerFilters, validationErr := h.parseAndValidateGetTrackersRequest(r)
+	if validationErr != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, msgValidationFailed, validationErr)
 		return
 	}
 
-	// Validate sort field
-	if params.Sort != "" && !models.ValidateTrackerSortField(params.Sort) {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid sort field", map[string]string{
-			"field":   params.Sort,
-			"allowed": "id, discord_id, calculated_mmr, valid, created_at, updated_at, last_updated, ones_current_season_peak, twos_current_season_peak, threes_current_season_peak",
-		})
-		return
-	}
-
-	// Get paginated trackers
-	trackers, pagination, err := h.trackerRepo.GetTrackersPaginated(params, filters)
+	// Retrieve paginated trackers from repository
+	trackers, paginationMetadata, err := h.trackerRepo.GetTrackersPaginated(paginationParams, trackerFilters)
 	if err != nil {
-		h.writeErrorResponse(w, http.StatusInternalServerError, "failed to get trackers", map[string]string{"error": err.Error()})
+		h.writeErrorResponse(w, http.StatusInternalServerError, msgFailedToGetTrackers, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Build response metadata
-	meta := models.ResponseMetadata{
-		Sort:           params.Sort,
-		Order:          params.Order,
-		FiltersApplied: filters.ToFiltersApplied(),
-		QueryTime:      time.Since(startTime).String(),
-	}
-
-	// Build paginated response
-	response := models.PaginatedResponse[*models.UserTracker]{
-		Data:       trackers,
-		Pagination: *pagination,
-		Meta:       meta,
-	}
-
+	// Build and send response
+	response := h.buildPaginatedTrackersResponse(trackers, paginationMetadata, paginationParams, trackerFilters, requestStartTime)
 	h.writeJSONResponse(w, http.StatusOK, response)
 }
 
-// createTracker handles POST /api/v2/trackers
-func (h *V2TrackersHandler) createTracker(w http.ResponseWriter, r *http.Request) {
-	var trackerData models.TrackerCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&trackerData); err != nil {
-		h.writeErrorResponse(w, http.StatusBadRequest, "invalid request body", map[string]string{"error": err.Error()})
+// handleCreateTracker handles POST /api/v2/trackers
+func (h *V2TrackersHandler) handleCreateTracker(w http.ResponseWriter, r *http.Request) {
+	trackerCreateRequest, err := h.parseTrackerCreateRequest(r)
+	if err != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, msgInvalidRequestBody, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Create tracker
-	tracker, err := h.trackerRepo.CreateTracker(trackerData)
+	createdTracker, err := h.trackerRepo.CreateTracker(*trackerCreateRequest)
 	if err != nil {
-		if err.Error() == fmt.Sprintf("tracker with Discord ID %s already exists", trackerData.DiscordID) {
-			h.writeErrorResponse(w, http.StatusConflict, "tracker already exists", map[string]string{"discord_id": trackerData.DiscordID})
-			return
-		}
-		h.writeErrorResponse(w, http.StatusInternalServerError, "failed to create tracker", map[string]string{"error": err.Error()})
+		h.handleTrackerCreationError(w, err, trackerCreateRequest.DiscordID)
 		return
 	}
 
 	h.writeJSONResponse(w, http.StatusCreated, map[string]interface{}{
-		"tracker": tracker,
-		"message": "tracker created successfully",
+		"tracker": createdTracker,
+		"message": msgTrackerCreatedSuccessfully,
 	})
 }
 
@@ -156,4 +123,83 @@ func (h *V2TrackersHandler) writeErrorResponse(w http.ResponseWriter, status int
 	}
 
 	h.writeJSONResponse(w, status, errorResponse)
+}
+
+// Helper methods for improved code organization
+
+// parseBulkOperationRequest parses a bulk operation request from HTTP body
+func (h *V2TrackersHandler) parseBulkOperationRequest(r *http.Request) (*models.BulkOperation, error) {
+	var bulkOperation models.BulkOperation
+	if err := json.NewDecoder(r.Body).Decode(&bulkOperation); err != nil {
+		return nil, err
+	}
+	return &bulkOperation, nil
+}
+
+// parseTrackerCreateRequest parses a tracker creation request from HTTP body
+func (h *V2TrackersHandler) parseTrackerCreateRequest(r *http.Request) (*models.TrackerCreateRequest, error) {
+	var trackerCreateRequest models.TrackerCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&trackerCreateRequest); err != nil {
+		return nil, err
+	}
+	return &trackerCreateRequest, nil
+}
+
+// parseAndValidateGetTrackersRequest parses and validates parameters for GET trackers request
+func (h *V2TrackersHandler) parseAndValidateGetTrackersRequest(r *http.Request) (*models.PaginationParams, *models.TrackerFilters, interface{}) {
+	requestParser := models.NewRequestParser()
+	paginationParams := requestParser.ParsePaginationParams(r)
+	trackerFilters := requestParser.ParseTrackerFilters(r)
+
+	// Check for validation errors
+	if requestParser.HasErrors() {
+		return nil, nil, map[string]interface{}{
+			"errors": requestParser.GetErrors(),
+		}
+	}
+
+	// Validate sort field
+	if paginationParams.Sort != "" && !models.ValidateTrackerSortField(paginationParams.Sort) {
+		return nil, nil, map[string]string{
+			"field":   paginationParams.Sort,
+			"allowed": allowedTrackerSortFields,
+		}
+	}
+
+	return paginationParams, trackerFilters, nil
+}
+
+// buildPaginatedTrackersResponse constructs a paginated response for trackers
+func (h *V2TrackersHandler) buildPaginatedTrackersResponse(
+	trackers []*models.Tracker,
+	paginationMetadata *models.PaginationMetadata,
+	paginationParams *models.PaginationParams,
+	trackerFilters *models.TrackerFilters,
+	requestStartTime time.Time,
+) models.PaginatedResponse[*models.Tracker] {
+	responseMetadata := models.ResponseMetadata{
+		Sort:           paginationParams.Sort,
+		Order:          paginationParams.Order,
+		FiltersApplied: trackerFilters.ToFiltersApplied(),
+		QueryTime:      time.Since(requestStartTime).String(),
+	}
+
+	return models.PaginatedResponse[*models.Tracker]{
+		Data:       trackers,
+		Pagination: *paginationMetadata,
+		Meta:       responseMetadata,
+	}
+}
+
+// handleTrackerCreationError handles errors that occur during tracker creation
+func (h *V2TrackersHandler) handleTrackerCreationError(w http.ResponseWriter, err error, discordID string) {
+	errorMessage := err.Error()
+	expectedConflictMessage := fmt.Sprintf("tracker with Discord ID %s already exists", discordID)
+
+	if errorMessage == expectedConflictMessage {
+		h.writeErrorResponse(w, http.StatusConflict, msgTrackerAlreadyExists, map[string]string{"discord_id": discordID})
+		return
+	}
+
+	h.writeErrorResponse(w, http.StatusInternalServerError, msgFailedToCreateTracker, map[string]string{"error": errorMessage})
 }

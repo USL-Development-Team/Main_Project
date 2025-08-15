@@ -109,7 +109,7 @@ func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 
 	// Parse status
 	if status := r.URL.Query().Get("status"); status != "" {
-		if status != "active" && status != "inactive" && status != "banned" {
+		if !isValidUserStatus(status) {
 			rp.AddError("status", "must be 'active', 'inactive', or 'banned'", status)
 		} else {
 			filters.Status = status
@@ -138,7 +138,7 @@ func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 	}
 
 	// Validate MMR range
-	if filters.MMRMin != nil && filters.MMRMax != nil && *filters.MMRMin > *filters.MMRMax {
+	if isInvalidRange(filters.MMRMin, filters.MMRMax) {
 		rp.AddError("mmr_range", "mmr_min must be less than or equal to mmr_max",
 			fmt.Sprintf("min=%d, max=%d", *filters.MMRMin, *filters.MMRMax))
 	}
@@ -199,7 +199,7 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 
 	// Parse playlist
 	if playlist := r.URL.Query().Get("playlist"); playlist != "" {
-		if playlist != "ones" && playlist != "twos" && playlist != "threes" {
+		if !isValidPlaylist(playlist) {
 			rp.AddError("playlist", "must be 'ones', 'twos', or 'threes'", playlist)
 		} else {
 			filters.Playlist = playlist
@@ -228,7 +228,7 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 	}
 
 	// Validate peak range
-	if filters.PeakMin != nil && filters.PeakMax != nil && *filters.PeakMin > *filters.PeakMax {
+	if isInvalidRange(filters.PeakMin, filters.PeakMax) {
 		rp.AddError("peak_range", "peak_min must be less than or equal to peak_max",
 			fmt.Sprintf("min=%d, max=%d", *filters.PeakMin, *filters.PeakMax))
 	}
@@ -330,4 +330,33 @@ func ValidateTrackerSortField(sort string) bool {
 	}
 
 	return false
+}
+
+// Helper functions for validation simplification
+
+// isValidUserStatus checks if the given status is valid for users
+func isValidUserStatus(status string) bool {
+	validStatuses := []string{"active", "inactive", "banned"}
+	for _, validStatus := range validStatuses {
+		if status == validStatus {
+			return true
+		}
+	}
+	return false
+}
+
+// isValidPlaylist checks if the given playlist is valid
+func isValidPlaylist(playlist string) bool {
+	validPlaylists := []string{"ones", "twos", "threes"}
+	for _, validPlaylist := range validPlaylists {
+		if playlist == validPlaylist {
+			return true
+		}
+	}
+	return false
+}
+
+// isInvalidRange checks if min value is greater than max value
+func isInvalidRange(min, max *int) bool {
+	return min != nil && max != nil && *min > *max
 }
