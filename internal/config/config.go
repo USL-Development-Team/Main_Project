@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds all configuration for the application
@@ -15,6 +16,7 @@ type Config struct {
 	Supabase  SupabaseConfig  `json:"supabase"`
 	TrueSkill TrueSkillConfig `json:"trueskill"`
 	MMR       MMRConfig       `json:"mmr"`
+	USL       USLConfig       `json:"usl"`
 }
 
 type ServerConfig struct {
@@ -28,6 +30,7 @@ type DatabaseConfig struct {
 
 type SupabaseConfig struct {
 	URL            string `json:"url"`
+	PublicURL      string `json:"public_url"` // For OAuth callbacks via ngrok
 	AnonKey        string `json:"anon_key"`
 	ServiceRoleKey string `json:"service_role_key"`
 }
@@ -51,6 +54,11 @@ type MMRConfig struct {
 	PreviousSeasonWeight float64 `json:"previous_season_weight"`
 }
 
+// USLConfig holds USL-specific configuration for temporary migration
+type USLConfig struct {
+	AdminDiscordIDs []string `json:"admin_discord_ids"`
+}
+
 // Load initializes configuration from environment variables
 func Load() (*Config, error) {
 	// Load .env file if it exists
@@ -68,6 +76,7 @@ func Load() (*Config, error) {
 		},
 		Supabase: SupabaseConfig{
 			URL:            getEnv("SUPABASE_URL", ""),
+			PublicURL:      getEnv("SUPABASE_PUBLIC_URL", getEnv("SUPABASE_URL", "")), // Fallback to URL if not set
 			AnonKey:        getEnv("SUPABASE_ANON_KEY", ""),
 			ServiceRoleKey: getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
 		},
@@ -85,6 +94,9 @@ func Load() (*Config, error) {
 			MinGamesThreshold:    getEnvInt("MMR_MIN_GAMES_THRESHOLD", 10),
 			CurrentSeasonWeight:  getEnvFloat("MMR_CURRENT_SEASON_WEIGHT", 0.7),
 			PreviousSeasonWeight: getEnvFloat("MMR_PREVIOUS_SEASON_WEIGHT", 0.3),
+		},
+		USL: USLConfig{
+			AdminDiscordIDs: getEnvStringSlice("USL_ADMIN_DISCORD_IDS", []string{"679038415576104971", "354474826192388127"}),
 		},
 	}
 
@@ -129,4 +141,20 @@ func (c *Config) GetTrueSkillSigmaRange() (float64, float64) {
 
 func (c *Config) GetMMRConfig() MMRConfig {
 	return c.MMR
+}
+
+// getEnvStringSlice parses a comma-separated string into a slice
+func getEnvStringSlice(key string, defaultValue []string) []string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+
+	// Split by comma and trim whitespace
+	parts := strings.Split(value, ",")
+	result := make([]string, len(parts))
+	for i, part := range parts {
+		result[i] = strings.TrimSpace(part)
+	}
+	return result
 }

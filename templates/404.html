@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Page Not Found - USL Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .error-container {
+            background-color: white;
+            padding: 60px 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        .error-code {
+            font-size: 8em;
+            font-weight: bold;
+            color: #007cba;
+            margin: 0;
+            line-height: 1;
+        }
+        .error-title {
+            font-size: 2em;
+            color: #333;
+            margin: 20px 0 10px 0;
+        }
+        .error-message {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .nav-link {
+            background-color: #007cba;
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .nav-link:hover {
+            background-color: #005a87;
+        }
+        .nav-link.secondary {
+            background-color: #6c757d;
+        }
+        .nav-link.secondary:hover {
+            background-color: #545b62;
+        }
+        .helpful-links {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        .helpful-links h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .helpful-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .helpful-links li {
+            margin: 8px 0;
+        }
+        .helpful-links a {
+            color: #007cba;
+            text-decoration: none;
+        }
+        .helpful-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-message">
+            Sorry, the page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.
+        </p>
+        
+        <div class="nav-links">
+            <a href="/" class="nav-link">← Go Home</a>
+            <a href="/usl/admin" class="nav-link">USL Admin</a>
+            <a href="/usl/login" class="nav-link secondary">USL Login</a>
+        </div>
+
+        <div class="helpful-links">
+            <h3>Available Pages</h3>
+            <ul>
+                <li><a href="/">Home Dashboard</a></li>
+                <li><a href="/users">User Management</a></li>
+                <li><a href="/trackers">Tracker Management</a></li>
+                <li><a href="/trueskill">TrueSkill Calculator</a></li>
+                <li><a href="/usl/admin">USL Admin Dashboard</a></li>
+                <li><a href="/usl/users">USL Users</a></li>
+                <li><a href="/usl/trackers">USL Trackers</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

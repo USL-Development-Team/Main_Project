@@ -44,7 +44,7 @@ func (h *GuildHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request
 
 func (h *GuildHandler) renderTemplate(w http.ResponseWriter, templateName string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := h.templates.ExecuteTemplate(w, templateName, data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Template rendering error (%s): %v", templateName, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

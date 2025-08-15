@@ -34,7 +34,8 @@ func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request,
 
 func (h *UserHandler) renderTemplate(w http.ResponseWriter, templateName string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := h.templates.ExecuteTemplate(w, templateName, data); err != nil {
+	// Execute the base template which will include the content template
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Template rendering error (%s): %v", templateName, err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -80,7 +81,10 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		Users: users,
 	}
 
-	h.renderTemplate(w, "users.html", pageData)
+	if err := h.templates.ExecuteTemplate(w, "base", pageData); err != nil {
+		log.Printf("Error executing template: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
 
 // NewUserForm displays the form for creating a new user
@@ -164,7 +168,7 @@ func (h *UserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 		User:  user,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "user_edit_form.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -188,20 +192,11 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse MMR
-	mmr := 0
-	if mmrStr := r.FormValue("mmr"); mmrStr != "" {
-		if parsedMMR, err := strconv.Atoi(mmrStr); err == nil {
-			mmr = parsedMMR
-		}
-	}
-
+	// Restricted user update: only name, active, and banned status (matches Google Sheets pattern)
 	userData := models.UserUpdateRequest{
-		Name:      r.FormValue("name"),
-		DiscordID: r.FormValue("discord_id"),
-		Active:    r.FormValue("active") == "true",
-		Banned:    r.FormValue("banned") == "true",
-		MMR:       mmr,
+		Name:   r.FormValue("name"),
+		Active: r.FormValue("active") == "true",
+		Banned: r.FormValue("banned") == "true",
 	}
 
 	user, err := h.userRepository.UpdateUser(originalDiscordID, userData)
@@ -269,7 +264,7 @@ func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		Query: query,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "users.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

@@ -1,206 +1,5 @@
 package models
 
-import "encoding/json"
-
-// User Guild Membership database types
-type PublicUserGuildMembershipsSelect struct {
-	Id             int64    `json:"id"`
-	UserId         int64    `json:"user_id"`
-	GuildId        int64    `json:"guild_id"`
-	DiscordRoles   []string `json:"discord_roles"`
-	UslPermissions []string `json:"usl_permissions"`
-	JoinedAt       string   `json:"joined_at"`
-	Active         bool     `json:"active"`
-	CreatedAt      string   `json:"created_at"`
-	UpdatedAt      string   `json:"updated_at"`
-}
-
-type PublicUserGuildMembershipsInsert struct {
-	Id             *int64    `json:"id"`
-	UserId         int64     `json:"user_id"`
-	GuildId        int64     `json:"guild_id"`
-	DiscordRoles   *[]string `json:"discord_roles"`
-	UslPermissions *[]string `json:"usl_permissions"`
-	JoinedAt       *string   `json:"joined_at"`
-	Active         *bool     `json:"active"`
-	CreatedAt      *string   `json:"created_at"`
-	UpdatedAt      *string   `json:"updated_at"`
-}
-
-type PublicUserGuildMembershipsUpdate struct {
-	Id             *int64    `json:"id"`
-	UserId         *int64    `json:"user_id"`
-	GuildId        *int64    `json:"guild_id"`
-	DiscordRoles   *[]string `json:"discord_roles"`
-	UslPermissions *[]string `json:"usl_permissions"`
-	JoinedAt       *string   `json:"joined_at"`
-	Active         *bool     `json:"active"`
-	CreatedAt      *string   `json:"created_at"`
-	UpdatedAt      *string   `json:"updated_at"`
-}
-
-// Player Effective MMR database types
-type PublicPlayerEffectiveMmrSelect struct {
-	Id             int64   `json:"id"`
-	UserId         int64   `json:"user_id"`
-	GuildId        int64   `json:"guild_id"`
-	Mmr            int32   `json:"mmr"`
-	TrueskillMu    float64 `json:"trueskill_mu"`
-	TrueskillSigma float64 `json:"trueskill_sigma"`
-	GamesPlayed    int32   `json:"games_played"`
-	LastUpdated    string  `json:"last_updated"`
-	CreatedAt      string  `json:"created_at"`
-	UpdatedAt      string  `json:"updated_at"`
-}
-
-type PublicPlayerEffectiveMmrInsert struct {
-	Id             *int64   `json:"id"`
-	UserId         int64    `json:"user_id"`
-	GuildId        int64    `json:"guild_id"`
-	Mmr            *int32   `json:"mmr"`
-	TrueskillMu    *float64 `json:"trueskill_mu"`
-	TrueskillSigma *float64 `json:"trueskill_sigma"`
-	GamesPlayed    *int32   `json:"games_played"`
-	LastUpdated    *string  `json:"last_updated"`
-	CreatedAt      *string  `json:"created_at"`
-	UpdatedAt      *string  `json:"updated_at"`
-}
-
-type PublicPlayerEffectiveMmrUpdate struct {
-	Id             *int64   `json:"id"`
-	UserId         *int64   `json:"user_id"`
-	GuildId        *int64   `json:"guild_id"`
-	Mmr            *int32   `json:"mmr"`
-	TrueskillMu    *float64 `json:"trueskill_mu"`
-	TrueskillSigma *float64 `json:"trueskill_sigma"`
-	GamesPlayed    *int32   `json:"games_played"`
-	LastUpdated    *string  `json:"last_updated"`
-	CreatedAt      *string  `json:"created_at"`
-	UpdatedAt      *string  `json:"updated_at"`
-}
-
-// Player Historical MMR database types
-type PublicPlayerHistoricalMmrSelect struct {
-	Id                   int64    `json:"id"`
-	UserId               int64    `json:"user_id"`
-	GuildId              int64    `json:"guild_id"`
-	MmrBefore            *int32   `json:"mmr_before"`
-	MmrAfter             int32    `json:"mmr_after"`
-	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
-	TrueskillMuAfter     float64  `json:"trueskill_mu_after"`
-	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
-	TrueskillSigmaAfter  float64  `json:"trueskill_sigma_after"`
-	ChangeReason         string   `json:"change_reason"`
-	MatchId              *int64   `json:"match_id"`
-	ChangedByUserId      *int64   `json:"changed_by_user_id"`
-	CreatedAt            string   `json:"created_at"`
-}
-
-type PublicPlayerHistoricalMmrInsert struct {
-	Id                   *int64   `json:"id"`
-	UserId               int64    `json:"user_id"`
-	GuildId              int64    `json:"guild_id"`
-	MmrBefore            *int32   `json:"mmr_before"`
-	MmrAfter             int32    `json:"mmr_after"`
-	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
-	TrueskillMuAfter     float64  `json:"trueskill_mu_after"`
-	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
-	TrueskillSigmaAfter  float64  `json:"trueskill_sigma_after"`
-	ChangeReason         string   `json:"change_reason"`
-	MatchId              *int64   `json:"match_id"`
-	ChangedByUserId      *int64   `json:"changed_by_user_id"`
-	CreatedAt            *string  `json:"created_at"`
-}
-
-type PublicPlayerHistoricalMmrUpdate struct {
-	Id                   *int64   `json:"id"`
-	UserId               *int64   `json:"user_id"`
-	GuildId              *int64   `json:"guild_id"`
-	MmrBefore            *int32   `json:"mmr_before"`
-	MmrAfter             *int32   `json:"mmr_after"`
-	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
-	TrueskillMuAfter     *float64 `json:"trueskill_mu_after"`
-	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
-	TrueskillSigmaAfter  *float64 `json:"trueskill_sigma_after"`
-	ChangeReason         *string  `json:"change_reason"`
-	MatchId              *int64   `json:"match_id"`
-	ChangedByUserId      *int64   `json:"changed_by_user_id"`
-	CreatedAt            *string  `json:"created_at"`
-}
-
-// Guild database types
-type PublicGuildsSelect struct {
-	Id             int64           `json:"id"`
-	DiscordGuildId string          `json:"discord_guild_id"`
-	Name           string          `json:"name"`
-	Active         bool            `json:"active"`
-	Config         json.RawMessage `json:"config"`
-	CreatedAt      string          `json:"created_at"`
-	UpdatedAt      string          `json:"updated_at"`
-}
-
-type PublicGuildsInsert struct {
-	Id             *int64           `json:"id"`
-	DiscordGuildId string           `json:"discord_guild_id"`
-	Name           string           `json:"name"`
-	Active         *bool            `json:"active"`
-	Config         *json.RawMessage `json:"config"`
-	CreatedAt      *string          `json:"created_at"`
-	UpdatedAt      *string          `json:"updated_at"`
-}
-
-type PublicGuildsUpdate struct {
-	Id             *int64           `json:"id"`
-	DiscordGuildId *string          `json:"discord_guild_id"`
-	Name           *string          `json:"name"`
-	Active         *bool            `json:"active"`
-	Config         *json.RawMessage `json:"config"`
-	CreatedAt      *string          `json:"created_at"`
-	UpdatedAt      *string          `json:"updated_at"`
-}
-
-type PublicUsersSelect struct {
-	Active               bool    `json:"active"`
-	Banned               bool    `json:"banned"`
-	CreatedAt            string  `json:"created_at"`
-	DiscordId            string  `json:"discord_id"`
-	Id                   int64   `json:"id"`
-	Mmr                  int32   `json:"mmr"`
-	Name                 string  `json:"name"`
-	TrueskillLastUpdated string  `json:"trueskill_last_updated"`
-	TrueskillMu          float64 `json:"trueskill_mu"`
-	TrueskillSigma       float64 `json:"trueskill_sigma"`
-	UpdatedAt            string  `json:"updated_at"`
-}
-
-type PublicUsersInsert struct {
-	Active               *bool    `json:"active"`
-	Banned               *bool    `json:"banned"`
-	CreatedAt            *string  `json:"created_at"`
-	DiscordId            string   `json:"discord_id"`
-	Id                   *int64   `json:"id"`
-	Mmr                  *int32   `json:"mmr"`
-	Name                 string   `json:"name"`
-	TrueskillLastUpdated *string  `json:"trueskill_last_updated"`
-	TrueskillMu          *float64 `json:"trueskill_mu"`
-	TrueskillSigma       *float64 `json:"trueskill_sigma"`
-	UpdatedAt            *string  `json:"updated_at"`
-}
-
-type PublicUsersUpdate struct {
-	Active               *bool    `json:"active"`
-	Banned               *bool    `json:"banned"`
-	CreatedAt            *string  `json:"created_at"`
-	DiscordId            *string  `json:"discord_id"`
-	Id                   *int64   `json:"id"`
-	Mmr                  *int32   `json:"mmr"`
-	Name                 *string  `json:"name"`
-	TrueskillLastUpdated *string  `json:"trueskill_last_updated"`
-	TrueskillMu          *float64 `json:"trueskill_mu"`
-	TrueskillSigma       *float64 `json:"trueskill_sigma"`
-	UpdatedAt            *string  `json:"updated_at"`
-}
-
 type PublicUserTrackersSelect struct {
 	CalculatedMmr             int32  `json:"calculated_mmr"`
 	CreatedAt                 string `json:"created_at"`
@@ -277,4 +76,187 @@ type PublicUserTrackersUpdate struct {
 	UpdatedAt                 *string `json:"updated_at"`
 	Url                       *string `json:"url"`
 	Valid                     *bool   `json:"valid"`
+}
+
+type PublicUsersSelect struct {
+	Active    bool   `json:"active"`
+	Banned    bool   `json:"banned"`
+	CreatedAt string `json:"created_at"`
+	DiscordId string `json:"discord_id"`
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type PublicUsersInsert struct {
+	Active    *bool   `json:"active"`
+	Banned    *bool   `json:"banned"`
+	CreatedAt *string `json:"created_at"`
+	DiscordId string  `json:"discord_id"`
+	Id        *int64  `json:"id"`
+	Name      string  `json:"name"`
+	UpdatedAt *string `json:"updated_at"`
+}
+
+type PublicUsersUpdate struct {
+	Active    *bool   `json:"active"`
+	Banned    *bool   `json:"banned"`
+	CreatedAt *string `json:"created_at"`
+	DiscordId *string `json:"discord_id"`
+	Id        *int64  `json:"id"`
+	Name      *string `json:"name"`
+	UpdatedAt *string `json:"updated_at"`
+}
+
+type PublicGuildsSelect struct {
+	Active         bool        `json:"active"`
+	Config         interface{} `json:"config"`
+	CreatedAt      string      `json:"created_at"`
+	DiscordGuildId string      `json:"discord_guild_id"`
+	Id             int64       `json:"id"`
+	Name           string      `json:"name"`
+	UpdatedAt      string      `json:"updated_at"`
+}
+
+type PublicGuildsInsert struct {
+	Active         *bool       `json:"active"`
+	Config         interface{} `json:"config"`
+	CreatedAt      *string     `json:"created_at"`
+	DiscordGuildId string      `json:"discord_guild_id"`
+	Id             *int64      `json:"id"`
+	Name           string      `json:"name"`
+	UpdatedAt      *string     `json:"updated_at"`
+}
+
+type PublicGuildsUpdate struct {
+	Active         *bool       `json:"active"`
+	Config         interface{} `json:"config"`
+	CreatedAt      *string     `json:"created_at"`
+	DiscordGuildId *string     `json:"discord_guild_id"`
+	Id             *int64      `json:"id"`
+	Name           *string     `json:"name"`
+	UpdatedAt      *string     `json:"updated_at"`
+}
+
+type PublicUserGuildMembershipsSelect struct {
+	Active         bool      `json:"active"`
+	CreatedAt      string    `json:"created_at"`
+	DiscordRoles   []*string `json:"discord_roles"`
+	GuildId        int64     `json:"guild_id"`
+	Id             int64     `json:"id"`
+	JoinedAt       string    `json:"joined_at"`
+	UpdatedAt      string    `json:"updated_at"`
+	UserId         int64     `json:"user_id"`
+	UslPermissions []*string `json:"usl_permissions"`
+}
+
+type PublicUserGuildMembershipsInsert struct {
+	Active         *bool     `json:"active"`
+	CreatedAt      *string   `json:"created_at"`
+	DiscordRoles   []*string `json:"discord_roles"`
+	GuildId        int64     `json:"guild_id"`
+	Id             *int64    `json:"id"`
+	JoinedAt       *string   `json:"joined_at"`
+	UpdatedAt      *string   `json:"updated_at"`
+	UserId         int64     `json:"user_id"`
+	UslPermissions []*string `json:"usl_permissions"`
+}
+
+type PublicUserGuildMembershipsUpdate struct {
+	Active         *bool     `json:"active"`
+	CreatedAt      *string   `json:"created_at"`
+	DiscordRoles   []*string `json:"discord_roles"`
+	GuildId        *int64    `json:"guild_id"`
+	Id             *int64    `json:"id"`
+	JoinedAt       *string   `json:"joined_at"`
+	UpdatedAt      *string   `json:"updated_at"`
+	UserId         *int64    `json:"user_id"`
+	UslPermissions []*string `json:"usl_permissions"`
+}
+
+type PublicPlayerEffectiveMmrSelect struct {
+	CreatedAt      string  `json:"created_at"`
+	GamesPlayed    int32   `json:"games_played"`
+	GuildId        int64   `json:"guild_id"`
+	Id             int64   `json:"id"`
+	LastUpdated    string  `json:"last_updated"`
+	Mmr            int32   `json:"mmr"`
+	TrueskillMu    float64 `json:"trueskill_mu"`
+	TrueskillSigma float64 `json:"trueskill_sigma"`
+	UpdatedAt      string  `json:"updated_at"`
+	UserId         int64   `json:"user_id"`
+}
+
+type PublicPlayerEffectiveMmrInsert struct {
+	CreatedAt      *string  `json:"created_at"`
+	GamesPlayed    *int32   `json:"games_played"`
+	GuildId        int64    `json:"guild_id"`
+	Id             *int64   `json:"id"`
+	LastUpdated    *string  `json:"last_updated"`
+	Mmr            *int32   `json:"mmr"`
+	TrueskillMu    *float64 `json:"trueskill_mu"`
+	TrueskillSigma *float64 `json:"trueskill_sigma"`
+	UpdatedAt      *string  `json:"updated_at"`
+	UserId         int64    `json:"user_id"`
+}
+
+type PublicPlayerEffectiveMmrUpdate struct {
+	CreatedAt      *string  `json:"created_at"`
+	GamesPlayed    *int32   `json:"games_played"`
+	GuildId        *int64   `json:"guild_id"`
+	Id             *int64   `json:"id"`
+	LastUpdated    *string  `json:"last_updated"`
+	Mmr            *int32   `json:"mmr"`
+	TrueskillMu    *float64 `json:"trueskill_mu"`
+	TrueskillSigma *float64 `json:"trueskill_sigma"`
+	UpdatedAt      *string  `json:"updated_at"`
+	UserId         *int64   `json:"user_id"`
+}
+
+type PublicPlayerHistoricalMmrSelect struct {
+	ChangeReason         string   `json:"change_reason"`
+	ChangedByUserId      *int64   `json:"changed_by_user_id"`
+	CreatedAt            string   `json:"created_at"`
+	GuildId              int64    `json:"guild_id"`
+	Id                   int64    `json:"id"`
+	MatchId              *int64   `json:"match_id"`
+	MmrAfter             int32    `json:"mmr_after"`
+	MmrBefore            *int32   `json:"mmr_before"`
+	TrueskillMuAfter     float64  `json:"trueskill_mu_after"`
+	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
+	TrueskillSigmaAfter  float64  `json:"trueskill_sigma_after"`
+	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
+	UserId               int64    `json:"user_id"`
+}
+
+type PublicPlayerHistoricalMmrInsert struct {
+	ChangeReason         string   `json:"change_reason"`
+	ChangedByUserId      *int64   `json:"changed_by_user_id"`
+	CreatedAt            *string  `json:"created_at"`
+	GuildId              int64    `json:"guild_id"`
+	Id                   *int64   `json:"id"`
+	MatchId              *int64   `json:"match_id"`
+	MmrAfter             int32    `json:"mmr_after"`
+	MmrBefore            *int32   `json:"mmr_before"`
+	TrueskillMuAfter     float64  `json:"trueskill_mu_after"`
+	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
+	TrueskillSigmaAfter  float64  `json:"trueskill_sigma_after"`
+	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
+	UserId               int64    `json:"user_id"`
+}
+
+type PublicPlayerHistoricalMmrUpdate struct {
+	ChangeReason         *string  `json:"change_reason"`
+	ChangedByUserId      *int64   `json:"changed_by_user_id"`
+	CreatedAt            *string  `json:"created_at"`
+	GuildId              *int64   `json:"guild_id"`
+	Id                   *int64   `json:"id"`
+	MatchId              *int64   `json:"match_id"`
+	MmrAfter             *int32   `json:"mmr_after"`
+	MmrBefore            *int32   `json:"mmr_before"`
+	TrueskillMuAfter     *float64 `json:"trueskill_mu_after"`
+	TrueskillMuBefore    *float64 `json:"trueskill_mu_before"`
+	TrueskillSigmaAfter  *float64 `json:"trueskill_sigma_after"`
+	TrueskillSigmaBefore *float64 `json:"trueskill_sigma_before"`
+	UserId               *int64   `json:"user_id"`
 }

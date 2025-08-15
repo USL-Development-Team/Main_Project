@@ -30,17 +30,11 @@ func (r *UserRepository) CreateUser(userData models.UserCreateRequest) (*models.
 		return nil, fmt.Errorf("user with Discord ID %s already exists", userData.DiscordID)
 	}
 
-	initialMu, initialSigma := r.config.GetTrueSkillDefaults()
-
 	insertData := models.PublicUsersInsert{
-		Name:                 userData.Name,
-		DiscordId:            userData.DiscordID,
-		Active:               &userData.Active,
-		Banned:               &userData.Banned,
-		Mmr:                  func() *int32 { mmr := int32(userData.MMR); return &mmr }(),
-		TrueskillMu:          &initialMu,
-		TrueskillSigma:       &initialSigma,
-		TrueskillLastUpdated: func() *string { now := time.Now().Format(time.RFC3339); return &now }(),
+		Name:      userData.Name,
+		DiscordId: userData.DiscordID,
+		Active:    &userData.Active,
+		Banned:    &userData.Banned,
 	}
 
 	data, _, err := r.client.From("users").Insert(insertData, false, "", "", "").Execute()
@@ -93,19 +87,12 @@ func (r *UserRepository) UpdateUser(discordID string, userData models.UserUpdate
 		return nil, fmt.Errorf("user with Discord ID %s not found", discordID)
 	}
 
-	if userData.DiscordID != discordID {
-		conflictUser, err := r.FindUserByDiscordID(userData.DiscordID)
-		if err == nil && conflictUser != nil {
-			return nil, fmt.Errorf("user with Discord ID %s already exists", userData.DiscordID)
-		}
-	}
-
+	// Restricted update: only name, active, and banned status (matches Google Sheets pattern)
+	// Discord ID is immutable in this context
 	updateData := models.PublicUsersUpdate{
-		Name:      &userData.Name,
-		DiscordId: &userData.DiscordID,
-		Active:    &userData.Active,
-		Banned:    &userData.Banned,
-		Mmr:       func() *int32 { mmr := int32(userData.MMR); return &mmr }(),
+		Name:   &userData.Name,
+		Active: &userData.Active,
+		Banned: &userData.Banned,
 	}
 
 	data, _, err := r.client.From("users").
@@ -234,28 +221,11 @@ func (r *UserRepository) SearchUsers(searchTerm string, maxResults int) ([]*mode
 }
 
 // UpdateUserTrueSkill updates a single user's TrueSkill values using Supabase client
+// TODO: Update this function to work with player_effective_mmr table in new schema
 func (r *UserRepository) UpdateUserTrueSkill(discordID string, trueskillMu, trueskillSigma float64, lastUpdated *time.Time) error {
-	if lastUpdated == nil {
-		now := time.Now()
-		lastUpdated = &now
-	}
-
-	updateData := models.PublicUsersUpdate{
-		TrueskillMu:          &trueskillMu,
-		TrueskillSigma:       &trueskillSigma,
-		TrueskillLastUpdated: func() *string { ts := lastUpdated.Format(time.RFC3339); return &ts }(),
-	}
-
-	_, _, err := r.client.From("users").
-		Update(updateData, "", "").
-		Eq("discord_id", discordID).
-		Execute()
-
-	if err != nil {
-		return fmt.Errorf("failed to update user TrueSkill: %w", err)
-	}
-
-	return nil
+	// This function needs to be updated to work with the new schema
+	// where MMR data is stored in player_effective_mmr table
+	return fmt.Errorf("UpdateUserTrueSkill not yet implemented for new schema")
 }
 
 // BatchUpdateTrueSkill updates TrueSkill values for multiple users
@@ -288,24 +258,21 @@ func (r *UserRepository) GetUserStats() (*models.UserStats, error) {
 	}
 
 	stats := &models.UserStats{}
-	var totalMMR, totalTrueSkillMu float64
 
 	for _, user := range allUsers {
 		stats.TotalUsers++
 		if user.Active {
 			stats.ActiveUsers++
-			totalMMR += float64(user.Mmr)
-			totalTrueSkillMu += user.TrueskillMu
+			// TODO: Calculate average MMR and TrueSkill from player_effective_mmr table
 		}
 		if user.Banned {
 			stats.BannedUsers++
 		}
 	}
 
-	if stats.ActiveUsers > 0 {
-		stats.AverageMMR = totalMMR / float64(stats.ActiveUsers)
-		stats.AverageTrueSkillMu = totalTrueSkillMu / float64(stats.ActiveUsers)
-	}
+	// TODO: Query player_effective_mmr table to get MMR statistics
+	stats.AverageMMR = 0
+	stats.AverageTrueSkillMu = 0
 
 	return stats, nil
 }
@@ -315,18 +282,18 @@ func (r *UserRepository) convertToUser(userSelect models.PublicUsersSelect) mode
 	// Parse timestamps
 	createdAt, _ := time.Parse(time.RFC3339, userSelect.CreatedAt)
 	updatedAt, _ := time.Parse(time.RFC3339, userSelect.UpdatedAt)
-	trueskillLastUpdated, _ := time.Parse(time.RFC3339, userSelect.TrueskillLastUpdated)
 
 	return models.User{
-		ID:                   int(userSelect.Id),
-		Name:                 userSelect.Name,
-		DiscordID:            userSelect.DiscordId,
-		Active:               userSelect.Active,
-		Banned:               userSelect.Banned,
-		MMR:                  int(userSelect.Mmr),
-		TrueSkillMu:          userSelect.TrueskillMu,
-		TrueSkillSigma:       userSelect.TrueskillSigma,
-		TrueSkillLastUpdated: trueskillLastUpdated,
+		ID:        int(userSelect.Id),
+		Name:      userSelect.Name,
+		DiscordID: userSelect.DiscordId,
+		Active:    userSelect.Active,
+		Banned:    userSelect.Banned,
+		// MMR fields are now in player_effective_mmr table
+		MMR:                  0,           // TODO: Query from player_effective_mmr
+		TrueSkillMu:          0,           // TODO: Query from player_effective_mmr
+		TrueSkillSigma:       0,           // TODO: Query from player_effective_mmr
+		TrueSkillLastUpdated: time.Time{}, // TODO: Query from player_effective_mmr
 		CreatedAt:            createdAt,
 		UpdatedAt:            updatedAt,
 	}

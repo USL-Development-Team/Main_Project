@@ -8,19 +8,22 @@ import (
 	"strconv"
 	"usl-server/internal/models"
 	"usl-server/internal/repositories"
+	"usl-server/internal/services"
 )
 
 // TrackerHandler handles HTTP requests for tracker management
 type TrackerHandler struct {
-	trackerRepo *repositories.TrackerRepository
-	templates   *template.Template
+	trackerRepo      *repositories.TrackerRepository
+	trueSkillService *services.UserTrueSkillService
+	templates        *template.Template
 }
 
 // NewTrackerHandler creates a new tracker handler
-func NewTrackerHandler(trackerRepo *repositories.TrackerRepository, templates *template.Template) *TrackerHandler {
+func NewTrackerHandler(trackerRepo *repositories.TrackerRepository, trueSkillService *services.UserTrueSkillService, templates *template.Template) *TrackerHandler {
 	return &TrackerHandler{
-		trackerRepo: trackerRepo,
-		templates:   templates,
+		trackerRepo:      trackerRepo,
+		trueSkillService: trueSkillService,
+		templates:        templates,
 	}
 }
 
@@ -49,7 +52,7 @@ func (h *TrackerHandler) ListTrackers(w http.ResponseWriter, r *http.Request) {
 		ValidOnly: validOnly,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "trackers.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -68,7 +71,7 @@ func (h *TrackerHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request) 
 		Title: "Create New Tracker",
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "tracker_form.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -125,6 +128,16 @@ func (h *TrackerHandler) CreateTracker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-update TrueSkill after tracker creation
+	result := h.trueSkillService.UpdateUserTrueSkillFromTrackers(tracker.DiscordID)
+	if !result.Success {
+		log.Printf("TrueSkill auto-update failed for %s: %s", tracker.DiscordID, result.Error)
+		// Continue anyway - don't fail the tracker operation
+	} else if result.TrueSkillResult != nil {
+		log.Printf("Auto-updated TrueSkill for %s: μ=%.1f",
+			tracker.DiscordID, result.TrueSkillResult.Mu)
+	}
+
 	log.Printf("Created tracker for user: %s", tracker.DiscordID)
 	http.Redirect(w, r, "/trackers", http.StatusSeeOther)
 }
@@ -177,7 +190,7 @@ func (h *TrackerHandler) EditTrackerForm(w http.ResponseWriter, r *http.Request)
 		Tracker: tracker,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "tracker_edit_form.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
@@ -245,6 +258,16 @@ func (h *TrackerHandler) UpdateTracker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Auto-update TrueSkill after tracker update
+	result := h.trueSkillService.UpdateUserTrueSkillFromTrackers(tracker.DiscordID)
+	if !result.Success {
+		log.Printf("TrueSkill auto-update failed for %s: %s", tracker.DiscordID, result.Error)
+		// Continue anyway - don't fail the tracker operation
+	} else if result.TrueSkillResult != nil {
+		log.Printf("Auto-updated TrueSkill for %s: μ=%.1f",
+			tracker.DiscordID, result.TrueSkillResult.Mu)
+	}
+
 	log.Printf("Updated tracker for user: %s", tracker.DiscordID)
 	http.Redirect(w, r, "/trackers", http.StatusSeeOther)
 }
@@ -273,6 +296,16 @@ func (h *TrackerHandler) DeleteTracker(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error deleting tracker: %v", err)
 		http.Error(w, "Failed to delete tracker: "+err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	// Auto-update TrueSkill after tracker deletion (may revert to defaults)
+	result := h.trueSkillService.UpdateUserTrueSkillFromTrackers(tracker.DiscordID)
+	if !result.Success {
+		log.Printf("TrueSkill auto-update failed for %s: %s", tracker.DiscordID, result.Error)
+		// Continue anyway - don't fail the tracker operation
+	} else if result.TrueSkillResult != nil {
+		log.Printf("Auto-updated TrueSkill for %s: μ=%.1f",
+			tracker.DiscordID, result.TrueSkillResult.Mu)
 	}
 
 	log.Printf("Deleted tracker for user: %s", tracker.DiscordID)
@@ -309,7 +342,7 @@ func (h *TrackerHandler) SearchTrackers(w http.ResponseWriter, r *http.Request) 
 		Query:    query,
 	}
 
-	if err := h.templates.ExecuteTemplate(w, "trackers.html", data); err != nil {
+	if err := h.templates.ExecuteTemplate(w, "base", data); err != nil {
 		log.Printf("Error executing template: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}

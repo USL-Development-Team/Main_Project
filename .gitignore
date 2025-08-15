@@ -1,5 +1,9 @@
 node_modules/
 .env
+.env.local
+.env.production
+.env.staging
+logs/
 
 # Supabase
 supabase/.temp/

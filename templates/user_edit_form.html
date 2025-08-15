@@ -23,20 +23,14 @@
                                    placeholder="Enter user name" maxlength="50" value="{{.User.Name}}">
                         </div>
                         <div class="col-md-6">
-                            <label for="discord_id" class="form-label">Discord ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="discord_id" name="discord_id" required 
-                                   placeholder="Enter Discord ID" minlength="17" maxlength="19" pattern="[0-9]+"
-                                   value="{{.User.DiscordID}}">
-                            <div class="form-text">Discord IDs are 17-19 digits long</div>
+                            <label for="discord_id_display" class="form-label">Discord ID</label>
+                            <input type="text" class="form-control" id="discord_id_display" 
+                                   value="{{.User.DiscordID}}" readonly>
+                            <div class="form-text">Discord ID cannot be changed once set</div>
                         </div>
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="mmr" class="form-label">MMR</label>
-                            <input type="number" class="form-control" id="mmr" name="mmr" 
-                                   placeholder="Enter MMR (optional)" min="0" max="3000" value="{{.User.MMR}}">
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <div>
@@ -51,6 +45,12 @@
                                     <label class="form-check-label" for="banned">Banned</label>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="mmr_display" class="form-label">Current MMR</label>
+                            <input type="number" class="form-control" id="mmr_display" 
+                                   value="{{.User.MMR}}" readonly>
+                            <div class="form-text">MMR is calculated automatically from trackers</div>
                         </div>
                     </div>
 
@@ -103,9 +103,10 @@
             </div>
             <div class="card-body">
                 <ul class="list-unstyled small text-muted">
-                    <li><i class="fas fa-info-circle"></i> Changing Discord ID may affect tracker links</li>
+                    <li><i class="fas fa-info-circle"></i> Only username and status can be updated</li>
+                    <li><i class="fas fa-info-circle"></i> Discord ID is immutable once set</li>
+                    <li><i class="fas fa-info-circle"></i> MMR is calculated automatically from trackers</li>
                     <li><i class="fas fa-info-circle"></i> TrueSkill values are updated separately</li>
-                    <li><i class="fas fa-info-circle"></i> MMR is for display purposes</li>
                     <li><i class="fas fa-warning text-warning"></i> Banned users cannot participate in matches</li>
                 </ul>
             </div>

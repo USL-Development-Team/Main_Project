@@ -18,6 +18,7 @@ create table if not exists user_trackers (
   threes_all_time_peak integer not null default 0 check (threes_all_time_peak >= 0),
   threes_current_season_games integer not null default 0 check (threes_current_season_games >= 0),
   threes_previous_season_games integer not null default 0 check (threes_previous_season_games >= 0),
+  total_wins integer not null default 0 check (total_wins >= 0),
   last_updated timestamptz not null default now(),
   valid boolean not null default true,
   calculated_mmr integer not null default 0 check (calculated_mmr >= 0),

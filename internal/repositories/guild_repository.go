@@ -326,7 +326,11 @@ func (r *GuildRepository) convertToGuild(guildSelect models.PublicGuildsSelect) 
 
 	// Parse configuration
 	var config models.GuildConfig
-	if err := json.Unmarshal(guildSelect.Config, &config); err != nil {
+	configBytes, err := json.Marshal(guildSelect.Config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config interface: %w", err)
+	}
+	if err := json.Unmarshal(configBytes, &config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 

@@ -1,0 +1,213 @@
+{{define "content"}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-chart-line"></i> {{.Title}}</h1>
+    <a href="/trackers" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Trackers
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Edit Tracker Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/trackers/update">
+                    <input type="hidden" name="tracker_id" value="{{.Tracker.ID}}">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="discord_id" class="form-label">Discord ID</label>
+                            <input type="text" class="form-control" id="discord_id" name="discord_id" 
+                                   value="{{.Tracker.DiscordID}}" readonly>
+                            <div class="form-text">Discord ID cannot be changed for existing trackers</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="url" class="form-label">Tracker URL <span class="text-danger">*</span></label>
+                            <input type="url" class="form-control" id="url" name="url" required 
+                                   placeholder="https://rocketleague.tracker.network/..." value="{{.Tracker.URL}}">
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">1v1 (Ones)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="ones_current_peak" class="form-label">Current Peak</label>
+                                    <input type="number" class="form-control" id="ones_current_peak" name="ones_current_peak" 
+                                           min="0" max="3000" value="{{.Tracker.OnesCurrentSeasonPeak}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="ones_current_games" class="form-label">Current Games</label>
+                                    <input type="number" class="form-control" id="ones_current_games" name="ones_current_games" 
+                                           min="0" value="{{.Tracker.OnesCurrentSeasonGames}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="ones_all_time_peak" class="form-label">All-Time Peak</label>
+                                    <input type="number" class="form-control" id="ones_all_time_peak" name="ones_all_time_peak" 
+                                           min="0" max="3000" value="{{.Tracker.OnesAllTimePeak}}">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label for="ones_previous_peak" class="form-label">Previous Peak</label>
+                                    <input type="number" class="form-control" id="ones_previous_peak" name="ones_previous_peak" 
+                                           min="0" max="3000" value="{{.Tracker.OnesPreviousSeasonPeak}}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="ones_previous_games" class="form-label">Previous Games</label>
+                                    <input type="number" class="form-control" id="ones_previous_games" name="ones_previous_games" 
+                                           min="0" value="{{.Tracker.OnesPreviousSeasonGames}}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">2v2 (Twos)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="twos_current_peak" class="form-label">Current Peak</label>
+                                    <input type="number" class="form-control" id="twos_current_peak" name="twos_current_peak" 
+                                           min="0" max="3000" value="{{.Tracker.TwosCurrentSeasonPeak}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="twos_current_games" class="form-label">Current Games</label>
+                                    <input type="number" class="form-control" id="twos_current_games" name="twos_current_games" 
+                                           min="0" value="{{.Tracker.TwosCurrentSeasonGames}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="twos_all_time_peak" class="form-label">All-Time Peak</label>
+                                    <input type="number" class="form-control" id="twos_all_time_peak" name="twos_all_time_peak" 
+                                           min="0" max="3000" value="{{.Tracker.TwosAllTimePeak}}">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label for="twos_previous_peak" class="form-label">Previous Peak</label>
+                                    <input type="number" class="form-control" id="twos_previous_peak" name="twos_previous_peak" 
+                                           min="0" max="3000" value="{{.Tracker.TwosPreviousSeasonPeak}}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="twos_previous_games" class="form-label">Previous Games</label>
+                                    <input type="number" class="form-control" id="twos_previous_games" name="twos_previous_games" 
+                                           min="0" value="{{.Tracker.TwosPreviousSeasonGames}}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">3v3 (Threes)</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="threes_current_peak" class="form-label">Current Peak</label>
+                                    <input type="number" class="form-control" id="threes_current_peak" name="threes_current_peak" 
+                                           min="0" max="3000" value="{{.Tracker.ThreesCurrentSeasonPeak}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="threes_current_games" class="form-label">Current Games</label>
+                                    <input type="number" class="form-control" id="threes_current_games" name="threes_current_games" 
+                                           min="0" value="{{.Tracker.ThreesCurrentSeasonGames}}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="threes_all_time_peak" class="form-label">All-Time Peak</label>
+                                    <input type="number" class="form-control" id="threes_all_time_peak" name="threes_all_time_peak" 
+                                           min="0" max="3000" value="{{.Tracker.ThreesAllTimePeak}}">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label for="threes_previous_peak" class="form-label">Previous Peak</label>
+                                    <input type="number" class="form-control" id="threes_previous_peak" name="threes_previous_peak" 
+                                           min="0" max="3000" value="{{.Tracker.ThreesPreviousSeasonPeak}}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="threes_previous_games" class="form-label">Previous Games</label>
+                                    <input type="number" class="form-control" id="threes_previous_games" name="threes_previous_games" 
+                                           min="0" value="{{.Tracker.ThreesPreviousSeasonGames}}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Tracker Status</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="valid" name="valid" 
+                                           value="true" {{if .Tracker.Valid}}checked{{end}}>
+                                    <label class="form-check-label" for="valid">Valid Tracker</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="calculated_mmr" class="form-label">Calculated MMR</label>
+                            <input type="number" class="form-control" id="calculated_mmr" 
+                                   value="{{.Tracker.CalculatedMMR}}" readonly>
+                            <div class="form-text">MMR is calculated automatically from current season data</div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/trackers" class="btn btn-outline-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Tracker
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Tracker Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <div class="row mb-2">
+                        <div class="col-6 fw-bold">Platform:</div>
+                        <div class="col-6">{{.Tracker.ParsePlatformInfo}}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6 fw-bold">Created:</div>
+                        <div class="col-6">{{.Tracker.CreatedAt.Format "2006-01-02"}}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-6 fw-bold">Last Updated:</div>
+                        <div class="col-6">{{.Tracker.UpdatedAt.Format "2006-01-02"}}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">Notes</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small text-muted">
+                    <li><i class="fas fa-info-circle"></i> Discord ID cannot be changed for existing trackers</li>
+                    <li><i class="fas fa-info-circle"></i> Current season data is most important for skill calculation</li>
+                    <li><i class="fas fa-info-circle"></i> MMR is calculated from weighted average of current season peaks</li>
+                    <li><i class="fas fa-info-circle"></i> Invalid trackers won't be used for TrueSkill calculations</li>
+                    <li><i class="fas fa-warning text-warning"></i> TrueSkill will be auto-updated after saving</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

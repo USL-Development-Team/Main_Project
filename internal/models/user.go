@@ -29,13 +29,11 @@ type UserCreateRequest struct {
 	MMR       int    `json:"mmr"`
 }
 
-// UserUpdateRequest matches the form data from UpdateUserForm.html
+// UserUpdateRequest matches the form data from UpdateUserForm.html (restricted fields only)
 type UserUpdateRequest struct {
-	Name      string `json:"name" validate:"required,min=1,max=50"`
-	DiscordID string `json:"discord_id" validate:"required,min=17,max=19"`
-	Active    bool   `json:"active"`
-	Banned    bool   `json:"banned"`
-	MMR       int    `json:"mmr"`
+	Name   string `json:"name" validate:"required,min=1,max=50"`
+	Active bool   `json:"active"`
+	Banned bool   `json:"banned"`
 }
 
 // UserStats represents user statistics, matching JavaScript getUserStats() output
