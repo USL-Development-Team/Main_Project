@@ -28,19 +28,19 @@ func NewTestUserHandler(users []*models.User, templates *template.Template) *Tes
 	}
 }
 
-// Mock the methods we need for testing
-func (h *TestUserHandler) getAllUsers() []*models.User {
-	return h.mockUsers
-}
+// Mock helper methods for testing (currently unused but reserved for future test expansion)
+// func (h *TestUserHandler) getAllUsers() []*models.User {
+// 	return h.mockUsers
+// }
 
-func (h *TestUserHandler) findUserByDiscordID(discordID string) (*models.User, error) {
-	for _, user := range h.mockUsers {
-		if user.DiscordID == discordID {
-			return user, nil
-		}
-	}
-	return nil, fmt.Errorf("user not found")
-}
+// func (h *TestUserHandler) findUserByDiscordID(discordID string) (*models.User, error) {
+// 	for _, user := range h.mockUsers {
+// 		if user.DiscordID == discordID {
+// 			return user, nil
+// 		}
+// 	}
+// 	return nil, fmt.Errorf("user not found")
+// }
 
 func (h *TestUserHandler) isHTMXRequest(r *http.Request) bool {
 	return r.Header.Get("HX-Request") == "true"

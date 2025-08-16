@@ -461,7 +461,9 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if h.isHTMXRequest(r) {
 		// Return success response for HTMX
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("User deleted successfully"))
+		if _, err := w.Write([]byte("User deleted successfully")); err != nil {
+			log.Printf("Failed to write delete response: %v", err)
+		}
 	} else {
 		http.Redirect(w, r, "/"+guild.Slug+"/users", http.StatusSeeOther)
 	}

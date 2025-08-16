@@ -133,7 +133,9 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 `, a.getErrorMessage(r), discordOAuthURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	if _, err := w.Write([]byte(html)); err != nil {
+		log.Printf("Failed to write auth error response: %v", err)
+	}
 }
 
 // AuthCallback handles the OAuth callback from Supabase
@@ -221,7 +223,9 @@ func (a *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 `, finalRedirect)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	if _, err := w.Write([]byte(html)); err != nil {
+		log.Printf("Failed to write auth callback response: %v", err)
+	}
 }
 
 // ProcessTokens handles the access token validation and session setup

@@ -254,7 +254,9 @@ func setupHomeRoute(mux *http.ServeMux) {
 <a href="/usl/admin" style="color: #007cba;">USL Admin</a>
 </body>
 </html>`
-			w.Write([]byte(html))
+			if _, err := w.Write([]byte(html)); err != nil {
+				log.Printf("Failed to write 404 response: %v", err)
+			}
 			return
 		}
 		http.Redirect(w, r, "/users", http.StatusSeeOther)

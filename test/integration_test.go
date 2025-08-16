@@ -75,7 +75,9 @@ func TestHTMXTemplateIntegration(t *testing.T) {
 			}
 
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("OK"))
+			if _, err := w.Write([]byte("OK")); err != nil {
+				t.Errorf("Failed to write test response: %v", err)
+			}
 		})
 
 		// Test the middleware manually by adding guild context

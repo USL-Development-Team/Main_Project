@@ -32,13 +32,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="discord_id" class="block text-sm font-medium text-gray-700 mb-2">Discord ID *</label>
-                            <input type="text" id="discord_id" name="discord_id" required
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="discord_id" name="discord_id" required value="{{if .Tracker}}{{.Tracker.DiscordID}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.discord_id}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.discord_id}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.discord_id}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="url" class="block text-sm font-medium text-gray-700 mb-2">Profile URL</label>
-                            <input type="url" id="url" name="url"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="url" id="url" name="url" value="{{if .Tracker}}{{.Tracker.URL}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.url}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.url}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.url}}</p>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -49,30 +55,45 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="ones_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
-                            <input type="number" id="ones_current_peak" name="ones_current_peak" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="ones_current_peak" name="ones_current_peak" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.OnesCurrentSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_current_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_current_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="ones_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="ones_previous_peak" name="ones_previous_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="ones_previous_peak" name="ones_previous_peak" min="0" value="{{if .Tracker}}{{.Tracker.OnesPreviousSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_previous_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="ones_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="ones_all_time_peak" name="ones_all_time_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="ones_all_time_peak" name="ones_all_time_peak" min="0" value="{{if .Tracker}}{{.Tracker.OnesAllTimePeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_all_time_peak}}</p>
+                            {{end}}
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="ones_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
-                            <input type="number" id="ones_current_games" name="ones_current_games" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="ones_current_games" name="ones_current_games" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.OnesCurrentSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_current_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_current_games}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="ones_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
-                            <input type="number" id="ones_previous_games" name="ones_previous_games" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="ones_previous_games" name="ones_previous_games" min="0" value="{{if .Tracker}}{{.Tracker.OnesPreviousSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_previous_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_previous_games}}</p>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -83,30 +104,45 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="twos_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
-                            <input type="number" id="twos_current_peak" name="twos_current_peak" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="twos_current_peak" name="twos_current_peak" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.TwosCurrentSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_current_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_current_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="twos_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="twos_previous_peak" name="twos_previous_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="twos_previous_peak" name="twos_previous_peak" min="0" value="{{if .Tracker}}{{.Tracker.TwosPreviousSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_previous_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="twos_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="twos_all_time_peak" name="twos_all_time_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="twos_all_time_peak" name="twos_all_time_peak" min="0" value="{{if .Tracker}}{{.Tracker.TwosAllTimePeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_all_time_peak}}</p>
+                            {{end}}
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="twos_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
-                            <input type="number" id="twos_current_games" name="twos_current_games" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="twos_current_games" name="twos_current_games" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.TwosCurrentSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_current_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_current_games}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="twos_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
-                            <input type="number" id="twos_previous_games" name="twos_previous_games" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="twos_previous_games" name="twos_previous_games" min="0" value="{{if .Tracker}}{{.Tracker.TwosPreviousSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_previous_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_previous_games}}</p>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -117,30 +153,45 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label for="threes_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
-                            <input type="number" id="threes_current_peak" name="threes_current_peak" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="threes_current_peak" name="threes_current_peak" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.ThreesCurrentSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_current_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_current_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="threes_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="threes_previous_peak" name="threes_previous_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="threes_previous_peak" name="threes_previous_peak" min="0" value="{{if .Tracker}}{{.Tracker.ThreesPreviousSeasonPeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_previous_peak}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="threes_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="threes_all_time_peak" name="threes_all_time_peak" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="threes_all_time_peak" name="threes_all_time_peak" min="0" value="{{if .Tracker}}{{.Tracker.ThreesAllTimePeak}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_all_time_peak}}</p>
+                            {{end}}
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="threes_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
-                            <input type="number" id="threes_current_games" name="threes_current_games" min="0" onchange="calculateMMR()"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="threes_current_games" name="threes_current_games" min="0" onchange="calculateMMR()" value="{{if .Tracker}}{{.Tracker.ThreesCurrentSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_current_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_current_games}}</p>
+                            {{end}}
                         </div>
                         <div>
                             <label for="threes_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
-                            <input type="number" id="threes_previous_games" name="threes_previous_games" min="0"
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" id="threes_previous_games" name="threes_previous_games" min="0" value="{{if .Tracker}}{{.Tracker.ThreesPreviousSeasonGamesPlayed}}{{end}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_previous_games}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_previous_games}}</p>
+                            {{end}}
                         </div>
                     </div>
                 </div>
@@ -152,12 +203,20 @@
                         <div>
                             <label for="valid" class="block text-sm font-medium text-gray-700 mb-2">Valid Entry</label>
                             <select id="valid" name="valid" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                                <option value="true">Yes</option>
-                                <option value="false">No</option>
+                                    class="w-full px-3 py-2 border {{if .Errors.valid}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                                <option value="true" {{if and .Tracker .Tracker.Valid}}selected{{end}}>Yes</option>
+                                <option value="false" {{if and .Tracker (not .Tracker.Valid)}}selected{{end}}>No</option>
                             </select>
+                            {{if .Errors.valid}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.valid}}</p>
+                            {{end}}
                         </div>
                     </div>
+                    {{if .Errors.general}}
+                    <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                        <div class="text-sm font-medium text-red-900">{{.Errors.general}}</div>
+                    </div>
+                    {{end}}
                     <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
                         <div class="text-sm font-medium text-blue-900">Calculated MMR: <span id="mmrValue" class="text-blue-700 font-bold">0</span></div>
                         <div class="text-xs text-blue-600 mt-1">This value is calculated automatically based on current season peaks and games played</div>

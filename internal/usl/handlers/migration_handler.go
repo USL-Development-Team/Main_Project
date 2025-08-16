@@ -414,28 +414,32 @@ func (h *MigrationHandler) calculateEffectiveMMR(tracker *usl.USLUserTracker) {
 // These functions are kept for future TrueSkill integration when async ranking updates are implemented
 
 // logTrueSkillUpdateFailure logs structured failure information
-func (h *MigrationHandler) logTrueSkillUpdateFailure(tracker *usl.USLUserTracker, errorMsg string) {
-	log.Printf("[USL-TRUESKILL] WARNING: Update failed - Discord=%s, TrackerID=%d, Error=%s",
-		tracker.DiscordID, tracker.ID, errorMsg)
-	log.Printf("[USL-TRUESKILL] Tracker creation succeeded, TrueSkill update failed - manual intervention may be needed")
-}
+// Reserved for future TrueSkill integration - currently unused but kept for planned implementation
+// func (h *MigrationHandler) logTrueSkillUpdateFailure(tracker *usl.USLUserTracker, errorMsg string) {
+// 	log.Printf("[USL-TRUESKILL] WARNING: Update failed - Discord=%s, TrackerID=%d, Error=%s",
+// 		tracker.DiscordID, tracker.ID, errorMsg)
+// 	log.Printf("[USL-TRUESKILL] Tracker creation succeeded, TrueSkill update failed - manual intervention may be needed")
+// }
 
 // logTrueSkillUpdateSuccess logs structured success information
-func (h *MigrationHandler) logTrueSkillUpdateSuccess(tracker *usl.USLUserTracker, mu, sigma float64) {
-	log.Printf("[USL-TRUESKILL] SUCCESS: Calculated - Discord=%s, TrackerID=%d, μ=%.1f, σ=%.2f",
-		tracker.DiscordID, tracker.ID, mu, sigma)
-}
+// Reserved for future TrueSkill integration - currently unused but kept for planned implementation
+// func (h *MigrationHandler) logTrueSkillUpdateSuccess(tracker *usl.USLUserTracker, mu, sigma float64) {
+// 	log.Printf("[USL-TRUESKILL] SUCCESS: Calculated - Discord=%s, TrackerID=%d, μ=%.1f, σ=%.2f",
+// 		tracker.DiscordID, tracker.ID, mu, sigma)
+// }
 
 // logUSLSyncFailure logs structured USL sync failure information
-func (h *MigrationHandler) logUSLSyncFailure(discordID string, err error) {
-	log.Printf("[USL-TRUESKILL] WARNING: USL table sync failed - Discord=%s, Error=%v", discordID, err)
-	log.Printf("[USL-TRUESKILL] Core tables updated successfully, USL tables inconsistent - manual sync required")
-}
+// Reserved for future TrueSkill integration - currently unused but kept for planned implementation
+// func (h *MigrationHandler) logUSLSyncFailure(discordID string, err error) {
+// 	log.Printf("[USL-TRUESKILL] WARNING: USL table sync failed - Discord=%s, Error=%v", discordID, err)
+// 	log.Printf("[USL-TRUESKILL] Core tables updated successfully, USL tables inconsistent - manual sync required")
+// }
 
 // logUSLSyncSuccess logs structured USL sync success information
-func (h *MigrationHandler) logUSLSyncSuccess(discordID string) {
-	log.Printf("[USL-TRUESKILL] SUCCESS: Full integration completed - Discord=%s (Core ✓, USL ✓)", discordID)
-}
+// Reserved for future TrueSkill integration - currently unused but kept for planned implementation
+// func (h *MigrationHandler) logUSLSyncSuccess(discordID string) {
+// 	log.Printf("[USL-TRUESKILL] SUCCESS: Full integration completed - Discord=%s (Core ✓, USL ✓)", discordID)
+// }
 
 const (
 	USL_DISCORD_GUILD_ID = "1390537743385231451" // USL Discord Guild ID
@@ -946,36 +950,37 @@ func (h *MigrationHandler) GetLeaderboardAPI(w http.ResponseWriter, r *http.Requ
 }
 
 // performTrueSkillUpdate handles TrueSkill calculation and synchronization with comprehensive error handling
-func (h *MigrationHandler) performTrueSkillUpdate(tracker *usl.USLUserTracker) {
-	if tracker == nil {
-		log.Printf("[USL-TRUESKILL] ERROR: Cannot perform update - tracker is nil")
-		return
-	}
+// Reserved for future TrueSkill integration - currently unused but kept for planned implementation
+// func (h *MigrationHandler) performTrueSkillUpdate(tracker *usl.USLUserTracker) {
+// 	if tracker == nil {
+// 		log.Printf("[USL-TRUESKILL] ERROR: Cannot perform update - tracker is nil")
+// 		return
+// 	}
 
-	trackerData := h.mapUSLTrackerToTrackerData(tracker)
-	log.Printf("[USL-TRUESKILL] Starting update - Discord=%s, TrackerID=%d", tracker.DiscordID, tracker.ID)
+// 	trackerData := h.mapUSLTrackerToTrackerData(tracker)
+// 	log.Printf("[USL-TRUESKILL] Starting update - Discord=%s, TrackerID=%d", tracker.DiscordID, tracker.ID)
 
-	result := h.trueskillService.UpdateUserTrueSkillFromTrackerData(trackerData)
+// 	result := h.trueskillService.UpdateUserTrueSkillFromTrackerData(trackerData)
 
-	if !result.Success {
-		h.logTrueSkillUpdateFailure(tracker, result.Error)
-		return
-	}
+// 	if !result.Success {
+// 		h.logTrueSkillUpdateFailure(tracker, result.Error)
+// 		return
+// 	}
 
-	h.logTrueSkillUpdateSuccess(tracker, result.TrueSkillResult.Mu, result.TrueSkillResult.Sigma)
+// 	h.logTrueSkillUpdateSuccess(tracker, result.TrueSkillResult.Mu, result.TrueSkillResult.Sigma)
 
-	err := h.uslRepo.UpdateUserTrueSkill(
-		tracker.DiscordID,
-		result.TrueSkillResult.Mu,
-		result.TrueSkillResult.Sigma,
-	)
+// 	err := h.uslRepo.UpdateUserTrueSkill(
+// 		tracker.DiscordID,
+// 		result.TrueSkillResult.Mu,
+// 		result.TrueSkillResult.Sigma,
+// 	)
 
-	if err != nil {
-		h.logUSLSyncFailure(tracker.DiscordID, err)
-	} else {
-		h.logUSLSyncSuccess(tracker.DiscordID)
-	}
-}
+// 	if err != nil {
+// 		h.logUSLSyncFailure(tracker.DiscordID, err)
+// 	} else {
+// 		h.logUSLSyncSuccess(tracker.DiscordID)
+// 	}
+// }
 
 // mapUSLTrackerToTrackerData converts USL tracker format to TrueSkill service input format
 func (h *MigrationHandler) mapUSLTrackerToTrackerData(uslTracker *usl.USLUserTracker) *services.TrackerData {
