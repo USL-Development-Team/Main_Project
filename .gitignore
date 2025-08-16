@@ -1,6 +1,6 @@
 node_modules/
 .env
-.env.local
+.env.develop
 .env.production
 .env.staging
 logs/

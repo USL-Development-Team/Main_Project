@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Environment management script
-# Usage: ./scripts/env.sh [local|production|staging]
+# Usage: ./scripts/env.sh [develop|production|staging]
 
-ENV=${1:-local}
+ENV=${1:-develop}
 
 case $ENV in
-  "local")
-    echo "Loading local development environment..."
-    cp .env.local .env
+  "develop")
+    echo "Loading development environment..."
+    cp .env.develop .env
     ;;
   "production")
     echo "Loading production environment..."
@@ -28,7 +28,7 @@ case $ENV in
     cp .env.staging .env
     ;;
   *)
-    echo "Usage: $0 [local|production|staging]"
+    echo "Usage: $0 [develop|production|staging]"
     echo "Current environment files:"
     ls -la .env* 2>/dev/null || echo "No environment files found"
     exit 1
