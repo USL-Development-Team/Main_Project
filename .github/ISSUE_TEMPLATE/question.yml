@@ -1,0 +1,61 @@
+name: Question/Help
+description: Ask a question or get help with something
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about the USL system? We're here to help!
+
+  - type: input
+    id: summary
+    attributes:
+      label: Question
+      description: What would you like to know?
+      placeholder: "How do I reset a user's TrueSkill rating?"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area is your question about?
+      options:
+        - User Management
+        - TrueSkill/MMR System
+        - Authentication/Permissions
+        - Discord Integration
+        - Data/Statistics
+        - API Usage
+        - Development/Setup
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to accomplish?
+      placeholder: "I'm trying to fix a user's rating after they reported incorrect tracker data..."
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What have you tried?
+      description: Steps you've already attempted (if any)
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is this question?
+      options:
+        - Low - When convenient
+        - Medium - Within a few days
+        - High - Need answer soon
+        - Critical - Blocking important work
+    validations:
+      required: true

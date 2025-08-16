@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/USL-Development-Team/Main_Project/blob/main/CONTRIBUTING.md
+    about: Read the contributing guide and development workflow
+  - name: Discord Support
+    url: https://discord.gg/usl-server
+    about: Get help from the community on Discord
+  - name: Security Issue
+    url: https://github.com/USL-Development-Team/Main_Project/security/advisories/new
+    about: Report security vulnerabilities privately
