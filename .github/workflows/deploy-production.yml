@@ -1,0 +1,36 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: true
+        default: 'Manual deployment trigger'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to Render
+        uses: JorgeLNJunior/render-deploy@v1.4.4
+        with:
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          wait_deploy: true
+
+      - name: Deployment notification
+        run: |
+          echo "🚀 Production deployment initiated"
+          echo "📦 Version: ${{ github.event.release.tag_name || 'manual' }}"
+          echo "🔗 Release: ${{ github.event.release.html_url || 'Manual deployment' }}"
+          echo "⏰ Triggered: $(date)"
+          
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to be ready..."
+          sleep 30
+          curl -f https://usl-admin-app.onrender.com/health || echo "Health check failed - manual verification needed"

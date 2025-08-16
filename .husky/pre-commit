@@ -1,3 +1,28 @@
+# Check branch protection
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" = "develop" ]; then
+    echo "❌ Direct commits to 'develop' branch are not allowed!"
+    echo ""
+    echo "✅ Proper workflow:"
+    echo "  1. gh issue create --title \"Your issue title\" --body \"Description\""
+    echo "  2. gh issue develop <issue-number> --name feature/issue-description"
+    echo "  3. Make your changes and commit"
+    echo "  4. gh pr create --base develop"
+    echo ""
+    echo "💡 Quick start for this change:"
+    echo "  gh issue create --title \"$(git log --format=%s -n 1 || echo 'Fix or feature description')\""
+    echo "  # Then: gh issue develop <issue-number> --name feature/$(whoami)-$(date +%Y%m%d)"
+    exit 1
+fi
+
+if [ "$branch" = "main" ]; then
+    echo "❌ Direct commits to 'main' branch are not allowed!"
+    echo ""
+    echo "✅ Only merge from develop branch via PR"
+    exit 1
+fi
+
 # Run Go formatting
 echo "Running go fmt..."
 go fmt ./...
