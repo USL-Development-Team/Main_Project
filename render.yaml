@@ -2,7 +2,7 @@ services:
   - type: web
     name: usl-admin-app
     runtime: docker
-    repo: https://github.com/YOUR_USERNAME/YOUR_REPO_NAME  # Update this with your actual repo
+    repo: https://github.com/USL-Development-Team/Main_Project
     branch: main
     
     # Docker configuration
@@ -67,7 +67,7 @@ services:
         value: "info"
     
     # Health check configuration
-    healthCheckPath: /
+    healthCheckPath: /health
     
     # Deployment configuration
     buildFilter:

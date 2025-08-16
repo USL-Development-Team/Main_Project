@@ -67,9 +67,9 @@ USER app
 # Expose port (Render will provide PORT env var)
 EXPOSE 8080
 
-# Health check
+# Health check - use dedicated health endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-8080}/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider --timeout=2 http://localhost:${PORT:-8080}/health || exit 1
 
 # Run the binary
 CMD ["./server"]

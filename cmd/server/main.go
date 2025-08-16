@@ -194,6 +194,7 @@ func setupHTTPServer(deps *ApplicationContext) http.Handler {
 	mux := http.NewServeMux()
 
 	setupStaticRoutes(mux)
+	setupHealthRoute(mux)      // Health check endpoint
 	setupAuthRoutes(mux, deps) // Unified Discord OAuth routes
 	setupHomeRoute(mux)
 	setupGuildAwareRoutes(mux, deps) // New guild-aware routes
@@ -216,6 +217,21 @@ func setupHTTPServer(deps *ApplicationContext) http.Handler {
 
 func setupStaticRoutes(mux *http.ServeMux) {
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+}
+
+func setupHealthRoute(mux *http.ServeMux) {
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte(`{"status":"healthy","service":"usl-server"}`)); err != nil {
+			log.Printf("Failed to write health response: %v", err)
+		}
+	})
 }
 
 func setupGuildAwareRoutes(mux *http.ServeMux, deps *ApplicationContext) {
