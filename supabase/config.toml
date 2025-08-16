@@ -250,8 +250,8 @@ enabled = true
 client_id = "env(DISCORD_CLIENT_ID)"
 # DO NOT commit your OAuth provider secret to git. Use environment variable substitution instead:
 secret = "env(DISCORD_CLIENT_SECRET)"
-# Redirect to Supabase auth callback (local development)
-redirect_uri = "http://localhost:54321/auth/v1/callback"
+# Redirect URI dynamically set based on environment
+redirect_uri = "env(SUPABASE_OAUTH_REDIRECT_URI)"
 
 [auth.external.apple]
 enabled = false

@@ -241,9 +241,11 @@ func setupGuildAwareRoutes(mux *http.ServeMux, deps *ApplicationContext) {
 }
 
 func setupAuthRoutes(mux *http.ServeMux, deps *ApplicationContext) {
-	// Unified Discord OAuth routes for both main app and USL
-	mux.HandleFunc("/login", deps.Auth.LoginForm)
-	mux.HandleFunc("/usl/login", deps.Auth.LoginForm) // USL uses same login
+	// Redirect main app login to USL login for now
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
+	})
+	mux.HandleFunc("/usl/login", deps.Auth.LoginForm)
 	mux.HandleFunc("/auth/callback", deps.Auth.AuthCallback)
 	mux.HandleFunc("/auth/process", deps.Auth.ProcessTokens)
 	mux.HandleFunc("/logout", deps.Auth.Logout)
@@ -259,7 +261,7 @@ func handleHomeAndNotFound(w http.ResponseWriter, r *http.Request) {
 		render404Page(w)
 		return
 	}
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+	http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
 }
 
 func render404Page(w http.ResponseWriter) {

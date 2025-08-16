@@ -59,11 +59,25 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	discordOAuthURL := fmt.Sprintf("%s/auth/v1/authorize?provider=discord&redirect_to=%s",
 		a.publicURL, redirectTo)
 
+	// Determine if this is USL login
+	isUSL := strings.HasPrefix(r.URL.Path, "/usl")
+	var title, heading, infoText string
+
+	if isUSL {
+		title = "USL Admin Login"
+		heading = "USL Administration"
+		infoText = "Sign in with Discord to access the USL management system."
+	} else {
+		title = "Sign In"
+		heading = "Sign In"
+		infoText = "Sign in with Discord to access the application."
+	}
+
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sign In</title>
+    <title>%s</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -88,8 +102,14 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
             color: #333;
             margin-bottom: 20px;
         }
+        .usl-header {
+            color: #1a365d;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
         .discord-btn {
-            display: inline-block;
+            display: block;
             width: 100%%;
             padding: 15px;
             background-color: #5865F2;
@@ -99,6 +119,8 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
             font-size: 16px;
             font-weight: bold;
             transition: background-color 0.3s;
+            text-align: center;
+            box-sizing: border-box;
         }
         .discord-btn:hover {
             background-color: #4752C4;
@@ -116,8 +138,8 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 </head>
 <body>
     <div class="login-container">
-        <h2>Sign In</h2>
-        <div class="info">Sign in with Discord to access the application.</div>
+        <h2 class="%s">%s</h2>
+        <div class="info">%s</div>
         %s
         <a href="%s" class="discord-btn">
             🎮 Sign in with Discord
@@ -125,7 +147,12 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
     </div>
 </body>
 </html>
-`, a.getErrorMessage(r), discordOAuthURL)
+`, title, func() string {
+		if isUSL {
+			return "usl-header"
+		}
+		return ""
+	}(), heading, infoText, a.getErrorMessage(r), discordOAuthURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if _, err := w.Write([]byte(html)); err != nil {
