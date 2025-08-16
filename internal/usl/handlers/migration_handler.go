@@ -753,7 +753,7 @@ func (h *MigrationHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if query == "" {
-		// Return all users when no query (for clear button)
+
 		users, err = h.uslRepo.GetAllUsers()
 	} else {
 		// Search for users matching the query
@@ -873,7 +873,7 @@ func (h *MigrationHandler) SearchTrackers(w http.ResponseWriter, r *http.Request
 
 	query := r.URL.Query().Get("q")
 	if query == "" {
-		// Return all trackers if no query
+
 		trackers, err := h.uslRepo.GetAllTrackers()
 		if err != nil {
 			h.handleDatabaseError(w, "load trackers", err)
@@ -1351,7 +1351,6 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 	// Calculate MMR (using extracted function)
 	h.calculateEffectiveMMR(tracker)
 
-	// Update in database
 	err = h.uslRepo.UpdateTracker(tracker)
 	if err != nil {
 		h.handleDatabaseError(w, "update tracker", err)
@@ -1795,7 +1794,6 @@ func (h *MigrationHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update the user
 	_, err = h.uslRepo.UpdateUser(userID, user.Name, user.Active, user.Banned)
 	if err != nil {
 		h.handleDatabaseError(w, "update user", err)

@@ -61,7 +61,6 @@ func (s *DataTransformationService) TransformRowDataToTracker(rowData []interfac
 		return fmt.Sprintf("%v", val)
 	}
 
-	// Parse last updated date
 	var lastUpdated time.Time
 	if rowData[17] != nil {
 		if dateStr := safeString(rowData[17]); dateStr != "" {
@@ -180,7 +179,6 @@ func (s *DataTransformationService) TransformRowDataToUser(rowData []interface{}
 		return defaultVal
 	}
 
-	// Parse timestamps
 	var createdAt, updatedAt, trueskillLastUpdated time.Time
 	now := time.Now()
 

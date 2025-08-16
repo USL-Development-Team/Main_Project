@@ -80,7 +80,7 @@ func NewUserTrueSkillService(
 // UpdateAllUserTrueSkill updates TrueSkill values for all users
 // Exact port of JavaScript updateAllUserTrueSkill() function
 func (s *UserTrueSkillService) UpdateAllUserTrueSkill() (*BatchUpdateResult, error) {
-	// Get all users from repository
+
 	allUsers, err := s.userRepo.GetAllUsers(false) // Get all users, not just active
 	if err != nil {
 		return nil, fmt.Errorf("failed to get all users: %w", err)

@@ -156,7 +156,6 @@ func (h *GuildHandler) CreateGuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set default config if not provided
 	if guildData.Config.Discord.BotCommandPrefix == "" {
 		guildData.Config = models.GetDefaultGuildConfig()
 	}

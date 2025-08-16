@@ -40,9 +40,7 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if already authenticated
 	if a.IsAuthenticated(r) {
-		// Redirect based on the requested path
 		if strings.HasPrefix(r.URL.Path, "/usl") {
 			http.Redirect(w, r, "/usl/admin", http.StatusSeeOther)
 		} else {
@@ -51,8 +49,6 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build proper Supabase OAuth URL using configured public URL
-	// Determine redirect URL based on context
 	var redirectTo string
 	if strings.HasPrefix(r.URL.Path, "/usl") {
 		redirectTo = "http://127.0.0.1:8080/auth/callback?redirect=usl"
@@ -63,7 +59,6 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	discordOAuthURL := fmt.Sprintf("%s/auth/v1/authorize?provider=discord&redirect_to=%s",
 		a.publicURL, redirectTo)
 
-	// Render login form with Discord OAuth button
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -261,7 +256,6 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set secure session cookies
 	a.setSessionCookies(w, req.AccessToken, req.RefreshToken)
 
 	// Success response
@@ -271,7 +265,6 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 // IsAuthenticated checks if the current request has valid authentication
 // This works for both main app and USL routes
 func (a *DiscordAuth) IsAuthenticated(r *http.Request) bool {
-	// Get access token from cookie
 	cookie, err := r.Cookie("auth_access_token")
 	if err != nil {
 		return false
@@ -283,7 +276,6 @@ func (a *DiscordAuth) IsAuthenticated(r *http.Request) bool {
 		return false
 	}
 
-	// Check if user is authorized
 	return a.isUserAuthorized(user)
 }
 
@@ -336,10 +328,8 @@ func (a *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 func (a *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
 	// Use the main Supabase client with the user's access token
 
-	// Create an authenticated client with the user's token
 	userClient := a.supabaseClient.Auth.WithToken(accessToken)
 
-	// Get user info using their access token
 	user, err := userClient.GetUser()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user from Supabase: %w", err)
@@ -378,7 +368,6 @@ func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
 		return false
 	}
 
-	// Check if Discord ID is in admin list
 	for _, adminID := range a.adminDiscordIDs {
 		if discordID == adminID {
 			return true
@@ -389,7 +378,6 @@ func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
 }
 
 func (a *DiscordAuth) setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string) {
-	// Set access token cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_access_token",
 		Value:    accessToken,
@@ -400,7 +388,6 @@ func (a *DiscordAuth) setSessionCookies(w http.ResponseWriter, accessToken, refr
 		MaxAge:   3600, // 1 hour
 	})
 
-	// Set refresh token cookie
 	if refreshToken != "" {
 		http.SetCookie(w, &http.Cookie{
 			Name:     "auth_refresh_token",

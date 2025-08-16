@@ -88,14 +88,12 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
 		return
 	}
 
-	// Get search query
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 
 	var users []*models.User
@@ -120,12 +118,9 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		Query: query,
 	}
 
-	// Check if this is an HTMX request
 	if h.isHTMXRequest(r) {
-		// Return just the user table fragment
 		h.renderFragment(w, "user-table", pageData)
 	} else {
-		// Return the full page
 		h.renderTemplate(w, "content", pageData)
 	}
 }
@@ -136,7 +131,6 @@ func (h *UserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -160,7 +154,6 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -244,7 +237,6 @@ func (h *UserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -308,7 +300,6 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -413,7 +404,6 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)

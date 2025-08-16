@@ -89,7 +89,6 @@ func (m *MMRCalculator) CalculatePercentileBasedSkill(playerData PlayerMMRData) 
 		}
 	}
 
-	// Parse and structure playlist data exactly like JavaScript
 	playlists := map[string]PlaylistData{
 		"ones":   playerData.Ones,
 		"twos":   playerData.Twos,
@@ -147,7 +146,6 @@ func (m *MMRCalculator) CalculatePercentileBasedSkill(playerData PlayerMMRData) 
 		(playerData.Twos.Current.Games + playerData.Twos.Previous.Games) +
 		(playerData.Threes.Current.Games + playerData.Threes.Previous.Games)
 
-	// Build breakdown exactly matching JavaScript structure
 	breakdown := map[string]PlaylistBreakdown{
 		"ones": {
 			EffectiveMMR:    playlistEffectiveMMRs["ones"],

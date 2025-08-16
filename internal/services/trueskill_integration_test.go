@@ -16,7 +16,6 @@ func TestUpdateUserTrueSkillFromTrackerData(t *testing.T) {
 		t.Skipf("Config not available for testing: %v", err)
 	}
 
-	// Create minimal service (without repos - will fail gracefully)
 	dataTransformationService := NewDataTransformationService()
 	uncertaintyCalculator := NewEnhancedUncertaintyCalculator(cfg)
 	percentileConverter := NewPercentileConverter(cfg)

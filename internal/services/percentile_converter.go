@@ -56,7 +56,6 @@ func (p *PercentileConverter) MMRToPercentile(mmr float64, playlist string) floa
 	distribution := rankDistributions[playlist]
 	ranges := mmrRanges[playlist]
 
-	// Build sorted ranges cache for binary search
 	if _, exists := p.sortedRangesByPlaylist[playlist]; !exists {
 		var sortedRanges []RankRange
 		for rank, mmrRange := range ranges {
@@ -84,7 +83,6 @@ func (p *PercentileConverter) MMRToPercentile(mmr float64, playlist string) floa
 		}
 	}
 
-	// Build rank order cache for O(1) lookup
 	if _, exists := p.rankOrderCache[playlist]; !exists {
 		p.rankOrderCache[playlist] = p.buildRankOrderCache(playlist, distribution)
 	}

@@ -231,7 +231,7 @@ func (c *EnhancedUncertaintyCalculator) calculatePeakPerformanceFactor(breakdown
 
 // calculateDataQualityFactor calculates data quality and freshness factor
 func (c *EnhancedUncertaintyCalculator) calculateDataQualityFactor(trackerData *TrackerData) float64 {
-	// Check for missing or invalid data
+
 	totalFields := 12 // Total tracker data fields
 	validFields := 0
 

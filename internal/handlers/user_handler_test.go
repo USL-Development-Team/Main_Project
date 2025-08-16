@@ -67,14 +67,12 @@ func (h *TestUserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
 		return
 	}
 
-	// Get search query
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 
 	// Filter users based on search
@@ -111,7 +109,6 @@ func (h *TestUserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get guild from context
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -183,7 +180,6 @@ func createTestRequestWithGuild(method, path string, body string) (*http.Request
 		req = httptest.NewRequest(method, path, nil)
 	}
 
-	// Add guild context
 	testGuild := &models.Guild{
 		ID:             1,
 		DiscordGuildID: "123456789012345678",
@@ -200,7 +196,7 @@ func createTestRequestWithGuild(method, path string, body string) (*http.Request
 }
 
 func TestUserHandler_ListUsers(t *testing.T) {
-	// Create test users
+
 	testUsers := []*models.User{
 		{
 			ID:        1,
@@ -218,7 +214,6 @@ func TestUserHandler_ListUsers(t *testing.T) {
 		},
 	}
 
-	// Create minimal template for testing
 	tmpl := template.Must(template.New("test").Parse(`
 		{{define "user-table"}}
 		<table>
@@ -325,7 +320,6 @@ func TestUserHandler_CreateUser(t *testing.T) {
 			t.Errorf("Expected status 303, got %d", w.Code)
 		}
 
-		// Check if user was created
 		if len(handler.mockUsers) != 1 {
 			t.Errorf("Expected 1 user after creation, got %d", len(handler.mockUsers))
 		}
@@ -366,7 +360,6 @@ func TestUserHandler_CreateUser(t *testing.T) {
 			t.Errorf("Expected status 200, got %d", w.Code)
 		}
 
-		// Check for HTMX redirect header
 		redirectHeader := w.Header().Get("HX-Redirect")
 		if redirectHeader != "/test/users" {
 			t.Errorf("Expected HX-Redirect header, got: %s", redirectHeader)
@@ -377,7 +370,7 @@ func TestUserHandler_CreateUser(t *testing.T) {
 // Test real UserHandler constructor with a simple repository mock
 func TestUserHandler_Integration(t *testing.T) {
 	t.Run("UserHandler_Constructor", func(t *testing.T) {
-		// Create a real UserRepository (even if it would fail to connect)
+
 		// This tests that our constructor works with the real types
 		var repo *repositories.UserRepository = nil // Would normally be created with supabase client
 

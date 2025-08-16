@@ -81,13 +81,11 @@ func (m *GuildContextMiddleware) GuildContext() func(http.Handler) http.Handler 
 				}
 			}
 
-			// Check if guild is active
 			if !guild.Active {
 				http.Error(w, "Guild is not active", http.StatusForbidden)
 				return
 			}
 
-			// Add guild to request context
 			ctx := context.WithValue(r.Context(), GuildContextKey, guild)
 			r = r.WithContext(ctx)
 

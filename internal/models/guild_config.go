@@ -115,13 +115,12 @@ func (gc *GuildConfig) HasModeratorRole(userRoleIDs []string) bool {
 
 // hasAnyRole efficiently checks if any user role matches any allowed role
 func hasAnyRole(userRoles, allowedRoles []string) bool {
-	// Create a set of allowed roles for O(1) lookup
+
 	allowedSet := make(map[string]bool, len(allowedRoles))
 	for _, role := range allowedRoles {
 		allowedSet[role] = true
 	}
 
-	// Check if any user role exists in the allowed set
 	for _, userRole := range userRoles {
 		if allowedSet[userRole] {
 			return true

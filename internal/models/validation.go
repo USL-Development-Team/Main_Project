@@ -52,7 +52,6 @@ func (rp *RequestParser) ParsePaginationParams(r *http.Request) *PaginationParam
 		Order: "desc",
 	}
 
-	// Parse page
 	if pageStr := r.URL.Query().Get("page"); pageStr != "" {
 		if page, err := strconv.Atoi(pageStr); err != nil {
 			rp.AddError("page", "must be a valid integer", pageStr)
@@ -63,7 +62,6 @@ func (rp *RequestParser) ParsePaginationParams(r *http.Request) *PaginationParam
 		}
 	}
 
-	// Parse limit
 	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 		if limit, err := strconv.Atoi(limitStr); err != nil {
 			rp.AddError("limit", "must be a valid integer", limitStr)
@@ -76,12 +74,10 @@ func (rp *RequestParser) ParsePaginationParams(r *http.Request) *PaginationParam
 		}
 	}
 
-	// Parse sort
 	if sort := r.URL.Query().Get("sort"); sort != "" {
 		params.Sort = sort
 	}
 
-	// Parse order
 	if order := r.URL.Query().Get("order"); order != "" {
 		if order != "asc" && order != "desc" {
 			rp.AddError("order", "must be 'asc' or 'desc'", order)
@@ -90,7 +86,6 @@ func (rp *RequestParser) ParsePaginationParams(r *http.Request) *PaginationParam
 		}
 	}
 
-	// Parse cursor
 	if cursor := r.URL.Query().Get("cursor"); cursor != "" {
 		params.Cursor = cursor
 	}
@@ -102,12 +97,10 @@ func (rp *RequestParser) ParsePaginationParams(r *http.Request) *PaginationParam
 func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 	filters := &UserFilters{}
 
-	// Parse search
 	if search := r.URL.Query().Get("search"); search != "" {
 		filters.Search = strings.TrimSpace(search)
 	}
 
-	// Parse status
 	if status := r.URL.Query().Get("status"); status != "" {
 		if !isValidUserStatus(status) {
 			rp.AddError("status", "must be 'active', 'inactive', or 'banned'", status)
@@ -143,7 +136,6 @@ func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 			fmt.Sprintf("min=%d, max=%d", *filters.MMRMin, *filters.MMRMax))
 	}
 
-	// Parse date range
 	if createdAfterStr := r.URL.Query().Get("created_after"); createdAfterStr != "" {
 		if createdAfter, err := time.Parse(time.RFC3339, createdAfterStr); err != nil {
 			// Try parsing date-only format
@@ -170,7 +162,6 @@ func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 		}
 	}
 
-	// Parse has_trackers
 	if hasTrackersStr := r.URL.Query().Get("has_trackers"); hasTrackersStr != "" {
 		if hasTrackersStr != "true" && hasTrackersStr != "false" {
 			rp.AddError("has_trackers", "must be 'true' or 'false'", hasTrackersStr)
@@ -187,7 +178,6 @@ func (rp *RequestParser) ParseUserFilters(r *http.Request) *UserFilters {
 func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 	filters := &TrackerFilters{}
 
-	// Parse valid
 	if validStr := r.URL.Query().Get("valid"); validStr != "" {
 		if validStr != "true" && validStr != "false" {
 			rp.AddError("valid", "must be 'true' or 'false'", validStr)
@@ -197,7 +187,6 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 		}
 	}
 
-	// Parse playlist
 	if playlist := r.URL.Query().Get("playlist"); playlist != "" {
 		if !isValidPlaylist(playlist) {
 			rp.AddError("playlist", "must be 'ones', 'twos', or 'threes'", playlist)
@@ -206,7 +195,6 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 		}
 	}
 
-	// Parse peak range
 	if peakMinStr := r.URL.Query().Get("peak_min"); peakMinStr != "" {
 		if peakMin, err := strconv.Atoi(peakMinStr); err != nil {
 			rp.AddError("peak_min", "must be a valid integer", peakMinStr)
@@ -233,7 +221,6 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 			fmt.Sprintf("min=%d, max=%d", *filters.PeakMin, *filters.PeakMax))
 	}
 
-	// Parse discord_id
 	if discordID := r.URL.Query().Get("discord_id"); discordID != "" {
 		if len(discordID) < 17 || len(discordID) > 19 {
 			rp.AddError("discord_id", "must be 17-19 characters long", discordID)
@@ -242,7 +229,6 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 		}
 	}
 
-	// Parse games range
 	if gamesMinStr := r.URL.Query().Get("games_min"); gamesMinStr != "" {
 		if gamesMin, err := strconv.Atoi(gamesMinStr); err != nil {
 			rp.AddError("games_min", "must be a valid integer", gamesMinStr)
@@ -253,7 +239,6 @@ func (rp *RequestParser) ParseTrackerFilters(r *http.Request) *TrackerFilters {
 		}
 	}
 
-	// Parse date range
 	if createdAfterStr := r.URL.Query().Get("created_after"); createdAfterStr != "" {
 		if createdAfter, err := time.Parse(time.RFC3339, createdAfterStr); err != nil {
 			if createdAfter, err := time.Parse("2006-01-02", createdAfterStr); err != nil {

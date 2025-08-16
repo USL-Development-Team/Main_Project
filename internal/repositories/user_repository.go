@@ -305,7 +305,6 @@ func (r *UserRepository) GetUserStats() (*models.UserStats, error) {
 
 // Helper function to convert Supabase generated type to internal model
 func (r *UserRepository) convertToUser(userSelect models.PublicUsersSelect) models.User {
-	// Parse timestamps
 	createdAt, _ := time.Parse(time.RFC3339, userSelect.CreatedAt)
 	updatedAt, _ := time.Parse(time.RFC3339, userSelect.UpdatedAt)
 
@@ -327,7 +326,7 @@ func (r *UserRepository) convertToUser(userSelect models.PublicUsersSelect) mode
 
 // GetUsersPaginated gets users with pagination and filtering using Supabase client
 func (r *UserRepository) GetUsersPaginated(params *models.PaginationParams, filters *models.UserFilters) ([]*models.User, *models.PaginationMetadata, error) {
-	// Build base query
+
 	query := r.client.From("users").Select("*", "", false)
 
 	// Apply filters
@@ -359,7 +358,6 @@ func (r *UserRepository) GetUsersPaginated(params *models.PaginationParams, filt
 		}
 	}
 
-	// Get total count for pagination metadata
 	total, err := r.getUserCount(filters)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get user count: %w", err)
@@ -441,7 +439,6 @@ func (r *UserRepository) getUserCount(filters *models.UserFilters) (int64, error
 		return 0, fmt.Errorf("failed to get user count: %w", err)
 	}
 
-	// Parse count result
 	var countResult []map[string]interface{}
 	err = json.Unmarshal(data, &countResult)
 	if err != nil {
@@ -560,7 +557,6 @@ func (r *UserRepository) updateSingleUser(discordID string, updates map[string]i
 		return fmt.Errorf("no valid fields to update")
 	}
 
-	// Add updated_at timestamp
 	sanitizedUpdates["updated_at"] = time.Now().Format(time.RFC3339)
 
 	// Execute update

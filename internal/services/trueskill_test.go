@@ -130,7 +130,6 @@ func TestTrueSkillCalculationAccuracy(t *testing.T) {
 			t.Logf("Expected μ: %.1f (±%.1f), Got μ: %.1f", tc.expectedMu, tc.tolerance, skillResult.TrueskillMu)
 			t.Logf("Expected σ: %.1f, Normalized Skill: %.1f%%", tc.expectedSigma, skillResult.NormalizedSkill)
 
-			// Check if TrueSkill Mu is within expected range
 			if tc.name == "High MMR Player (1858 MMR) - Production Case" {
 				if skillResult.TrueskillMu < 1500 {
 					t.Errorf("❌ BUG: High MMR player (1858) got low TrueSkill μ=%.1f, expected μ > 1500", skillResult.TrueskillMu)

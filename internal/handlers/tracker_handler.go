@@ -89,7 +89,6 @@ func (h *TrackerHandler) CreateTracker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse form values to integers
 	parseInt := func(value string) int {
 		if value == "" {
 			return 0
@@ -161,7 +160,6 @@ func (h *TrackerHandler) EditTrackerForm(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Get tracker by finding all trackers and filtering by ID (simplified approach)
 	allTrackers, err := h.trackerRepo.GetAllTrackers(false)
 	if err != nil {
 		log.Printf("Error getting trackers: %v", err)
@@ -220,7 +218,6 @@ func (h *TrackerHandler) UpdateTracker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse form values to integers
 	parseInt := func(value string) int {
 		if value == "" {
 			return 0

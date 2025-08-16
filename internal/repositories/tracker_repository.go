@@ -304,7 +304,7 @@ func (r *TrackerRepository) GetTrackerStats() (*models.TrackerStats, error) {
 
 // GetTrackersPaginated gets trackers with pagination and filtering using Supabase client
 func (r *TrackerRepository) GetTrackersPaginated(params *models.PaginationParams, filters *models.TrackerFilters) ([]*models.UserTracker, *models.PaginationMetadata, error) {
-	// Build base query
+
 	query := r.client.From("user_trackers").Select("*", "", false)
 
 	// Apply filters
@@ -344,7 +344,6 @@ func (r *TrackerRepository) GetTrackersPaginated(params *models.PaginationParams
 		}
 	}
 
-	// Get total count for pagination metadata
 	total, err := r.getTrackerCount(filters)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get tracker count: %w", err)
@@ -434,7 +433,6 @@ func (r *TrackerRepository) getTrackerCount(filters *models.TrackerFilters) (int
 		return 0, fmt.Errorf("failed to get tracker count: %w", err)
 	}
 
-	// Parse count result
 	var countResult []map[string]interface{}
 	err = json.Unmarshal(data, &countResult)
 	if err != nil {
