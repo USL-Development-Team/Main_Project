@@ -33,53 +33,52 @@ type ApplicationContext struct {
 }
 
 func main() {
-	appLogger := logger.SetupLogger(slog.LevelDebug, "logs/server.log")
-	appLogger.Info("Starting USL server application")
+	logger := logger.SetupLogger(slog.LevelDebug, "logs/server.log")
+	logger.Info("Starting USL server application")
 
-	dependencies := initializeApplication(appLogger)
-	server := setupHTTPServer(dependencies)
-	startServer(server, dependencies.Config, dependencies.Logger)
+	app := initializeApplication(logger)
+	server := setupHTTPServer(app)
+	startServer(server, app.Config, app.Logger)
 }
 
-func initializeApplication(appLogger *slog.Logger) *ApplicationContext {
-	configuration := loadConfiguration(appLogger)
-	supabaseClient := createSupabaseClient(configuration, appLogger)
-	repositories := setupRepositories(supabaseClient, configuration, appLogger)
-	services := setupServices(configuration, repositories, appLogger)
-	templates := loadTemplates(appLogger)
+func initializeApplication(logger *slog.Logger) *ApplicationContext {
+	cfg := loadConfiguration(logger)
+	supabaseClient := createSupabaseClient(cfg, logger)
+	repositories := setupRepositories(supabaseClient, cfg, logger)
+	services := setupServices(cfg, repositories, logger)
+	templates := loadTemplates(logger)
 
-	// Create unified Discord OAuth auth system
-	discordAuth := auth.NewDiscordAuth(supabaseClient, configuration.USL.AdminDiscordIDs,
-		configuration.Supabase.URL, configuration.Supabase.PublicURL, configuration.Supabase.AnonKey)
+	auth := auth.NewDiscordAuth(supabaseClient, cfg.USL.AdminDiscordIDs,
+		cfg.Supabase.URL, cfg.Supabase.PublicURL, cfg.Supabase.AnonKey)
 
 	return &ApplicationContext{
-		Config:           configuration,
+		Config:           cfg,
 		UserRepo:         repositories.UserRepo,
 		TrackerRepo:      repositories.TrackerRepo,
 		GuildRepo:        repositories.GuildRepo,
 		TrueSkillService: services,
 		Templates:        templates,
-		Logger:           appLogger,
-		Auth:             discordAuth,
+		Logger:           logger,
+		Auth:             auth,
 	}
 }
 
 func loadConfiguration(logger *slog.Logger) *config.Config {
 	logger.Info("Loading configuration")
-	configuration, err := config.Load()
+	cfg, err := config.Load()
 	if err != nil {
 		logger.Error("Failed to load configuration", "error", err)
 		os.Exit(1)
 	}
 	logger.Info("Configuration loaded successfully")
-	return configuration
+	return cfg
 }
 
-func createSupabaseClient(configuration *config.Config, logger *slog.Logger) *supabase.Client {
-	logger.Info("Initializing Supabase client", "url", configuration.Supabase.URL)
+func createSupabaseClient(cfg *config.Config, logger *slog.Logger) *supabase.Client {
+	logger.Info("Initializing Supabase client", "url", cfg.Supabase.URL)
 	client, err := supabase.NewClient(
-		configuration.Supabase.URL,
-		configuration.Supabase.ServiceRoleKey,
+		cfg.Supabase.URL,
+		cfg.Supabase.ServiceRoleKey,
 		nil,
 	)
 	if err != nil {
@@ -96,20 +95,20 @@ type RepositoryCollection struct {
 	GuildRepo   *repositories.GuildRepository
 }
 
-func setupRepositories(client *supabase.Client, config *config.Config, logger *slog.Logger) *RepositoryCollection {
+func setupRepositories(client *supabase.Client, cfg *config.Config, logger *slog.Logger) *RepositoryCollection {
 	logger.Info("Setting up repositories")
 	return &RepositoryCollection{
-		UserRepo:    repositories.NewUserRepository(client, config),
-		TrackerRepo: repositories.NewTrackerRepository(client, config),
-		GuildRepo:   repositories.NewGuildRepository(client, config),
+		UserRepo:    repositories.NewUserRepository(client, cfg),
+		TrackerRepo: repositories.NewTrackerRepository(client, cfg),
+		GuildRepo:   repositories.NewGuildRepository(client, cfg),
 	}
 }
 
-func setupServices(config *config.Config, repos *RepositoryCollection, logger *slog.Logger) *services.UserTrueSkillService {
+func setupServices(cfg *config.Config, repos *RepositoryCollection, logger *slog.Logger) *services.UserTrueSkillService {
 	logger.Info("Setting up services")
-	percentileConverter := services.NewPercentileConverter(config)
-	mmrCalculator := services.NewMMRCalculator(config, percentileConverter)
-	uncertaintyCalculator := services.NewEnhancedUncertaintyCalculator(config)
+	percentileConverter := services.NewPercentileConverter(cfg)
+	mmrCalculator := services.NewMMRCalculator(cfg, percentileConverter)
+	uncertaintyCalculator := services.NewEnhancedUncertaintyCalculator(cfg)
 	dataTransformationService := services.NewDataTransformationService()
 
 	return services.NewUserTrueSkillService(
@@ -118,7 +117,7 @@ func setupServices(config *config.Config, repos *RepositoryCollection, logger *s
 		mmrCalculator,
 		uncertaintyCalculator,
 		dataTransformationService,
-		config,
+		cfg,
 	)
 }
 

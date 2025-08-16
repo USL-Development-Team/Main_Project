@@ -10,6 +10,14 @@ import (
 	"github.com/supabase-community/supabase-go"
 )
 
+// Discord metadata field names for consistent access
+const (
+	metadataProviderID = "provider_id"
+	metadataSub        = "sub"
+	metadataDiscordID  = "discord_id"
+	userMetadataKey    = "user_metadata"
+)
+
 // DiscordAuth provides unified Discord OAuth authentication via Supabase Auth
 // This replaces both the main app auth and USL auth systems
 type DiscordAuth struct {
@@ -347,35 +355,18 @@ func (a *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]i
 		return nil, fmt.Errorf("failed to get user from Supabase: %w", err)
 	}
 
-	// Extract user information
-	userMap := map[string]interface{}{
+	userInfo := map[string]interface{}{
 		"id":            user.ID,
 		"email":         user.Email,
 		"user_metadata": user.UserMetadata,
 		"app_metadata":  user.AppMetadata,
 	}
 
-	return userMap, nil
+	return userInfo, nil
 }
 
 func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
-	// Extract Discord ID from user metadata
-	// The exact location depends on how Supabase stores Discord user info
-	discordID := ""
-
-	// Debug: Log the entire user object to see what we're working with
-
-	// Try to get Discord ID from various possible locations
-	if metadata, ok := user["user_metadata"].(map[string]interface{}); ok {
-		if id, exists := metadata["provider_id"].(string); exists {
-			discordID = id
-		} else if id, exists := metadata["sub"].(string); exists {
-			discordID = id
-		} else if id, exists := metadata["discord_id"].(string); exists {
-			discordID = id
-		}
-	}
-
+	discordID := a.extractDiscordID(user)
 	if discordID == "" {
 		return false
 	}
@@ -387,6 +378,24 @@ func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
 	}
 
 	return false
+}
+
+// extractDiscordID extracts Discord ID from user metadata using multiple fallback fields
+func (a *DiscordAuth) extractDiscordID(user map[string]interface{}) string {
+	metadata, ok := user[userMetadataKey].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	// Try multiple possible field names for Discord ID
+	fields := []string{metadataProviderID, metadataSub, metadataDiscordID}
+	for _, field := range fields {
+		if id, exists := metadata[field].(string); exists && id != "" {
+			return id
+		}
+	}
+
+	return ""
 }
 
 func (a *DiscordAuth) setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string) {

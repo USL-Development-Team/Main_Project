@@ -13,18 +13,18 @@ import (
 )
 
 type UserHandler struct {
-	userRepository *repositories.UserRepository
-	templates      *template.Template
+	repo      *repositories.UserRepository
+	templates *template.Template
 }
 
 func NewUserHandler(userRepo *repositories.UserRepository, templates *template.Template) *UserHandler {
 	return &UserHandler{
-		userRepository: userRepo,
-		templates:      templates,
+		repo:      userRepo,
+		templates: templates,
 	}
 }
 
-func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request, allowedMethod string) bool {
+func (h *UserHandler) validateMethod(w http.ResponseWriter, r *http.Request, allowedMethod string) bool {
 	if r.Method != allowedMethod {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return false
@@ -32,7 +32,7 @@ func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request,
 	return true
 }
 
-func (h *UserHandler) extractGuildContext(w http.ResponseWriter, r *http.Request) (*models.Guild, bool) {
+func (h *UserHandler) getGuild(w http.ResponseWriter, r *http.Request) (*models.Guild, bool) {
 	guild, ok := middleware.GetGuildFromRequest(r)
 	if !ok {
 		http.Error(w, "Guild context not found", http.StatusInternalServerError)
@@ -128,11 +128,11 @@ type UserFormData struct {
 
 // ListUsers displays all users in HTML format
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	if !h.validateHTTPMethod(w, r, http.MethodGet) {
+	if !h.validateMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	guild, ok := h.extractGuildContext(w, r)
+	guild, ok := h.getGuild(w, r)
 	if !ok {
 		return
 	}
@@ -143,9 +143,9 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if query != "" {
-		users, err = h.userRepository.SearchUsers(query, 50)
+		users, err = h.repo.SearchUsers(query, 50)
 	} else {
-		users, err = h.userRepository.GetAllUsers(false)
+		users, err = h.repo.GetAllUsers(false)
 	}
 
 	if err != nil {
@@ -170,11 +170,11 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 // NewUserForm displays the form for creating a new user
 func (h *UserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
-	if !h.validateHTTPMethod(w, r, http.MethodGet) {
+	if !h.validateMethod(w, r, http.MethodGet) {
 		return
 	}
 
-	guild, ok := h.extractGuildContext(w, r)
+	guild, ok := h.getGuild(w, r)
 	if !ok {
 		return
 	}
@@ -184,11 +184,11 @@ func (h *UserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
 
 // CreateUser handles the creation of a new user
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	if !h.validateHTTPMethod(w, r, http.MethodPost) {
+	if !h.validateMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	guild, ok := h.extractGuildContext(w, r)
+	guild, ok := h.getGuild(w, r)
 	if !ok {
 		return
 	}
@@ -211,7 +211,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepository.CreateUser(userData)
+	user, err := h.repo.CreateUser(userData)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
 		errors := map[string]string{"general": "Failed to create user: " + err.Error()}
@@ -244,7 +244,7 @@ func (h *UserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		user, err := h.userRepository.FindUserByDiscordID(discordID)
+		user, err := h.repo.FindUserByDiscordID(discordID)
 		if err != nil {
 			log.Printf("Error finding user: %v", err)
 			http.Error(w, "User not found", http.StatusNotFound)
@@ -269,7 +269,7 @@ func (h *UserHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepository.FindUserByID(id)
+	user, err := h.repo.FindUserByID(id)
 	if err != nil {
 		log.Printf("Error finding user: %v", err)
 		http.Error(w, "User not found", http.StatusNotFound)
@@ -313,7 +313,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Find user by Discord ID first
-		user, err := h.userRepository.FindUserByDiscordID(originalDiscordID)
+		user, err := h.repo.FindUserByDiscordID(originalDiscordID)
 		if err != nil {
 			log.Printf("Error finding user: %v", err)
 			http.Error(w, "User not found", http.StatusNotFound)
@@ -342,7 +342,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errors) > 0 {
-		user, _ := h.userRepository.FindUserByID(id)
+		user, _ := h.repo.FindUserByID(id)
 		formData := &UserFormData{
 			Title:  "Edit User",
 			Guild:  guild,
@@ -358,12 +358,12 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepository.UpdateUser(strconv.FormatInt(id, 10), userData)
+	user, err := h.repo.UpdateUser(strconv.FormatInt(id, 10), userData)
 	if err != nil {
 		log.Printf("Error updating user: %v", err)
 		errors["general"] = "Failed to update user: " + err.Error()
 
-		user, _ := h.userRepository.FindUserByID(id)
+		user, _ := h.repo.FindUserByID(id)
 		formData := &UserFormData{
 			Title:  "Edit User",
 			Guild:  guild,
@@ -415,7 +415,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if discordID != "" {
-		user, err = h.userRepository.DeleteUser(discordID)
+		user, err = h.repo.DeleteUser(discordID)
 	} else {
 		// Convert userID to find by Discord ID first (legacy compatibility)
 		id, parseErr := strconv.ParseInt(userID, 10, 64)
@@ -424,13 +424,13 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		userObj, findErr := h.userRepository.FindUserByID(id)
+		userObj, findErr := h.repo.FindUserByID(id)
 		if findErr != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}
 
-		user, err = h.userRepository.DeleteUser(userObj.DiscordID)
+		user, err = h.repo.DeleteUser(userObj.DiscordID)
 	}
 
 	if err != nil {
@@ -470,7 +470,7 @@ func (h *UserHandler) ListUsersAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.userRepository.GetAllUsers(false)
+	users, err := h.repo.GetAllUsers(false)
 	if err != nil {
 		log.Printf("Error getting users: %v", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
