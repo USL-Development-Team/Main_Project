@@ -3,7 +3,8 @@ services:
     name: usl-admin-app
     runtime: docker
     repo: https://github.com/USL-Development-Team/Main_Project
-    branch: main
+    # Deploy only on tagged releases, not every push to main
+    autoDeploy: false
     
     # Docker configuration
     dockerfilePath: ./Dockerfile
@@ -69,14 +70,22 @@ services:
     # Health check configuration
     healthCheckPath: /health
     
-    # Deployment configuration
+    # Deployment configuration - more restrictive
     buildFilter:
       paths:
-        - "**"
+        - "cmd/**"
+        - "internal/**"
+        - "templates/**"
+        - "static/**"
+        - "Dockerfile"
+        - "go.mod"
+        - "go.sum"
       ignoredPaths:
+        - ".github/**"
         - "docs/**"
-        - "README.md"
         - "*.md"
+        - "CHANGELOG.md"
+        - "CONTRIBUTING.md"
 
 # Optional: Preview environments for pull requests
 previews:

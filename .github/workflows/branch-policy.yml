@@ -1,0 +1,69 @@
+name: Branch Policy Enforcement
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  enforce-develop-only:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.ref != 'develop' && !startsWith(github.head_ref, 'release-please--')
+    steps:
+      - name: Block PR from non-develop branch
+        run: |
+          echo "❌ ERROR: Pull requests to main are only allowed from develop branch"
+          echo "Current source branch: ${{ github.event.pull_request.head.ref }}"
+          echo ""
+          echo "✅ Allowed workflow:"
+          echo "  feature/branch → develop → main"
+          echo ""
+          echo "Please:"
+          echo "1. Merge your branch into develop first"
+          echo "2. Then create PR from develop to main"
+          exit 1
+
+  validate-develop-pr:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.ref == 'develop' || startsWith(github.head_ref, 'release-please--')
+    steps:
+      - name: Validate develop to main PR
+        run: |
+          echo "✅ Valid PR: ${{ github.event.pull_request.head.ref }} → main"
+          echo "This PR follows the correct git flow workflow"
+          
+  # This job always runs and passes only for valid branches
+  branch-policy-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce branch policy
+        run: |
+          if [[ "${{ github.event.pull_request.head.ref }}" != "develop" ]] && [[ ! "${{ github.head_ref }}" == release-please--* ]]; then
+            echo "❌ Only develop branch can merge to main"
+            exit 1
+          else
+            echo "✅ Branch policy check passed"
+          fi
+          
+      - name: Check for required labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name);
+            const requiredLabels = ['release'];
+            const hasRequired = requiredLabels.some(label => labels.includes(label));
+            
+            if (context.payload.pull_request.head.ref === 'develop' && !hasRequired) {
+              github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: ['release', 'develop-to-main']
+              });
+              
+              github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: '🚀 **Release PR Detected**\n\nThis PR will trigger a new release when merged:\n- Semantic version will be calculated automatically\n- CHANGELOG.md will be updated\n- Git tag will be created\n- GitHub release will be published\n- Render deployment will be triggered'
+              });
+            }
