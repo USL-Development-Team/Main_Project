@@ -261,6 +261,192 @@
 
         // Calculate initial MMR on page load
         calculateMMR();
+
+        // ===== CLIENT-SIDE VALIDATION FRAMEWORK =====
+        
+        // Validation constants (mirror server-side validation)
+        const VALIDATION = {
+            MMR: { MIN: 0, MAX: 3000 },
+            GAMES: { MIN: 0, MAX: 10000 },
+            DISCORD_ID: { MIN_LENGTH: 17, MAX_LENGTH: 19 },
+            URL_HOSTS: ['rocketleague.tracker.network', 'ballchasing.com', 'rltracker.pro']
+        };
+
+        // Validation functions
+        function validateDiscordID(discordID) {
+            if (!discordID || discordID.trim() === '') {
+                return { valid: false, message: 'Discord ID is required' };
+            }
+            
+            const trimmed = discordID.trim();
+            if (!/^\d+$/.test(trimmed)) {
+                return { valid: false, message: 'Discord ID must contain only digits' };
+            }
+            
+            if (trimmed.length < VALIDATION.DISCORD_ID.MIN_LENGTH || trimmed.length > VALIDATION.DISCORD_ID.MAX_LENGTH) {
+                return { valid: false, message: `Discord ID must be ${VALIDATION.DISCORD_ID.MIN_LENGTH}-${VALIDATION.DISCORD_ID.MAX_LENGTH} digits` };
+            }
+            
+            return { valid: true };
+        }
+
+        function validateMMR(value, fieldName) {
+            if (value === '' || value === null || value === undefined) {
+                return { valid: true }; // Optional field
+            }
+            
+            const mmr = parseInt(value);
+            if (isNaN(mmr)) {
+                return { valid: false, message: 'Must be a valid number' };
+            }
+            
+            if (mmr < VALIDATION.MMR.MIN || mmr > VALIDATION.MMR.MAX) {
+                return { valid: false, message: `MMR must be between ${VALIDATION.MMR.MIN} and ${VALIDATION.MMR.MAX}` };
+            }
+            
+            return { valid: true };
+        }
+
+        function validateGames(value, fieldName) {
+            if (value === '' || value === null || value === undefined) {
+                return { valid: true }; // Optional field
+            }
+            
+            const games = parseInt(value);
+            if (isNaN(games)) {
+                return { valid: false, message: 'Must be a valid number' };
+            }
+            
+            if (games < VALIDATION.GAMES.MIN || games > VALIDATION.GAMES.MAX) {
+                return { valid: false, message: `Games must be between ${VALIDATION.GAMES.MIN} and ${VALIDATION.GAMES.MAX}` };
+            }
+            
+            return { valid: true };
+        }
+
+        function validateURL(url) {
+            if (!url || url.trim() === '') {
+                return { valid: true }; // Optional field
+            }
+            
+            try {
+                const parsedURL = new URL(url);
+                
+                // Check if host contains any of our valid tracker hosts
+                const isValidHost = VALIDATION.URL_HOSTS.some(host => 
+                    parsedURL.hostname.includes(host)
+                );
+                
+                if (!isValidHost) {
+                    return { 
+                        valid: false, 
+                        message: 'Must be a valid Rocket League tracker URL' 
+                    };
+                }
+                
+                return { valid: true };
+            } catch (e) {
+                return { valid: false, message: 'Must be a valid URL format' };
+            }
+        }
+
+        // Visual feedback functions
+        function showFieldError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            
+            // Update field styling
+            field.classList.remove('border-gray-300');
+            field.classList.add('border-red-300', 'bg-red-50');
+            
+            // Remove existing error message
+            const existingError = field.parentNode.querySelector('.field-error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            const errorEl = document.createElement('p');
+            errorEl.className = 'field-error-message mt-1 text-sm text-red-600';
+            errorEl.textContent = message;
+            field.parentNode.appendChild(errorEl);
+        }
+
+        function clearFieldError(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            
+            // Reset field styling
+            field.classList.remove('border-red-300', 'bg-red-50');
+            field.classList.add('border-gray-300');
+            
+            // Remove error message
+            const existingError = field.parentNode.querySelector('.field-error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+
+        // Main validation function
+        function validateField(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            
+            const value = field.value;
+            let result;
+            
+            // Route to appropriate validator based on field
+            if (fieldId === 'discord_id') {
+                result = validateDiscordID(value);
+            } else if (fieldId === 'url') {
+                result = validateURL(value);
+            } else if (fieldId.includes('peak') || fieldId.includes('mmr')) {
+                result = validateMMR(value, fieldId);
+            } else if (fieldId.includes('games')) {
+                result = validateGames(value, fieldId);
+            } else {
+                return; // Unknown field
+            }
+            
+            // Apply visual feedback
+            if (result.valid) {
+                clearFieldError(fieldId);
+            } else {
+                showFieldError(fieldId, result.message);
+            }
+        }
+
+        // Attach blur event listeners to all form fields
+        function setupValidation() {
+            const fieldsToValidate = [
+                'discord_id', 'url',
+                'ones_current_peak', 'ones_previous_peak', 'ones_all_time_peak',
+                'ones_current_games', 'ones_previous_games',
+                'twos_current_peak', 'twos_previous_peak', 'twos_all_time_peak', 
+                'twos_current_games', 'twos_previous_games',
+                'threes_current_peak', 'threes_previous_peak', 'threes_all_time_peak',
+                'threes_current_games', 'threes_previous_games'
+            ];
+            
+            fieldsToValidate.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('blur', () => validateField(fieldId));
+                    
+                    // Also validate on change for immediate feedback on MMR/games fields
+                    if (fieldId.includes('peak') || fieldId.includes('games')) {
+                        field.addEventListener('input', () => {
+                            // Debounce validation for input events
+                            clearTimeout(field.validateTimeout);
+                            field.validateTimeout = setTimeout(() => validateField(fieldId), 300);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Initialize validation when page loads
+        setupValidation();
     </script>
 </body>
 </html>
