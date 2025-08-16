@@ -34,6 +34,52 @@ func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request,
 	return true
 }
 
+func (h *UserHandler) extractGuildContext(w http.ResponseWriter, r *http.Request) (*models.Guild, bool) {
+	guild, ok := middleware.GetGuildFromRequest(r)
+	if !ok {
+		http.Error(w, "Guild context not found", http.StatusInternalServerError)
+		return nil, false
+	}
+	return guild, true
+}
+
+func (h *UserHandler) renderFormWithErrors(w http.ResponseWriter, r *http.Request, title string, guild *models.Guild, user *models.User, errors map[string]string) {
+	formData := &UserFormData{
+		Title:  title,
+		Guild:  guild,
+		User:   user,
+		Errors: errors,
+	}
+
+	if h.isHTMXRequest(r) {
+		h.renderFragment(w, "user-form", formData)
+	} else {
+		h.renderTemplate(w, "content", formData)
+	}
+}
+
+func (h *UserHandler) redirectToUserList(w http.ResponseWriter, r *http.Request, guild *models.Guild) {
+	redirectURL := "/" + guild.Slug + "/users"
+
+	if h.isHTMXRequest(r) {
+		w.Header().Set("HX-Redirect", redirectURL)
+		w.WriteHeader(http.StatusOK)
+	} else {
+		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	}
+}
+
+func (h *UserHandler) validateUserForm(name, discordID string) map[string]string {
+	errors := make(map[string]string)
+	if strings.TrimSpace(name) == "" {
+		errors["Name"] = "Display name is required"
+	}
+	if strings.TrimSpace(discordID) == "" {
+		errors["DiscordID"] = "Discord ID is required"
+	}
+	return errors
+}
+
 func (h *UserHandler) renderTemplate(w http.ResponseWriter, templateName string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.templates.ExecuteTemplate(w, templateName, data); err != nil {
@@ -88,9 +134,8 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guild, ok := middleware.GetGuildFromRequest(r)
+	guild, ok := h.extractGuildContext(w, r)
 	if !ok {
-		http.Error(w, "Guild context not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -131,32 +176,22 @@ func (h *UserHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guild, ok := middleware.GetGuildFromRequest(r)
+	guild, ok := h.extractGuildContext(w, r)
 	if !ok {
-		http.Error(w, "Guild context not found", http.StatusInternalServerError)
 		return
 	}
 
-	formData := &UserFormData{
-		Title:  "Add New User",
-		Guild:  guild,
-		User:   nil,
-		Errors: make(map[string]string),
-	}
-
-	h.renderTemplate(w, "content", formData)
+	h.renderFormWithErrors(w, r, "Add New User", guild, nil, make(map[string]string))
 }
 
 // CreateUser handles the creation of a new user
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if !h.validateHTTPMethod(w, r, http.MethodPost) {
 		return
 	}
 
-	guild, ok := middleware.GetGuildFromRequest(r)
+	guild, ok := h.extractGuildContext(w, r)
 	if !ok {
-		http.Error(w, "Guild context not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -173,61 +208,21 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		MMR:       0, // MMR will be calculated via TrueSkill
 	}
 
-	// Validation
-	errors := make(map[string]string)
-	if userData.Name == "" {
-		errors["Name"] = "Display name is required"
-	}
-	if userData.DiscordID == "" {
-		errors["DiscordID"] = "Discord ID is required"
-	}
-
-	if len(errors) > 0 {
-		// Return form with errors for HTMX
-		formData := &UserFormData{
-			Title:  "Add New User",
-			Guild:  guild,
-			User:   nil,
-			Errors: errors,
-		}
-
-		if h.isHTMXRequest(r) {
-			h.renderFragment(w, "user-form", formData)
-		} else {
-			h.renderTemplate(w, "content", formData)
-		}
+	if errors := h.validateUserForm(userData.Name, userData.DiscordID); len(errors) > 0 {
+		h.renderFormWithErrors(w, r, "Add New User", guild, nil, errors)
 		return
 	}
 
 	user, err := h.userRepository.CreateUser(userData)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
-		errors["general"] = "Failed to create user: " + err.Error()
-
-		formData := &UserFormData{
-			Title:  "Add New User",
-			Guild:  guild,
-			User:   nil,
-			Errors: errors,
-		}
-
-		if h.isHTMXRequest(r) {
-			h.renderFragment(w, "user-form", formData)
-		} else {
-			h.renderTemplate(w, "content", formData)
-		}
+		errors := map[string]string{"general": "Failed to create user: " + err.Error()}
+		h.renderFormWithErrors(w, r, "Add New User", guild, nil, errors)
 		return
 	}
 
 	log.Printf("Created user: %s (%s)", user.Name, user.DiscordID)
-
-	if h.isHTMXRequest(r) {
-		// Redirect via HTMX
-		w.Header().Set("HX-Redirect", "/"+guild.Slug+"/users")
-		w.WriteHeader(http.StatusOK)
-	} else {
-		http.Redirect(w, r, "/"+guild.Slug+"/users", http.StatusSeeOther)
-	}
+	h.redirectToUserList(w, r, guild)
 }
 
 // EditUserForm displays the form for editing an existing user

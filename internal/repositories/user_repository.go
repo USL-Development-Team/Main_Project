@@ -12,7 +12,6 @@ import (
 )
 
 // UserRepository handles all user data access operations using Supabase Go client
-// Exactly matches the patterns from JavaScript UserRepository
 type UserRepository struct {
 	client *supabase.Client
 	config *config.Config
@@ -26,8 +25,7 @@ func NewUserRepository(client *supabase.Client, cfg *config.Config) *UserReposit
 }
 
 func (r *UserRepository) CreateUser(userData models.UserCreateRequest) (*models.User, error) {
-	existingUser, err := r.FindUserByDiscordID(userData.DiscordID)
-	if err == nil && existingUser != nil {
+	if existingUser, err := r.FindUserByDiscordID(userData.DiscordID); err == nil && existingUser != nil {
 		return nil, fmt.Errorf("user with Discord ID %s already exists", userData.DiscordID)
 	}
 

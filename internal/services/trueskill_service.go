@@ -10,19 +10,16 @@ import (
 )
 
 // UserTrueSkillService manages TrueSkill calculations and updates for individual users and batch operations.
-// Exact port of JavaScript UserTrueSkillService with dependency injection pattern.
-//
 // Service Responsibilities:
 // - Individual user TrueSkill calculation from tracker data
 // - Batch TrueSkill updates for all users
 // - Default TrueSkill assignment for users without trackers
 // - TrueSkill recalculation workflows
 type UserTrueSkillService struct {
-	// Service dependencies - injected at runtime
 	trackerRepo               *repositories.TrackerRepository
 	userRepo                  *repositories.UserRepository
-	percentileCalculator      *MMRCalculator
-	enhancedUncertainty       *EnhancedUncertaintyCalculator
+	mmrCalculator             *MMRCalculator
+	uncertaintyCalculator     *EnhancedUncertaintyCalculator
 	dataTransformationService *DataTransformationService
 	config                    *config.Config
 }
@@ -58,20 +55,19 @@ type TrueSkillCalculation struct {
 	LastUpdated time.Time              `json:"lastUpdated"`
 }
 
-// NewUserTrueSkillService creates a new user TrueSkill service instance
 func NewUserTrueSkillService(
 	trackerRepo *repositories.TrackerRepository,
 	userRepo *repositories.UserRepository,
-	percentileCalculator *MMRCalculator,
-	enhancedUncertainty *EnhancedUncertaintyCalculator,
+	mmrCalculator *MMRCalculator,
+	uncertaintyCalculator *EnhancedUncertaintyCalculator,
 	dataTransformationService *DataTransformationService,
 	config *config.Config,
 ) *UserTrueSkillService {
 	return &UserTrueSkillService{
 		trackerRepo:               trackerRepo,
 		userRepo:                  userRepo,
-		percentileCalculator:      percentileCalculator,
-		enhancedUncertainty:       enhancedUncertainty,
+		mmrCalculator:             mmrCalculator,
+		uncertaintyCalculator:     uncertaintyCalculator,
 		dataTransformationService: dataTransformationService,
 		config:                    config,
 	}
@@ -344,9 +340,9 @@ func (s *UserTrueSkillService) calculateTrueSkillValues(trackerData *TrackerData
 		},
 	}
 
-	skillResult := s.percentileCalculator.CalculatePercentileBasedSkill(playerData)
+	skillResult := s.mmrCalculator.CalculatePercentileBasedSkill(playerData)
 
-	trueskillSigma, err := s.enhancedUncertainty.CalculateEnhancedUncertainty(trackerData)
+	trueskillSigma, err := s.uncertaintyCalculator.CalculateEnhancedUncertainty(trackerData)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate enhanced uncertainty: %w", err)
 	}
@@ -409,8 +405,8 @@ func (s *UserTrueSkillService) GetTrueSkillStats() map[string]interface{} {
 		"dependencies": map[string]bool{
 			"trackerRepo":               s.trackerRepo != nil,
 			"userRepo":                  s.userRepo != nil,
-			"percentileCalculator":      s.percentileCalculator != nil,
-			"enhancedUncertainty":       s.enhancedUncertainty != nil,
+			"mmrCalculator":             s.mmrCalculator != nil,
+			"uncertaintyCalculator":     s.uncertaintyCalculator != nil,
 			"dataTransformationService": s.dataTransformationService != nil,
 		},
 	}

@@ -24,8 +24,8 @@ func TestUpdateUserTrueSkillFromTrackerData(t *testing.T) {
 	service := &UserTrueSkillService{
 		trackerRepo:               nil, // Will cause graceful failure in real calculation
 		userRepo:                  nil, // Will cause graceful failure in real calculation
-		percentileCalculator:      mmrCalculator,
-		enhancedUncertainty:       uncertaintyCalculator,
+		mmrCalculator:             mmrCalculator,
+		uncertaintyCalculator:     uncertaintyCalculator,
 		dataTransformationService: dataTransformationService,
 		config:                    cfg,
 	}
