@@ -5,13 +5,14 @@ if [ "$branch" = "develop" ]; then
     echo "❌ Direct commits to 'develop' branch are not allowed!"
     echo ""
     echo "✅ Proper workflow:"
-    echo "  1. git checkout -b feature/your-feature-name"
-    echo "  2. Make your changes and commit"
-    echo "  3. git push -u origin feature/your-feature-name"
-    echo "  4. Create PR to develop branch"
+    echo "  1. gh issue create --title \"Your issue title\" --body \"Description\""
+    echo "  2. gh issue develop <issue-number> --name feature/issue-description"
+    echo "  3. Make your changes and commit"
+    echo "  4. gh pr create --base develop"
     echo ""
-    echo "💡 To create a feature branch now:"
-    echo "  git checkout -b feature/$(whoami)-$(date +%Y%m%d)"
+    echo "💡 Quick start for this change:"
+    echo "  gh issue create --title \"$(git log --format=%s -n 1 || echo 'Fix or feature description')\""
+    echo "  # Then: gh issue develop <issue-number> --name feature/$(whoami)-$(date +%Y%m%d)"
     exit 1
 fi
 
