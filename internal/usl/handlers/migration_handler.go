@@ -7,7 +7,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"time"
 	"usl-server/internal/config"
 	"usl-server/internal/models"
@@ -18,6 +20,37 @@ import (
 // USL-specific constants for type safety
 const (
 	USLDiscordGuildID = "1390537743385231451" // USL Discord Guild ID
+)
+
+// Validation system types and constants
+type ValidationError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+	Code    string `json:"code"`
+}
+
+type ValidationResult struct {
+	IsValid bool              `json:"is_valid"`
+	Errors  []ValidationError `json:"errors"`
+}
+
+// Business rules for Rocket League MMR validation
+const (
+	MinMMR             = 0
+	MaxMMR             = 3000  // SSL is around 1900-2000, allow buffer for edge cases
+	MaxGames           = 10000 // Reasonable season game limit
+	MinDiscordIDLength = 17
+	MaxDiscordIDLength = 19
+)
+
+// Validation error codes for consistent categorization
+const (
+	ValidationCodeRequired      = "required"
+	ValidationCodeInvalidFormat = "invalid_format"
+	ValidationCodeOutOfRange    = "out_of_range"
+	ValidationCodeLogicalError  = "logical_error"
+	ValidationCodeInvalidURL    = "invalid_url"
+	ValidationCodeNoData        = "no_data"
 )
 
 // FormField represents typed form field names
@@ -155,16 +188,230 @@ func (h *MigrationHandler) buildTrackerFromForm(r *http.Request) *usl.USLUserTra
 	}
 }
 
-// validateTrackerRequired validates required tracker fields
-func (h *MigrationHandler) validateTrackerRequired(w http.ResponseWriter, tracker *usl.USLUserTracker) bool {
-	if tracker.DiscordID == "" || tracker.URL == "" {
-		log.Printf("[USL-HANDLER] Tracker validation failed: Discord=%s, URL=%s", tracker.DiscordID, tracker.URL)
-		http.Error(w, "Discord ID and URL are required", http.StatusBadRequest)
+// Comprehensive validation system
+
+// validateTracker performs comprehensive validation on a tracker
+func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) ValidationResult {
+	var errors []ValidationError
+
+	// Required field validation
+	if tracker.DiscordID == "" {
+		errors = append(errors, ValidationError{
+			Field:   "discord_id",
+			Message: "Discord ID is required",
+			Code:    ValidationCodeRequired,
+		})
+	} else if !isValidDiscordID(tracker.DiscordID) {
+		errors = append(errors, ValidationError{
+			Field:   "discord_id",
+			Message: "Discord ID must be 17-19 digits",
+			Code:    ValidationCodeInvalidFormat,
+		})
+	}
+
+	if tracker.URL == "" {
+		errors = append(errors, ValidationError{
+			Field:   "url",
+			Message: "Profile URL is required",
+			Code:    ValidationCodeRequired,
+		})
+	} else if !isValidTrackerURL(tracker.URL) {
+		errors = append(errors, ValidationError{
+			Field:   "url",
+			Message: "Must be a valid Rocket League tracker URL",
+			Code:    ValidationCodeInvalidURL,
+		})
+	}
+
+	// MMR validation for each playlist
+	errors = append(errors, h.validatePlaylistMMR("ones", tracker.OnesCurrentSeasonPeak, tracker.OnesPreviousSeasonPeak, tracker.OnesAllTimePeak)...)
+	errors = append(errors, h.validatePlaylistMMR("twos", tracker.TwosCurrentSeasonPeak, tracker.TwosPreviousSeasonPeak, tracker.TwosAllTimePeak)...)
+	errors = append(errors, h.validatePlaylistMMR("threes", tracker.ThreesCurrentSeasonPeak, tracker.ThreesPreviousSeasonPeak, tracker.ThreesAllTimePeak)...)
+
+	// Games played validation
+	errors = append(errors, h.validateGamesPlayed("ones", tracker.OnesCurrentSeasonGamesPlayed, tracker.OnesPreviousSeasonGamesPlayed)...)
+	errors = append(errors, h.validateGamesPlayed("twos", tracker.TwosCurrentSeasonGamesPlayed, tracker.TwosPreviousSeasonGamesPlayed)...)
+	errors = append(errors, h.validateGamesPlayed("threes", tracker.ThreesCurrentSeasonGamesPlayed, tracker.ThreesPreviousSeasonGamesPlayed)...)
+
+	// Business rule: Must have data in at least one playlist
+	if h.hasNoPlaylistData(tracker) {
+		errors = append(errors, ValidationError{
+			Field:   "general",
+			Message: "Must provide MMR data for at least one playlist",
+			Code:    ValidationCodeNoData,
+		})
+	}
+
+	return ValidationResult{
+		IsValid: len(errors) == 0,
+		Errors:  errors,
+	}
+}
+
+// validatePlaylistMMR validates MMR values for a specific playlist
+func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previous, allTime int) []ValidationError {
+	var errors []ValidationError
+
+	// Range validation for current peak (only validate if non-zero)
+	if current > 0 && (current < MinMMR || current > MaxMMR) {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_current_peak", playlist),
+			Message: fmt.Sprintf("Current peak must be between %d and %d", MinMMR, MaxMMR),
+			Code:    ValidationCodeOutOfRange,
+		})
+	}
+
+	// Range validation for previous peak
+	if previous > 0 && (previous < MinMMR || previous > MaxMMR) {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_previous_peak", playlist),
+			Message: fmt.Sprintf("Previous peak must be between %d and %d", MinMMR, MaxMMR),
+			Code:    ValidationCodeOutOfRange,
+		})
+	}
+
+	// Range validation for all-time peak
+	if allTime > 0 && (allTime < MinMMR || allTime > MaxMMR) {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_all_time_peak", playlist),
+			Message: fmt.Sprintf("All-time peak must be between %d and %d", MinMMR, MaxMMR),
+			Code:    ValidationCodeOutOfRange,
+		})
+	}
+
+	// Logical validation: all-time >= previous (if both have values)
+	if allTime > 0 && previous > 0 && allTime < previous {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_all_time_peak", playlist),
+			Message: "All-time peak cannot be lower than previous season peak",
+			Code:    ValidationCodeLogicalError,
+		})
+	}
+
+	return errors
+}
+
+// validateGamesPlayed validates games played counts for a playlist
+func (h *MigrationHandler) validateGamesPlayed(playlist string, current, previous int) []ValidationError {
+	var errors []ValidationError
+
+	// Range validation for current games
+	if current < 0 || current > MaxGames {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_current_games", playlist),
+			Message: fmt.Sprintf("Current games must be between 0 and %d", MaxGames),
+			Code:    ValidationCodeOutOfRange,
+		})
+	}
+
+	// Range validation for previous games
+	if previous < 0 || previous > MaxGames {
+		errors = append(errors, ValidationError{
+			Field:   fmt.Sprintf("%s_previous_games", playlist),
+			Message: fmt.Sprintf("Previous games must be between 0 and %d", MaxGames),
+			Code:    ValidationCodeOutOfRange,
+		})
+	}
+
+	return errors
+}
+
+// hasNoPlaylistData checks if tracker has no meaningful data
+func (h *MigrationHandler) hasNoPlaylistData(tracker *usl.USLUserTracker) bool {
+	hasOnesData := tracker.OnesCurrentSeasonPeak > 0 || tracker.OnesCurrentSeasonGamesPlayed > 0
+	hasTwosData := tracker.TwosCurrentSeasonPeak > 0 || tracker.TwosCurrentSeasonGamesPlayed > 0
+	hasThreesData := tracker.ThreesCurrentSeasonPeak > 0 || tracker.ThreesCurrentSeasonGamesPlayed > 0
+
+	return !hasOnesData && !hasTwosData && !hasThreesData
+}
+
+// isValidDiscordID validates Discord ID format (17-19 digit snowflake)
+func isValidDiscordID(id string) bool {
+	if len(id) < MinDiscordIDLength || len(id) > MaxDiscordIDLength {
 		return false
 	}
-	log.Printf("[USL-HANDLER] Tracker validation passed: Discord=%s", tracker.DiscordID)
-	return true
+	_, err := strconv.ParseUint(id, 10, 64)
+	return err == nil
 }
+
+// isValidTrackerURL validates tracker URL format and domain
+func isValidTrackerURL(urlStr string) bool {
+	// Check for common tracker sites
+	validHosts := []string{
+		"rocketleague.tracker.network",
+		"ballchasing.com",
+		"rltracker.pro",
+	}
+
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+
+	// Must have a host
+	if parsedURL.Host == "" {
+		return false
+	}
+
+	// Check against whitelist
+	for _, host := range validHosts {
+		if strings.Contains(parsedURL.Host, host) {
+			return true
+		}
+	}
+	return false
+}
+
+// Legacy validation function - replaced by comprehensive validation system
+// NOTE: validateTrackerRequired is deprecated, use validateTracker() instead
+
+// Error display system for validation feedback
+
+// renderFormWithErrors renders a form template with validation errors displayed
+func (h *MigrationHandler) renderFormWithErrors(w http.ResponseWriter, templateName TemplateName, tracker *usl.USLUserTracker, errors []ValidationError) {
+	data := struct {
+		Title       string
+		CurrentPage string
+		Tracker     *usl.USLUserTracker
+		Errors      []ValidationError
+		ErrorMap    map[string]string // For easy template lookup
+	}{
+		Title:       "Tracker Form",
+		CurrentPage: "trackers",
+		Tracker:     tracker,
+		Errors:      errors,
+		ErrorMap:    h.buildErrorMap(errors),
+	}
+
+	h.renderTemplate(w, templateName, data)
+}
+
+// buildErrorMap creates a map for easy error lookup in templates
+func (h *MigrationHandler) buildErrorMap(errors []ValidationError) map[string]string {
+	errorMap := make(map[string]string)
+	for _, err := range errors {
+		errorMap[err.Field] = err.Message
+	}
+	return errorMap
+}
+
+// calculateEffectiveMMR extracts MMR calculation to separate function
+func (h *MigrationHandler) calculateEffectiveMMR(tracker *usl.USLUserTracker) {
+	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
+		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
+		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
+
+	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
+
+	if totalGames > 0 {
+		tracker.MMR = weightedSum / totalGames
+	} else {
+		tracker.MMR = 0
+	}
+}
+
+// TrueSkill integration functions (currently unused in validation-focused CRUD)
+// These functions are kept for future TrueSkill integration when async ranking updates are implemented
 
 // logTrueSkillUpdateFailure logs structured failure information
 func (h *MigrationHandler) logTrueSkillUpdateFailure(tracker *usl.USLUserTracker, errorMsg string) {
@@ -490,77 +737,32 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Parse form data
 	if err := r.ParseForm(); err != nil {
 		h.handleInvalidFormData(w, err)
 		return
 	}
 
-	// Extract and validate required fields
-	discordID := r.FormValue("discord_id")
-	if discordID == "" {
-		http.Error(w, "Discord ID is required", http.StatusBadRequest)
+	// Build tracker from form (using existing helper)
+	tracker := h.buildTrackerFromForm(r)
+
+	// Comprehensive validation
+	validation := h.validateTracker(tracker)
+	if !validation.IsValid {
+		h.renderFormWithErrors(w, TemplateUSLTrackerNew, tracker, validation.Errors)
 		return
 	}
 
-	// Parse integer fields with helper function
-	parseInt := func(value string) int {
-		if value == "" {
-			return 0
-		}
-		if i, err := strconv.Atoi(value); err == nil {
-			return i
-		}
-		return 0
-	}
+	// Calculate MMR (using extracted function)
+	h.calculateEffectiveMMR(tracker)
 
-	// Parse boolean field
-	parseBool := func(value string) bool {
-		return value == "true"
-	}
-
-	// Create tracker with all MMR fields
-	tracker := &usl.USLUserTracker{
-		DiscordID:                       discordID,
-		URL:                             r.FormValue("url"),
-		OnesCurrentSeasonPeak:           parseInt(r.FormValue("ones_current_peak")),
-		OnesPreviousSeasonPeak:          parseInt(r.FormValue("ones_previous_peak")),
-		OnesAllTimePeak:                 parseInt(r.FormValue("ones_all_time_peak")),
-		OnesCurrentSeasonGamesPlayed:    parseInt(r.FormValue("ones_current_games")),
-		OnesPreviousSeasonGamesPlayed:   parseInt(r.FormValue("ones_previous_games")),
-		TwosCurrentSeasonPeak:           parseInt(r.FormValue("twos_current_peak")),
-		TwosPreviousSeasonPeak:          parseInt(r.FormValue("twos_previous_peak")),
-		TwosAllTimePeak:                 parseInt(r.FormValue("twos_all_time_peak")),
-		TwosCurrentSeasonGamesPlayed:    parseInt(r.FormValue("twos_current_games")),
-		TwosPreviousSeasonGamesPlayed:   parseInt(r.FormValue("twos_previous_games")),
-		ThreesCurrentSeasonPeak:         parseInt(r.FormValue("threes_current_peak")),
-		ThreesPreviousSeasonPeak:        parseInt(r.FormValue("threes_previous_peak")),
-		ThreesAllTimePeak:               parseInt(r.FormValue("threes_all_time_peak")),
-		ThreesCurrentSeasonGamesPlayed:  parseInt(r.FormValue("threes_current_games")),
-		ThreesPreviousSeasonGamesPlayed: parseInt(r.FormValue("threes_previous_games")),
-		Valid:                           parseBool(r.FormValue("valid")),
-	}
-
-	// Calculate effective MMR using the same logic as the JavaScript form
-	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
-		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
-		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
-
-	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
-
-	if totalGames > 0 {
-		tracker.MMR = weightedSum / totalGames
-	} else {
-		tracker.MMR = 0
-	}
-
+	// Save to database
 	createdTracker, err := h.uslRepo.CreateTracker(tracker)
 	if err != nil {
 		h.handleDatabaseError(w, "create tracker", err)
 		return
 	}
 
-	// Redirect to tracker detail
+	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", createdTracker.ID), http.StatusSeeOther)
 }
 
@@ -607,7 +809,6 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Parse form data
 	if err := r.ParseForm(); err != nil {
 		h.handleInvalidFormData(w, err)
 		return
@@ -626,72 +827,28 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Extract and validate required fields
-	discordID := r.FormValue("discord_id")
-	if discordID == "" {
-		http.Error(w, "Discord ID is required", http.StatusBadRequest)
+	// Build tracker from form (using existing helper)
+	tracker := h.buildTrackerFromForm(r)
+	tracker.ID = trackerID // Set ID for update operation
+
+	// Comprehensive validation
+	validation := h.validateTracker(tracker)
+	if !validation.IsValid {
+		h.renderFormWithErrors(w, TemplateUSLTrackerEdit, tracker, validation.Errors)
 		return
 	}
 
-	// Parse integer fields with helper function
-	parseInt := func(value string) int {
-		if value == "" {
-			return 0
-		}
-		if i, err := strconv.Atoi(value); err == nil {
-			return i
-		}
-		return 0
-	}
+	// Calculate MMR (using extracted function)
+	h.calculateEffectiveMMR(tracker)
 
-	// Parse boolean field
-	parseBool := func(value string) bool {
-		return value == "true"
-	}
-
-	// Update tracker with all MMR fields
-	tracker := &usl.USLUserTracker{
-		ID:                              trackerID,
-		DiscordID:                       discordID,
-		URL:                             r.FormValue("url"),
-		OnesCurrentSeasonPeak:           parseInt(r.FormValue("ones_current_peak")),
-		OnesPreviousSeasonPeak:          parseInt(r.FormValue("ones_previous_peak")),
-		OnesAllTimePeak:                 parseInt(r.FormValue("ones_all_time_peak")),
-		OnesCurrentSeasonGamesPlayed:    parseInt(r.FormValue("ones_current_games")),
-		OnesPreviousSeasonGamesPlayed:   parseInt(r.FormValue("ones_previous_games")),
-		TwosCurrentSeasonPeak:           parseInt(r.FormValue("twos_current_peak")),
-		TwosPreviousSeasonPeak:          parseInt(r.FormValue("twos_previous_peak")),
-		TwosAllTimePeak:                 parseInt(r.FormValue("twos_all_time_peak")),
-		TwosCurrentSeasonGamesPlayed:    parseInt(r.FormValue("twos_current_games")),
-		TwosPreviousSeasonGamesPlayed:   parseInt(r.FormValue("twos_previous_games")),
-		ThreesCurrentSeasonPeak:         parseInt(r.FormValue("threes_current_peak")),
-		ThreesPreviousSeasonPeak:        parseInt(r.FormValue("threes_previous_peak")),
-		ThreesAllTimePeak:               parseInt(r.FormValue("threes_all_time_peak")),
-		ThreesCurrentSeasonGamesPlayed:  parseInt(r.FormValue("threes_current_games")),
-		ThreesPreviousSeasonGamesPlayed: parseInt(r.FormValue("threes_previous_games")),
-		Valid:                           parseBool(r.FormValue("valid")),
-	}
-
-	// Calculate effective MMR using the same logic as the JavaScript form
-	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
-		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
-		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
-
-	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
-
-	if totalGames > 0 {
-		tracker.MMR = weightedSum / totalGames
-	} else {
-		tracker.MMR = 0
-	}
-
+	// Update in database
 	err = h.uslRepo.UpdateTracker(tracker)
 	if err != nil {
 		h.handleDatabaseError(w, "update tracker", err)
 		return
 	}
 
-	// Redirect to tracker detail
+	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", trackerID), http.StatusSeeOther)
 }
 
@@ -866,5 +1023,7 @@ func (h *MigrationHandler) renderTemplate(w http.ResponseWriter, templateName Te
 
 	// Only write to ResponseWriter after successful rendering
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	buf.WriteTo(w)
+	if _, err := buf.WriteTo(w); err != nil {
+		log.Printf("[USL-HANDLER] Failed to write template output: %v", err)
+	}
 }
