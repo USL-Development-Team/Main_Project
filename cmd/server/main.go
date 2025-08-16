@@ -33,7 +33,6 @@ type ApplicationContext struct {
 }
 
 func main() {
-	// Setup logging first - write to both stdout AND log file
 	appLogger := logger.SetupLogger(slog.LevelDebug, "logs/server.log")
 	appLogger.Info("Starting USL server application")
 
@@ -198,18 +197,14 @@ func setupHTTPServer(deps *ApplicationContext) http.Handler {
 	setupAuthRoutes(mux, deps) // Unified Discord OAuth routes
 	setupHomeRoute(mux)
 	setupGuildAwareRoutes(mux, deps) // New guild-aware routes
-	setupUserRoutes(mux, deps)       // Legacy routes
-	setupTrackerRoutes(mux, deps)    // Legacy routes
-	setupTrueSkillRoutes(mux, deps)  // Legacy routes
+	setupUserRoutes(mux, deps)
+	setupTrackerRoutes(mux, deps)
+	setupTrueSkillRoutes(mux, deps)
 	setupAPIRoutes(mux, deps)
 	setupUSLRoutes(mux, deps) // USL-specific temporary migration routes
 
-	// Create guild context middleware
 	guildMiddleware := middleware.NewGuildContextMiddleware(deps.GuildRepo, deps.Logger)
-
-	// Apply middleware chain
 	handler := middleware.LoggingMiddleware(deps.Logger)(mux)
-	// Apply guild context middleware globally now that it handles missing schema gracefully
 	handler = guildMiddleware.GuildContext()(handler)
 
 	return handler
@@ -235,13 +230,10 @@ func setupHealthRoute(mux *http.ServeMux) {
 }
 
 func setupGuildAwareRoutes(mux *http.ServeMux, deps *ApplicationContext) {
-	// Create new guild-aware handlers for future guild support
-	// Currently no routes registered here to avoid conflicts with USL routes
 	// TODO: Add support for dynamic guild slugs when needed
 }
 
 func setupAuthRoutes(mux *http.ServeMux, deps *ApplicationContext) {
-	// Redirect main app login to USL login for now
 	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
 	})
@@ -285,7 +277,6 @@ func render404Page(w http.ResponseWriter) {
 }
 
 func setupUserRoutes(mux *http.ServeMux, deps *ApplicationContext) {
-	// Legacy routes - redirect to guild-aware routes
 	mux.HandleFunc("/users", deps.Auth.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/usl/users", http.StatusMovedPermanently)
 	}))

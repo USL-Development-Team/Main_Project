@@ -24,8 +24,6 @@ func NewUserHandler(userRepo *repositories.UserRepository, templates *template.T
 	}
 }
 
-// Helper methods for common operations
-
 func (h *UserHandler) validateHTTPMethod(w http.ResponseWriter, r *http.Request, allowedMethod string) bool {
 	if r.Method != allowedMethod {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

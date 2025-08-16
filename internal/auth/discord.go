@@ -20,7 +20,6 @@ type DiscordAuth struct {
 	anonKey         string // Anon key for client-side operations
 }
 
-// NewDiscordAuth creates a new unified Discord authentication handler
 func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string) *DiscordAuth {
 	return &DiscordAuth{
 		supabaseClient:  supabaseClient,
@@ -31,8 +30,6 @@ func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, s
 	}
 }
 
-// LoginForm displays the Discord OAuth login form
-// This works for both main app and USL routes
 func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
@@ -59,7 +56,6 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	discordOAuthURL := fmt.Sprintf("%s/auth/v1/authorize?provider=discord&redirect_to=%s",
 		a.publicURL, redirectTo)
 
-	// Determine if this is USL login
 	isUSL := strings.HasPrefix(r.URL.Path, "/usl")
 	var title, heading, infoText string
 
@@ -160,10 +156,7 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AuthCallback handles the OAuth callback from Supabase
-// This is a unified callback for both main app and USL
 func (a *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
-	// Extract session tokens from URL fragment using JavaScript
 	redirectParam := r.URL.Query().Get("redirect")
 	var finalRedirect string
 
@@ -268,7 +261,6 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate tokens with Supabase and get user info
 	user, err := a.validateTokensAndGetUser(req.AccessToken)
 	if err != nil {
 		log.Printf("Error validating tokens: %v", err)
@@ -276,7 +268,6 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user is authorized (Discord admin)
 	if !a.isUserAuthorized(user) {
 		log.Printf("User not authorized: %+v", user)
 		http.Error(w, "Access denied", http.StatusForbidden)
@@ -285,12 +276,9 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 
 	a.setSessionCookies(w, req.AccessToken, req.RefreshToken)
 
-	// Success response
 	w.WriteHeader(http.StatusOK)
 }
 
-// IsAuthenticated checks if the current request has valid authentication
-// This works for both main app and USL routes
 func (a *DiscordAuth) IsAuthenticated(r *http.Request) bool {
 	cookie, err := r.Cookie("auth_access_token")
 	if err != nil {
@@ -311,7 +299,6 @@ func (a *DiscordAuth) IsAuthenticated(r *http.Request) bool {
 func (a *DiscordAuth) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !a.IsAuthenticated(r) {
-			// Redirect to appropriate login based on route
 			if strings.HasPrefix(r.URL.Path, "/usl") {
 				http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
 			} else {
@@ -323,9 +310,7 @@ func (a *DiscordAuth) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// Logout clears the authentication session
 func (a *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
-	// Clear session cookies
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_access_token",
 		Value:    "",
