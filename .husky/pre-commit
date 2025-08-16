@@ -1,3 +1,27 @@
+# Check branch protection
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$branch" = "develop" ]; then
+    echo "❌ Direct commits to 'develop' branch are not allowed!"
+    echo ""
+    echo "✅ Proper workflow:"
+    echo "  1. git checkout -b feature/your-feature-name"
+    echo "  2. Make your changes and commit"
+    echo "  3. git push -u origin feature/your-feature-name"
+    echo "  4. Create PR to develop branch"
+    echo ""
+    echo "💡 To create a feature branch now:"
+    echo "  git checkout -b feature/$(whoami)-$(date +%Y%m%d)"
+    exit 1
+fi
+
+if [ "$branch" = "main" ]; then
+    echo "❌ Direct commits to 'main' branch are not allowed!"
+    echo ""
+    echo "✅ Only merge from develop branch via PR"
+    exit 1
+fi
+
 # Run Go formatting
 echo "Running go fmt..."
 go fmt ./...
