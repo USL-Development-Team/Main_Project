@@ -326,7 +326,7 @@
 
         function validateURL(url) {
             if (!url || url.trim() === '') {
-                return { valid: true }; // Optional field
+                return { valid: false, message: 'Profile URL is required' }; // Required field
             }
             
             try {
@@ -387,6 +387,18 @@
             }
         }
 
+        // Validate at least one playlist has data
+        function validateAtLeastOnePlaylist() {
+            const hasOnesData = (parseInt(document.getElementById('ones_current_peak').value) || 0) > 0 ||
+                               (parseInt(document.getElementById('ones_current_games').value) || 0) > 0;
+            const hasTwosData = (parseInt(document.getElementById('twos_current_peak').value) || 0) > 0 ||
+                               (parseInt(document.getElementById('twos_current_games').value) || 0) > 0;
+            const hasThreesData = (parseInt(document.getElementById('threes_current_peak').value) || 0) > 0 ||
+                                 (parseInt(document.getElementById('threes_current_games').value) || 0) > 0;
+            
+            return hasOnesData || hasTwosData || hasThreesData;
+        }
+
         // Main validation function
         function validateField(fieldId) {
             const field = document.getElementById(fieldId);
@@ -413,6 +425,39 @@
                 clearFieldError(fieldId);
             } else {
                 showFieldError(fieldId, result.message);
+            }
+            
+            // Also validate playlist requirement when MMR/games fields change
+            if (fieldId.includes('peak') || fieldId.includes('games')) {
+                validatePlaylistRequirement();
+            }
+        }
+
+        // Validate and show/hide playlist requirement error
+        function validatePlaylistRequirement() {
+            const hasData = validateAtLeastOnePlaylist();
+            const generalErrorId = 'playlist-requirement-error';
+            
+            if (!hasData) {
+                // Show general error if not already shown
+                if (!document.getElementById(generalErrorId)) {
+                    const errorEl = document.createElement('div');
+                    errorEl.id = generalErrorId;
+                    errorEl.className = 'bg-red-50 border border-red-200 rounded-md p-4 mb-4';
+                    errorEl.innerHTML = '<div class="text-sm font-medium text-red-900">Must provide MMR data for at least one playlist</div>';
+                    
+                    // Insert before MMR display
+                    const mmrDisplay = document.querySelector('.bg-blue-50');
+                    if (mmrDisplay) {
+                        mmrDisplay.parentNode.insertBefore(errorEl, mmrDisplay);
+                    }
+                }
+            } else {
+                // Remove general error if it exists
+                const existingError = document.getElementById(generalErrorId);
+                if (existingError) {
+                    existingError.remove();
+                }
             }
         }
 
