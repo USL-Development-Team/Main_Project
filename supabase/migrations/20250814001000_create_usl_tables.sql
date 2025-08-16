@@ -10,7 +10,7 @@ CREATE TABLE usl_users (
     active BOOLEAN NOT NULL DEFAULT true,
     banned BOOLEAN NOT NULL DEFAULT false,
     mmr INTEGER NOT NULL DEFAULT 0,
-    trueskill_mu DECIMAL(10,6) NOT NULL DEFAULT 25.0,
+    trueskill_mu DECIMAL(10,6) NOT NULL DEFAULT 1000.0,
     trueskill_sigma DECIMAL(10,6) NOT NULL DEFAULT 8.333333,
     trueskill_last_updated DATE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

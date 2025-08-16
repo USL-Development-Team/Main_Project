@@ -37,65 +37,46 @@
         <ul class="divide-y divide-gray-200">
             {{range .Trackers}}
             <li>
-                <div class="px-4 py-4 hover:bg-gray-50">
+                <a href="/usl/trackers/detail?id={{.ID}}" class="block px-6 py-3 hover:bg-gray-50 border border-gray-200 cursor-pointer transition-colors">
                     <div class="flex items-center justify-between">
+                        <!-- Left: User Info -->
                         <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-gray-900 truncate">{{.URL}}</div>
-                            <div class="text-sm text-gray-500">Discord ID: {{.DiscordID}}</div>
+                            <!-- User name -->
+                            <div class="text-lg font-medium text-gray-900 mb-1">
+                                {{if .User}}{{.User.Name}}{{else}}UserName{{end}}
+                            </div>
+                            
+                            <!-- Tracker URL -->
+                            <div class="mb-1">
+                                <span class="text-sm text-blue-600 hover:underline cursor-pointer" onclick="event.stopPropagation(); window.open('{{.URL}}', '_blank');">{{.URL}}</span>
+                            </div>
+                            
+                            <!-- Last updated -->
                             <div class="text-sm text-gray-500">
-                                Last updated: {{if .LastUpdated}}{{.LastUpdated}}{{else}}Never{{end}}
+                                Last Updated: {{if .LastUpdated}}{{.LastUpdated}}{{else}}Never{{end}}
                             </div>
                         </div>
                         
-                        <div class="flex items-center space-x-4 ml-6">
-                            <!-- MMR Display -->
-                            <div class="text-right">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {{if .OnesCurrentSeasonPeak}}{{.OnesCurrentSeasonPeak}} MMR{{else}}N/A{{end}}
+                        <!-- Right: MMR & Status -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Overall MMR -->
+                            <div class="text-center">
+                                <div class="text-xl font-bold text-gray-900">
+                                    {{if .MMR}}{{.MMR}}{{else}}N/A{{end}}
                                 </div>
-                                <div class="text-xs text-gray-500">1v1 Peak</div>
+                                <div class="text-xs text-gray-500">Overall MMR</div>
                             </div>
                             
-                            <!-- Status Badges -->
-                            <div class="flex flex-col space-y-1">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{if .Valid}}bg-green-100 text-green-800{{else}}bg-red-100 text-red-800{{end}}">
-                                    {{if .Valid}}Valid{{else}}Invalid{{end}}
-                                </span>
-                            </div>
-                            
-                            <!-- Actions -->
-                            <div class="flex space-x-2">
-                                <a href="/usl/trackers/detail?id={{.ID}}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">
-                                    View
-                                </a>
-                                <a href="/usl/trackers/edit?id={{.ID}}" class="text-green-600 hover:text-green-900 text-sm font-medium">
-                                    Edit
-                                </a>
-                                <button class="text-gray-400 hover:text-gray-600 text-sm font-medium"
-                                        hx-post="/usl/trackers/{{.ID}}/validate"
-                                        hx-target="closest li"
-                                        hx-swap="outerHTML">
-                                    Validate
-                                </button>
-                            </div>
+                            <!-- Status Badge -->
+                            <span class="px-2 py-1 text-xs font-medium rounded {{if .Valid}}bg-green-100 text-green-800{{else}}bg-red-100 text-red-800{{end}}">
+                                {{if .Valid}}Valid{{else}}Invalid{{end}}
+                            </span>
                         </div>
                     </div>
-                    
-                    <!-- MMR Stats Row -->
-                    {{if or .TwosCurrentSeasonPeak .ThreesCurrentSeasonPeak}}
-                    <div class="mt-3 flex space-x-6 text-xs text-gray-500">
-                        {{if .TwosCurrentSeasonPeak}}
-                        <div>2v2: {{.TwosCurrentSeasonPeak}} MMR</div>
-                        {{end}}
-                        {{if .ThreesCurrentSeasonPeak}}
-                        <div>3v3: {{.ThreesCurrentSeasonPeak}} MMR</div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
+                </a>
             </li>
             {{else}}
-            <li class="px-4 py-8 text-center text-gray-500">
+            <li class="px-6 py-8 text-center text-gray-500">
                 No trackers found.
             </li>
             {{end}}
@@ -109,15 +90,6 @@
         {{len .Trackers}} tracker(s) found
     </div>
     
-    <div class="flex space-x-3">
-        <button class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                hx-post="/usl/trackers/validate-all"
-                hx-target="#trackers-table"
-                hx-indicator="#validate-spinner">
-            <span id="validate-spinner" class="htmx-indicator">Validating...</span>
-            <span class="htmx-indicator-static">Validate All</span>
-        </button>
-    </div>
 </div>
     </main>
     

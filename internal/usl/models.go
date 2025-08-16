@@ -61,6 +61,9 @@ type USLUserTracker struct {
 	MMR                             int       `json:"mmr" db:"mmr"`
 	CreatedAt                       time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt                       time.Time `json:"updated_at" db:"updated_at"`
+
+	// Populated by handlers for display purposes
+	User *USLUser `json:"user,omitempty" db:"-"`
 }
 
 type USLUserCSV struct {

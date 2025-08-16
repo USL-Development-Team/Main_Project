@@ -76,7 +76,7 @@ SELECT
     u.id,
     g.id,
     0, -- Default MMR
-    25.0, -- TrueSkill default mu
+    1000.0, -- TrueSkill default mu
     8.333, -- TrueSkill default sigma
     0, -- Games played starts at 0
     now(),
@@ -110,7 +110,7 @@ SELECT
     null, -- No previous value for initial migration
     0, -- Starting with default MMR
     null, -- No previous TrueSkill values
-    25.0, -- Default TrueSkill mu
+    1000.0, -- Default TrueSkill mu
     null,
     8.333, -- Default TrueSkill sigma
     'initial_migration', -- Reason for this MMR entry

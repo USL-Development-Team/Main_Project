@@ -91,10 +91,12 @@ func (r *USLRepository) GetUserByDiscordID(discordID string) (*USLUser, error) {
 
 func (r *USLRepository) CreateUser(name, discordID string, active, banned bool) (*USLUser, error) {
 	insertData := map[string]interface{}{
-		"name":       name,
-		"discord_id": discordID,
-		"active":     active,
-		"banned":     banned,
+		"name":            name,
+		"discord_id":      discordID,
+		"active":          active,
+		"banned":          banned,
+		"trueskill_mu":    1000.0, // Explicitly set correct default
+		"trueskill_sigma": 8.333,  // Explicitly set correct default
 	}
 
 	var user USLUser
@@ -170,6 +172,22 @@ func (r *USLRepository) GetValidTrackers() ([]*USLUserTracker, error) {
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get valid trackers: %w", err)
+	}
+
+	return trackers, nil
+}
+
+func (r *USLRepository) SearchTrackers(query string) ([]*USLUserTracker, error) {
+	var trackers []*USLUserTracker
+
+	_, err := r.client.From("usl_user_trackers").
+		Select("*", "", false).
+		Or(fmt.Sprintf("url.ilike.%%%s%%,discord_id.eq.%s", query, query), "").
+		Order("mmr", &postgrest.OrderOpts{Ascending: false}).
+		ExecuteTo(&trackers)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to search trackers: %w", err)
 	}
 
 	return trackers, nil

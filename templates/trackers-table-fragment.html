@@ -1,0 +1,53 @@
+{{define "trackers-table-fragment"}}
+<div id="trackers-table">
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul class="divide-y divide-gray-200">
+            {{range .Trackers}}
+            <li>
+                <a href="/usl/trackers/detail?id={{.ID}}" class="block px-6 py-3 hover:bg-gray-50 border border-gray-200 cursor-pointer transition-colors">
+                    <div class="flex items-center justify-between">
+                        <!-- Left: User Info -->
+                        <div class="flex-1 min-w-0">
+                            <!-- User name -->
+                            <div class="text-lg font-medium text-gray-900 mb-1">
+                                {{if .User}}{{.User.Name}}{{else}}UserName{{end}}
+                            </div>
+                            
+                            <!-- Tracker URL -->
+                            <div class="mb-1">
+                                <span class="text-sm text-blue-600 hover:underline cursor-pointer" onclick="event.stopPropagation(); window.open('{{.URL}}', '_blank');">{{.URL}}</span>
+                            </div>
+                            
+                            <!-- Last updated -->
+                            <div class="text-sm text-gray-500">
+                                Last Updated: {{if .LastUpdated}}{{.LastUpdated}}{{else}}Never{{end}}
+                            </div>
+                        </div>
+                        
+                        <!-- Right: MMR & Status -->
+                        <div class="flex items-center space-x-4">
+                            <!-- Overall MMR -->
+                            <div class="text-center">
+                                <div class="text-xl font-bold text-gray-900">
+                                    {{if .MMR}}{{.MMR}}{{else}}N/A{{end}}
+                                </div>
+                                <div class="text-xs text-gray-500">Overall MMR</div>
+                            </div>
+                            
+                            <!-- Status Badge -->
+                            <span class="px-2 py-1 text-xs font-medium rounded {{if .Valid}}bg-green-100 text-green-800{{else}}bg-red-100 text-red-800{{end}}">
+                                {{if .Valid}}Valid{{else}}Invalid{{end}}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </li>
+            {{else}}
+            <li class="px-6 py-8 text-center text-gray-500">
+                No trackers found.
+            </li>
+            {{end}}
+        </ul>
+    </div>
+</div>
+{{end}}

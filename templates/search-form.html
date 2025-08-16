@@ -21,22 +21,7 @@
                        hx-trigger="input changed delay:300ms">
             </div>
             
-            {{if .ShowFilters}}
-            <select id="status" 
-                    name="status" 
-                    class="p-2.5 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 flex-shrink-0"
-                    hx-get="{{.SearchURL}}"
-                    hx-target="{{.SearchTarget}}"
-                    hx-trigger="change"
-                    hx-include="[name='q']">
-                <option value="">All Status</option>
-                <option value="active" {{if eq .StatusFilter "active"}}selected{{end}}>Active</option>
-                <option value="inactive" {{if eq .StatusFilter "inactive"}}selected{{end}}>Inactive</option>
-                <option value="banned" {{if eq .StatusFilter "banned"}}selected{{end}}>Banned</option>
-            </select>
-            {{end}}
-            
-            {{if or .Query .StatusFilter}}
+            {{if .Query}}
             <button type="button"
                     hx-get="{{.ClearURL}}"
                     hx-target="{{.SearchTarget}}"

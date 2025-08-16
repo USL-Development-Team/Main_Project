@@ -1,0 +1,103 @@
+{{define "user-new-page"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - USL Management</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="/static/dist/output.css" rel="stylesheet">
+    
+    <!-- HTMX -->
+    <script src="/static/htmx.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    {{template "navigation" .}}
+    
+    <main class="container mx-auto px-4 py-8">
+<div class="flex justify-between items-start mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Add New User</h1>
+        <p class="mt-2 text-gray-600">Create a new user in the USL system</p>
+    </div>
+    
+    <a href="/usl/users" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back to Users
+    </a>
+</div>
+
+<!-- User Form -->
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">User Information</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Enter the details for the new user.</p>
+    </div>
+    
+    <form action="/usl/users/create" method="POST" class="border-t border-gray-200">
+        <div class="px-4 py-5 sm:px-6 space-y-6">
+            <!-- Display Name -->
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Display Name *</label>
+                <input type="text" id="name" name="name" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter user's display name">
+            </div>
+            
+            <!-- Discord ID -->
+            <div>
+                <label for="discord_id" class="block text-sm font-medium text-gray-700 mb-2">Discord ID *</label>
+                <input type="text" id="discord_id" name="discord_id" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 font-mono"
+                       placeholder="Enter Discord ID">
+                <p class="mt-1 text-sm text-gray-500">The user's unique Discord identifier</p>
+            </div>
+            
+            <!-- Status Options -->
+            <div class="space-y-4">
+                <h4 class="text-sm font-medium text-gray-700">User Status</h4>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="active" name="active" checked
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="active" class="ml-2 block text-sm text-gray-700">Active</label>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="banned" name="banned"
+                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <label for="banned" class="ml-2 block text-sm text-gray-700">Banned</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="px-4 py-3 bg-gray-50 text-right sm:px-6 flex justify-end space-x-3">
+            <a href="/usl/users" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Create User
+            </button>
+        </div>
+    </form>
+</div>
+    </main>
+    
+    <!-- HTMX Configuration -->
+    <script>
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            if (evt.detail.xhr.status === 500) {
+                alert('Server error occurred. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>
+{{end}}

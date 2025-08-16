@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+
+# Logs
+logs/
+*.log
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+bin/
+server
+tmp/
+
+# Development tools
+.vscode/
+.idea/
+
+# Test files
+*_test.go
+test/
+coverage.out
+coverage.html
+
+# Supabase local files
+supabase/.temp/
+supabase/volumes/
+
+# Backup files
+*.sql.backup
+local_export.sql
+new_seed.sql
+remote_data_backup.sql
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Implementation planning files
+implement/
+refactor/
+
+# Commit lint
+commitlint.config.js
+
+# Makefile (development tool)
+Makefile

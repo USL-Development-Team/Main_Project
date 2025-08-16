@@ -19,7 +19,7 @@
         <div class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Edit Tracker</h1>
-                <p class="mt-2 text-gray-600">Update tracker information for {{.Tracker.DiscordID}}</p>
+                <p class="mt-2 text-gray-600">Update tracker information for {{if .User}}{{.User.Name}}{{else}}{{.Tracker.DiscordID}}{{end}}</p>
             </div>
         </div>
 
@@ -41,8 +41,22 @@
                         </div>
                         <div>
                             <label for="url" class="block text-sm font-medium text-gray-700 mb-2">Profile URL</label>
-                            <input type="url" id="url" name="url" value="{{.Tracker.URL}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.url}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            <div class="flex">
+                                <input type="url" id="url" name="url" value="{{.Tracker.URL}}"
+                                       class="flex-1 px-3 py-2 border {{if .Errors.url}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-l-md focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" onclick="copyToClipboard('url')" 
+                                        class="px-3 py-2 border border-l-0 {{if .Errors.url}}border-red-300{{else}}border-gray-300{{end}} rounded-r-md bg-gray-50 hover:bg-gray-100 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                </button>
+                                <a href="{{.Tracker.URL}}" target="_blank" rel="noopener noreferrer"
+                                   class="px-3 py-2 border border-l-0 {{if .Errors.url}}border-red-300{{else}}border-gray-300{{end}} rounded-r-md bg-blue-50 hover:bg-blue-100 text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                </a>
+                            </div>
                             {{if .Errors.url}}
                             <p class="mt-1 text-sm text-red-600">{{.Errors.url}}</p>
                             {{end}}
@@ -55,6 +69,14 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">1v1 (Ones) Stats</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
+                            <label for="ones_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="ones_all_time_peak" name="ones_all_time_peak" min="0" value="{{.Tracker.OnesAllTimePeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_all_time_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
                             <label for="ones_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
                             <input type="number" id="ones_current_peak" name="ones_current_peak" min="0" value="{{.Tracker.OnesCurrentSeasonPeak}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.ones_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -63,24 +85,6 @@
                             {{end}}
                         </div>
                         <div>
-                            <label for="ones_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="ones_previous_peak" name="ones_previous_peak" min="0" value="{{.Tracker.OnesPreviousSeasonPeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.ones_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.ones_previous_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_previous_peak}}</p>
-                            {{end}}
-                        </div>
-                        <div>
-                            <label for="ones_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="ones_all_time_peak" name="ones_all_time_peak" min="0" value="{{.Tracker.OnesAllTimePeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.ones_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.ones_all_time_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_all_time_peak}}</p>
-                            {{end}}
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
                             <label for="ones_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
                             <input type="number" id="ones_current_games" name="ones_current_games" min="0" value="{{.Tracker.OnesCurrentSeasonGamesPlayed}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.ones_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -88,8 +92,18 @@
                             <p class="mt-1 text-sm text-red-600">{{.Errors.ones_current_games}}</p>
                             {{end}}
                         </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="ones_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <label for="ones_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Past Season Peak</label>
+                            <input type="number" id="ones_previous_peak" name="ones_previous_peak" min="0" value="{{.Tracker.OnesPreviousSeasonPeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.ones_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.ones_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.ones_previous_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
+                            <label for="ones_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Past Season Games</label>
                             <input type="number" id="ones_previous_games" name="ones_previous_games" min="0" value="{{.Tracker.OnesPreviousSeasonGamesPlayed}}"
                                    class="w-full px-3 py-2 border {{if .Errors.ones_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
                             {{if .Errors.ones_previous_games}}
@@ -104,6 +118,14 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">2v2 (Twos) Stats</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
+                            <label for="twos_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="twos_all_time_peak" name="twos_all_time_peak" min="0" value="{{.Tracker.TwosAllTimePeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_all_time_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
                             <label for="twos_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
                             <input type="number" id="twos_current_peak" name="twos_current_peak" min="0" value="{{.Tracker.TwosCurrentSeasonPeak}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.twos_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -112,24 +134,6 @@
                             {{end}}
                         </div>
                         <div>
-                            <label for="twos_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="twos_previous_peak" name="twos_previous_peak" min="0" value="{{.Tracker.TwosPreviousSeasonPeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.twos_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.twos_previous_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_previous_peak}}</p>
-                            {{end}}
-                        </div>
-                        <div>
-                            <label for="twos_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="twos_all_time_peak" name="twos_all_time_peak" min="0" value="{{.Tracker.TwosAllTimePeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.twos_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.twos_all_time_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_all_time_peak}}</p>
-                            {{end}}
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
                             <label for="twos_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
                             <input type="number" id="twos_current_games" name="twos_current_games" min="0" value="{{.Tracker.TwosCurrentSeasonGamesPlayed}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.twos_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -137,8 +141,18 @@
                             <p class="mt-1 text-sm text-red-600">{{.Errors.twos_current_games}}</p>
                             {{end}}
                         </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="twos_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <label for="twos_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Past Season Peak</label>
+                            <input type="number" id="twos_previous_peak" name="twos_previous_peak" min="0" value="{{.Tracker.TwosPreviousSeasonPeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.twos_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.twos_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.twos_previous_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
+                            <label for="twos_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Past Season Games</label>
                             <input type="number" id="twos_previous_games" name="twos_previous_games" min="0" value="{{.Tracker.TwosPreviousSeasonGamesPlayed}}"
                                    class="w-full px-3 py-2 border {{if .Errors.twos_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
                             {{if .Errors.twos_previous_games}}
@@ -153,6 +167,14 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">3v3 (Threes) Stats</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
+                            <label for="threes_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
+                            <input type="number" id="threes_all_time_peak" name="threes_all_time_peak" min="0" value="{{.Tracker.ThreesAllTimePeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_all_time_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_all_time_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
                             <label for="threes_current_peak" class="block text-sm font-medium text-gray-700 mb-2">Current Season Peak</label>
                             <input type="number" id="threes_current_peak" name="threes_current_peak" min="0" value="{{.Tracker.ThreesCurrentSeasonPeak}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.threes_current_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -161,24 +183,6 @@
                             {{end}}
                         </div>
                         <div>
-                            <label for="threes_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Peak</label>
-                            <input type="number" id="threes_previous_peak" name="threes_previous_peak" min="0" value="{{.Tracker.ThreesPreviousSeasonPeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.threes_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.threes_previous_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_previous_peak}}</p>
-                            {{end}}
-                        </div>
-                        <div>
-                            <label for="threes_all_time_peak" class="block text-sm font-medium text-gray-700 mb-2">All Time Peak</label>
-                            <input type="number" id="threes_all_time_peak" name="threes_all_time_peak" min="0" value="{{.Tracker.ThreesAllTimePeak}}"
-                                   class="w-full px-3 py-2 border {{if .Errors.threes_all_time_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
-                            {{if .Errors.threes_all_time_peak}}
-                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_all_time_peak}}</p>
-                            {{end}}
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
                             <label for="threes_current_games" class="block text-sm font-medium text-gray-700 mb-2">Current Season Games</label>
                             <input type="number" id="threes_current_games" name="threes_current_games" min="0" value="{{.Tracker.ThreesCurrentSeasonGamesPlayed}}" onchange="calculateMMR()"
                                    class="w-full px-3 py-2 border {{if .Errors.threes_current_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
@@ -186,8 +190,18 @@
                             <p class="mt-1 text-sm text-red-600">{{.Errors.threes_current_games}}</p>
                             {{end}}
                         </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label for="threes_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Previous Season Games</label>
+                            <label for="threes_previous_peak" class="block text-sm font-medium text-gray-700 mb-2">Past Season Peak</label>
+                            <input type="number" id="threes_previous_peak" name="threes_previous_peak" min="0" value="{{.Tracker.ThreesPreviousSeasonPeak}}"
+                                   class="w-full px-3 py-2 border {{if .Errors.threes_previous_peak}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
+                            {{if .Errors.threes_previous_peak}}
+                            <p class="mt-1 text-sm text-red-600">{{.Errors.threes_previous_peak}}</p>
+                            {{end}}
+                        </div>
+                        <div>
+                            <label for="threes_previous_games" class="block text-sm font-medium text-gray-700 mb-2">Past Season Games</label>
                             <input type="number" id="threes_previous_games" name="threes_previous_games" min="0" value="{{.Tracker.ThreesPreviousSeasonGamesPlayed}}"
                                    class="w-full px-3 py-2 border {{if .Errors.threes_previous_games}}border-red-300 bg-red-50{{else}}border-gray-300{{end}} rounded-md focus:ring-blue-500 focus:border-blue-500">
                             {{if .Errors.threes_previous_games}}
@@ -492,6 +506,31 @@
 
         // Initialize validation when page loads
         setupValidation();
+
+        // Copy to clipboard function
+        function copyToClipboard(inputId) {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.select();
+                input.setSelectionRange(0, 99999); // For mobile devices
+                
+                try {
+                    document.execCommand('copy');
+                    // Visual feedback - change button temporarily
+                    const button = event.target.closest('button');
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                    button.classList.add('bg-green-100', 'text-green-600');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                        button.classList.remove('bg-green-100', 'text-green-600');
+                    }, 1000);
+                } catch (err) {
+                    console.error('Failed to copy: ', err);
+                }
+            }
+        }
     </script>
 </body>
 </html>

@@ -69,7 +69,7 @@ func Load() (*Config, error) {
 	config := &Config{
 		Server: ServerConfig{
 			Host: getEnv("SERVER_HOST", "localhost"),
-			Port: getEnv("SERVER_PORT", "8080"),
+			Port: getEnv("PORT", getEnv("SERVER_PORT", "8080")), // Render provides PORT env var
 		},
 		Database: DatabaseConfig{
 			URL: getEnv("DATABASE_URL", ""),
@@ -81,7 +81,7 @@ func Load() (*Config, error) {
 			ServiceRoleKey: getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
 		},
 		TrueSkill: TrueSkillConfig{
-			InitialMu:            getEnvFloat("TRUESKILL_INITIAL_MU", 1500.0),
+			InitialMu:            getEnvFloat("TRUESKILL_INITIAL_MU", 1000.0),
 			InitialSigma:         getEnvFloat("TRUESKILL_INITIAL_SIGMA", 8.333),
 			SigmaMin:             getEnvFloat("TRUESKILL_SIGMA_MIN", 2.5),
 			SigmaMax:             getEnvFloat("TRUESKILL_SIGMA_MAX", 8.333),

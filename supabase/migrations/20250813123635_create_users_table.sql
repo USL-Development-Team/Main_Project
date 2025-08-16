@@ -6,7 +6,7 @@ create table if not exists users (
   active boolean not null default true,
   banned boolean not null default false,
   mmr integer not null default 0 check (mmr >= 0),
-  trueskill_mu decimal(10,3) not null default 1500.000 check (trueskill_mu >= 0 and trueskill_mu <= 5000),
+  trueskill_mu decimal(10,3) not null default 1000.000 check (trueskill_mu >= 0 and trueskill_mu <= 5000),
   trueskill_sigma decimal(10,3) not null default 8.333 check (trueskill_sigma >= 0 and trueskill_sigma <= 20),
   trueskill_last_updated timestamptz not null default now(),
   created_at timestamptz not null default now(),

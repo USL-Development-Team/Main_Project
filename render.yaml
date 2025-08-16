@@ -1,0 +1,83 @@
+services:
+  - type: web
+    name: usl-admin-app
+    runtime: docker
+    repo: https://github.com/YOUR_USERNAME/YOUR_REPO_NAME  # Update this with your actual repo
+    branch: main
+    
+    # Docker configuration
+    dockerfilePath: ./Dockerfile
+    
+    # Scaling configuration
+    scaling:
+      minInstances: 1
+      maxInstances: 2
+      targetCPUPercent: 70
+    
+    # Environment variables
+    envVars:
+      # Server configuration
+      - key: SERVER_HOST
+        value: "0.0.0.0"
+      - key: SERVER_PORT
+        value: "8080"
+      
+      # Supabase configuration (production values)
+      - key: SUPABASE_URL
+        sync: false  # Set this in Render dashboard as it's sensitive
+      - key: SUPABASE_PUBLIC_URL
+        sync: false  # Set this in Render dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false  # Set this in Render dashboard as it's sensitive
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false  # Set this in Render dashboard as it's sensitive
+      
+      # TrueSkill configuration
+      - key: TRUESKILL_INITIAL_MU
+        value: "1000.0"
+      - key: TRUESKILL_INITIAL_SIGMA
+        value: "8.333333"
+      - key: TRUESKILL_SIGMA_MIN
+        value: "0.25"
+      - key: TRUESKILL_SIGMA_MAX
+        value: "8.333333"
+      - key: TRUESKILL_GAMES_FOR_MAX_CERTAINTY
+        value: "50"
+      
+      # MMR configuration
+      - key: MMR_ONES_WEIGHT
+        value: "0.3"
+      - key: MMR_TWOS_WEIGHT
+        value: "0.5"
+      - key: MMR_THREES_WEIGHT
+        value: "0.2"
+      - key: MMR_PEAK_FACTOR
+        value: "1.2"
+      - key: MMR_GAMES_PLAYED_FACTOR
+        value: "0.8"
+      
+      # USL configuration
+      - key: USL_ADMIN_DISCORD_IDS
+        sync: false  # Set this in Render dashboard as it contains Discord IDs
+      
+      # Application environment
+      - key: APP_ENV
+        value: "production"
+      - key: LOG_LEVEL
+        value: "info"
+    
+    # Health check configuration
+    healthCheckPath: /
+    
+    # Deployment configuration
+    buildFilter:
+      paths:
+        - "**"
+      ignoredPaths:
+        - "docs/**"
+        - "README.md"
+        - "*.md"
+
+# Optional: Preview environments for pull requests
+previews:
+  generation: manual

@@ -220,6 +220,38 @@ func (s *UserTrueSkillService) UpdateUserTrueSkillFromTrackerData(trackerData *T
 	}
 }
 
+// CalculateTrueSkillFromTrackerData calculates TrueSkill values from tracker data without database operations
+// This is a pure calculation method that delegates to the internal calculation logic
+func (s *UserTrueSkillService) CalculateTrueSkillFromTrackerData(trackerData *TrackerData) *TrueSkillUpdateResult {
+	// Validate tracker data
+	if err := s.dataTransformationService.ValidateTrackerData(trackerData); err != nil {
+		return &TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("invalid tracker data: %v", err),
+		}
+	}
+
+	// Calculate TrueSkill values directly from provided tracker data
+	trueSkillResult, err := s.calculateTrueSkillValues(trackerData)
+	if err != nil {
+		return &TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("failed to calculate TrueSkill: %v", err),
+		}
+	}
+
+	log.Printf("UserTrueSkillService: Calculated TrueSkill for user %s: μ=%.1f, σ=%.2f (calculation only)",
+		trackerData.DiscordID, trueSkillResult.Mu, trueSkillResult.Sigma)
+
+	return &TrueSkillUpdateResult{
+		Success:         true,
+		HadTrackers:     true,
+		TrueSkillResult: trueSkillResult,
+	}
+}
+
 // UpdateUserTrueSkillFromTrackers updates TrueSkill for a single user from their tracker data
 // Exact port of JavaScript updateUserTrueSkillFromTrackers() function
 func (s *UserTrueSkillService) UpdateUserTrueSkillFromTrackers(discordID string) *TrueSkillUpdateResult {

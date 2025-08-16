@@ -10,8 +10,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"usl-server/internal/config"
+	"usl-server/internal/logger"
 	"usl-server/internal/models"
 	"usl-server/internal/services"
 	"usl-server/internal/usl"
@@ -95,6 +97,42 @@ const (
 	TemplateUSLAdminDashboard TemplateName = "admin-dashboard-page"
 )
 
+// Validation metrics and monitoring structures
+type ValidationMetrics struct {
+	TotalValidations      int64            `json:"total_validations"`
+	SuccessfulValidations int64            `json:"successful_validations"`
+	FailedValidations     int64            `json:"failed_validations"`
+	ErrorsByType          map[string]int64 `json:"errors_by_type"`
+	ErrorsByField         map[string]int64 `json:"errors_by_field"`
+	SecurityIncidents     int64            `json:"security_incidents"`
+	LastReset             time.Time        `json:"last_reset"`
+}
+
+// ValidationEvent represents a validation event for structured logging
+type ValidationEvent struct {
+	Type           string                 `json:"type"` // "success", "failure", "security_incident"
+	DiscordID      string                 `json:"discord_id,omitempty"`
+	URL            string                 `json:"url,omitempty"`
+	Errors         []ValidationError      `json:"errors,omitempty"`
+	Duration       time.Duration          `json:"duration"`
+	Timestamp      time.Time              `json:"timestamp"`
+	UserAgent      string                 `json:"user_agent,omitempty"`
+	RemoteAddr     string                 `json:"remote_addr,omitempty"`
+	FormFields     map[string]interface{} `json:"form_fields,omitempty"`
+	SecurityReason string                 `json:"security_reason,omitempty"`
+}
+
+// Global validation metrics (in production, this would be in a proper metrics store)
+var (
+	validationMetrics = &ValidationMetrics{
+		ErrorsByType:  make(map[string]int64),
+		ErrorsByField: make(map[string]int64),
+		LastReset:     time.Now(),
+	}
+	metricsMutex     = &sync.RWMutex{}
+	validationLogger = logger.NewLogger("validation")
+)
+
 // parseIntField safely converts a form field to int, returning 0 for empty or invalid values
 func parseIntField(value string) int {
 	if value == "" {
@@ -104,6 +142,141 @@ func parseIntField(value string) int {
 		return i
 	}
 	return 0
+}
+
+// recordValidationMetrics updates validation metrics in a thread-safe manner
+func recordValidationMetrics(event *ValidationEvent) {
+	metricsMutex.Lock()
+	defer metricsMutex.Unlock()
+
+	validationMetrics.TotalValidations++
+
+	switch event.Type {
+	case "success":
+		validationMetrics.SuccessfulValidations++
+	case "failure":
+		validationMetrics.FailedValidations++
+		// Count errors by type and field
+		for _, err := range event.Errors {
+			validationMetrics.ErrorsByType[err.Code]++
+			validationMetrics.ErrorsByField[err.Field]++
+		}
+	case "security_incident":
+		validationMetrics.SecurityIncidents++
+		validationMetrics.FailedValidations++
+	}
+}
+
+// logValidationEvent creates a structured log entry for validation events
+func logValidationEvent(event *ValidationEvent) {
+	baseArgs := []any{
+		"event_type", event.Type,
+		"duration", event.Duration,
+		"timestamp", event.Timestamp,
+	}
+
+	// Add non-sensitive context
+	if event.UserAgent != "" {
+		baseArgs = append(baseArgs, "user_agent", event.UserAgent)
+	}
+	if event.RemoteAddr != "" {
+		baseArgs = append(baseArgs, "remote_addr", event.RemoteAddr)
+	}
+
+	// Add validation-specific data
+	if len(event.Errors) > 0 {
+		baseArgs = append(baseArgs, "error_count", len(event.Errors))
+		errorCodes := make([]string, len(event.Errors))
+		errorFields := make([]string, len(event.Errors))
+		for i, err := range event.Errors {
+			errorCodes[i] = err.Code
+			errorFields[i] = err.Field
+		}
+		baseArgs = append(baseArgs, "error_codes", errorCodes)
+		baseArgs = append(baseArgs, "error_fields", errorFields)
+	}
+
+	// Security incident logging
+	if event.Type == "security_incident" {
+		securityArgs := append(baseArgs, "security_reason", event.SecurityReason)
+		// Log with higher severity for security incidents
+		validationLogger.Warn("Security incident detected during validation", securityArgs...)
+	} else if event.Type == "failure" {
+		validationLogger.Info("Validation failed", baseArgs...)
+	} else {
+		validationLogger.Debug("Validation completed", baseArgs...)
+	}
+}
+
+// getValidationMetrics returns current validation metrics in a thread-safe manner
+func getValidationMetrics() ValidationMetrics {
+	metricsMutex.RLock()
+	defer metricsMutex.RUnlock()
+
+	// Create a copy to avoid race conditions
+	metrics := ValidationMetrics{
+		TotalValidations:      validationMetrics.TotalValidations,
+		SuccessfulValidations: validationMetrics.SuccessfulValidations,
+		FailedValidations:     validationMetrics.FailedValidations,
+		SecurityIncidents:     validationMetrics.SecurityIncidents,
+		LastReset:             validationMetrics.LastReset,
+		ErrorsByType:          make(map[string]int64),
+		ErrorsByField:         make(map[string]int64),
+	}
+
+	// Copy maps
+	for k, v := range validationMetrics.ErrorsByType {
+		metrics.ErrorsByType[k] = v
+	}
+	for k, v := range validationMetrics.ErrorsByField {
+		metrics.ErrorsByField[k] = v
+	}
+
+	return metrics
+}
+
+// detectSecurityIncident checks if a validation failure represents a security threat
+func detectSecurityIncident(r *http.Request, validation *ValidationResult) *string {
+	// Check for common attack patterns
+	formData := r.Form
+
+	// SQL injection patterns
+	for _, values := range formData {
+		for _, value := range values {
+			if strings.Contains(strings.ToLower(value), "drop table") ||
+				strings.Contains(strings.ToLower(value), "union select") ||
+				strings.Contains(strings.ToLower(value), "insert into") ||
+				strings.Contains(strings.ToLower(value), "delete from") {
+				reason := "SQL injection attempt detected"
+				return &reason
+			}
+		}
+	}
+
+	// XSS patterns
+	for _, values := range formData {
+		for _, value := range values {
+			if strings.Contains(value, "<script") ||
+				strings.Contains(value, "javascript:") ||
+				strings.Contains(value, "onload=") ||
+				strings.Contains(value, "onerror=") {
+				reason := "XSS attempt detected"
+				return &reason
+			}
+		}
+	}
+
+	// Buffer overflow attempts (extremely long inputs)
+	for _, values := range formData {
+		for _, value := range values {
+			if len(value) > 1000 {
+				reason := "Buffer overflow attempt detected"
+				return &reason
+			}
+		}
+	}
+
+	return nil
 }
 
 // parseUserID safely converts a string to a user ID with proper error handling
@@ -191,6 +364,56 @@ func (h *MigrationHandler) buildTrackerFromForm(r *http.Request) *usl.USLUserTra
 // Comprehensive validation system
 
 // validateTracker performs comprehensive validation on a tracker
+// validateTrackerWithMetrics performs validation with metrics collection and security monitoring
+func (h *MigrationHandler) validateTrackerWithMetrics(r *http.Request, tracker *usl.USLUserTracker) ValidationResult {
+	startTime := time.Now()
+
+	// Perform core validation
+	validation := h.validateTracker(tracker)
+
+	// Create validation event
+	event := &ValidationEvent{
+		Timestamp:  startTime,
+		Duration:   time.Since(startTime),
+		UserAgent:  r.Header.Get("User-Agent"),
+		RemoteAddr: r.RemoteAddr,
+	}
+
+	// Extract form fields for security analysis (non-sensitive data only)
+	if r.Form != nil {
+		event.FormFields = make(map[string]interface{})
+		for key, values := range r.Form {
+			// Only include field names and lengths, not actual values for privacy
+			if len(values) > 0 {
+				event.FormFields[key] = map[string]interface{}{
+					"length": len(values[0]),
+					"count":  len(values),
+				}
+			}
+		}
+	}
+
+	if validation.IsValid {
+		event.Type = "success"
+	} else {
+		event.Errors = validation.Errors
+
+		// Check for security incidents
+		if securityReason := detectSecurityIncident(r, &validation); securityReason != nil {
+			event.Type = "security_incident"
+			event.SecurityReason = *securityReason
+		} else {
+			event.Type = "failure"
+		}
+	}
+
+	// Record metrics and log event
+	recordValidationMetrics(event)
+	logValidationEvent(event)
+
+	return validation
+}
+
 func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) ValidationResult {
 	var errors []ValidationError
 
@@ -373,14 +596,12 @@ func (h *MigrationHandler) renderFormWithErrors(w http.ResponseWriter, templateN
 		Title       string
 		CurrentPage string
 		Tracker     *usl.USLUserTracker
-		Errors      []ValidationError
-		ErrorMap    map[string]string // For easy template lookup
+		Errors      map[string]string // For template .Errors.field_name access
 	}{
 		Title:       "Tracker Form",
 		CurrentPage: "trackers",
 		Tracker:     tracker,
-		Errors:      errors,
-		ErrorMap:    h.buildErrorMap(errors),
+		Errors:      h.buildErrorMap(errors),
 	}
 
 	h.renderTemplate(w, templateName, data)
@@ -509,8 +730,8 @@ func (h *MigrationHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		}{
 			SearchPlaceholder: "Search by name or Discord ID...",
 			SearchURL:         "/usl/users/search",
-			SearchTarget:      "#users-table",
-			ClearURL:          "/usl/users",
+			SearchTarget:      "#users-tbody",
+			ClearURL:          "/usl/users/search",
 			ShowFilters:       true,
 			Query:             "",
 			StatusFilter:      "",
@@ -527,12 +748,17 @@ func (h *MigrationHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query().Get("q")
-	if query == "" {
-		http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
-		return
-	}
 
-	users, err := h.uslRepo.SearchUsers(query)
+	var users []*usl.USLUser
+	var err error
+
+	if query == "" {
+		// Return all users when no query (for clear button)
+		users, err = h.uslRepo.GetAllUsers()
+	} else {
+		// Search for users matching the query
+		users, err = h.uslRepo.SearchUsers(query)
+	}
 	if err != nil {
 		h.handleDatabaseError(w, "search users", err)
 		return
@@ -564,8 +790,8 @@ func (h *MigrationHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
 		}{
 			SearchPlaceholder: "Search by name or Discord ID...",
 			SearchURL:         "/usl/users/search",
-			SearchTarget:      "#users-table",
-			ClearURL:          "/usl/users",
+			SearchTarget:      "#users-tbody",
+			ClearURL:          "/usl/users/search",
 			ShowFilters:       true,
 			Query:             query,
 			StatusFilter:      "",
@@ -616,14 +842,130 @@ func (h *MigrationHandler) ListTrackers(w http.ResponseWriter, r *http.Request) 
 			SearchPlaceholder: "Search by URL or Discord ID...",
 			SearchURL:         "/usl/trackers/search",
 			SearchTarget:      "#trackers-table",
-			ClearURL:          "/usl/trackers",
+			ClearURL:          "/usl/trackers/search",
 			ShowFilters:       false, // Trackers don't have status filters like users
 			Query:             "",
 			StatusFilter:      "",
 		},
 	}
 
+	// Populate user data for each tracker
+	h.populateTrackerUsers(trackers)
+
 	h.renderTemplate(w, TemplateUSLTrackers, data)
+}
+
+// populateTrackerUsers fetches and populates the User field for each tracker
+func (h *MigrationHandler) populateTrackerUsers(trackers []*usl.USLUserTracker) {
+	for _, tracker := range trackers {
+		if user, err := h.uslRepo.GetUserByDiscordID(tracker.DiscordID); err == nil {
+			tracker.User = user
+		}
+		// If error, User remains nil and template will show Discord ID instead
+	}
+}
+
+func (h *MigrationHandler) SearchTrackers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		// Return all trackers if no query
+		trackers, err := h.uslRepo.GetAllTrackers()
+		if err != nil {
+			h.handleDatabaseError(w, "load trackers", err)
+			return
+		}
+
+		data := struct {
+			Title        string
+			Trackers     []*usl.USLUserTracker
+			SearchConfig struct {
+				SearchPlaceholder string
+				SearchURL         string
+				SearchTarget      string
+				ClearURL          string
+				ShowFilters       bool
+				Query             string
+				StatusFilter      string
+			}
+		}{
+			Title:    "Trackers",
+			Trackers: trackers,
+			SearchConfig: struct {
+				SearchPlaceholder string
+				SearchURL         string
+				SearchTarget      string
+				ClearURL          string
+				ShowFilters       bool
+				Query             string
+				StatusFilter      string
+			}{
+				SearchPlaceholder: "Search by URL or Discord ID...",
+				SearchURL:         "/usl/trackers/search",
+				SearchTarget:      "#trackers-table",
+				ClearURL:          "/usl/trackers/search",
+				ShowFilters:       false,
+				Query:             "",
+				StatusFilter:      "",
+			},
+		}
+
+		// Populate user data for each tracker
+		h.populateTrackerUsers(trackers)
+
+		h.renderTemplate(w, "trackers-table-fragment", data)
+		return
+	}
+
+	// Search for trackers matching the query
+	trackers, err := h.uslRepo.SearchTrackers(query)
+	if err != nil {
+		h.handleDatabaseError(w, "search trackers", err)
+		return
+	}
+
+	data := struct {
+		Title        string
+		Trackers     []*usl.USLUserTracker
+		SearchConfig struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}
+	}{
+		Title:    "Trackers",
+		Trackers: trackers,
+		SearchConfig: struct {
+			SearchPlaceholder string
+			SearchURL         string
+			SearchTarget      string
+			ClearURL          string
+			ShowFilters       bool
+			Query             string
+			StatusFilter      string
+		}{
+			SearchPlaceholder: "Search by URL or Discord ID...",
+			SearchURL:         "/usl/trackers/search",
+			SearchTarget:      "#trackers-table",
+			ClearURL:          "/usl/trackers/search",
+			ShowFilters:       false,
+			Query:             query,
+			StatusFilter:      "",
+		},
+	}
+
+	// Populate user data for each tracker
+	h.populateTrackerUsers(trackers)
+
+	h.renderTemplate(w, "trackers-table-fragment", data)
 }
 
 func (h *MigrationHandler) UserDetail(w http.ResponseWriter, r *http.Request) {
@@ -670,6 +1012,157 @@ func (h *MigrationHandler) UserDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.renderTemplate(w, TemplateUSLUserDetail, data)
+}
+
+// updateUSLUserTrueSkillFromTrackers updates TrueSkill for a USL user from their tracker data
+// This function manages USL data access and delegates calculation to the TrueSkill service
+func (h *MigrationHandler) updateUSLUserTrueSkillFromTrackers(discordID string) *services.TrueSkillUpdateResult {
+	// Get USL tracker data
+	userTrackers, err := h.uslRepo.GetTrackersByDiscordID(discordID)
+	if err != nil {
+		validationLogger.Error("Failed to get USL trackers for TrueSkill calculation",
+			"discord_id", discordID,
+			"error", err)
+		return &services.TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: false,
+			Error:       fmt.Sprintf("failed to get trackers: %v", err),
+		}
+	}
+
+	// If no trackers, assign default values
+	if len(userTrackers) == 0 {
+		defaultMu := 1500.0
+		defaultSigma := 8.333
+
+		err = h.uslRepo.UpdateUserTrueSkill(discordID, defaultMu, defaultSigma)
+		if err != nil {
+			validationLogger.Error("Failed to update USL user with default TrueSkill values",
+				"discord_id", discordID,
+				"error", err)
+			return &services.TrueSkillUpdateResult{
+				Success:     false,
+				HadTrackers: false,
+				Error:       fmt.Sprintf("failed to update user with defaults: %v", err),
+			}
+		}
+
+		validationLogger.Info("Assigned default TrueSkill values to USL user",
+			"discord_id", discordID,
+			"mu", defaultMu,
+			"sigma", defaultSigma)
+
+		return &services.TrueSkillUpdateResult{
+			Success:     true,
+			HadTrackers: false,
+			TrueSkillResult: &services.TrueSkillCalculation{
+				Mu:    defaultMu,
+				Sigma: defaultSigma,
+			},
+		}
+	}
+
+	// Transform USL tracker data to TrueSkill service format
+	trackerData := h.transformUSLTrackerToTrackerData(userTrackers[0])
+
+	// Use TrueSkill service to calculate values (no database access in service)
+	result := h.trueskillService.CalculateTrueSkillFromTrackerData(trackerData)
+	if !result.Success {
+		validationLogger.Error("TrueSkill calculation failed for USL user",
+			"discord_id", discordID,
+			"error", result.Error)
+		return result
+	}
+
+	// Update USL user with calculated values
+	err = h.uslRepo.UpdateUserTrueSkill(discordID, result.TrueSkillResult.Mu, result.TrueSkillResult.Sigma)
+	if err != nil {
+		validationLogger.Error("Failed to update USL user with calculated TrueSkill values",
+			"discord_id", discordID,
+			"mu", result.TrueSkillResult.Mu,
+			"sigma", result.TrueSkillResult.Sigma,
+			"error", err)
+		return &services.TrueSkillUpdateResult{
+			Success:     false,
+			HadTrackers: true,
+			Error:       fmt.Sprintf("failed to update user: %v", err),
+		}
+	}
+
+	validationLogger.Info("Successfully calculated and updated TrueSkill for USL user",
+		"discord_id", discordID,
+		"mu", result.TrueSkillResult.Mu,
+		"sigma", result.TrueSkillResult.Sigma)
+
+	return result
+}
+
+// transformUSLTrackerToTrackerData converts USL tracker data to TrueSkill service format
+func (h *MigrationHandler) transformUSLTrackerToTrackerData(uslTracker *usl.USLUserTracker) *services.TrackerData {
+	return &services.TrackerData{
+		DiscordID:           uslTracker.DiscordID,
+		URL:                 uslTracker.URL,
+		OnesCurrentPeak:     uslTracker.OnesCurrentSeasonPeak,
+		OnesPreviousPeak:    uslTracker.OnesPreviousSeasonPeak,
+		OnesAllTimePeak:     uslTracker.OnesAllTimePeak,
+		OnesCurrentGames:    uslTracker.OnesCurrentSeasonGamesPlayed,
+		OnesPreviousGames:   uslTracker.OnesPreviousSeasonGamesPlayed,
+		TwosCurrentPeak:     uslTracker.TwosCurrentSeasonPeak,
+		TwosPreviousPeak:    uslTracker.TwosPreviousSeasonPeak,
+		TwosAllTimePeak:     uslTracker.TwosAllTimePeak,
+		TwosCurrentGames:    uslTracker.TwosCurrentSeasonGamesPlayed,
+		TwosPreviousGames:   uslTracker.TwosPreviousSeasonGamesPlayed,
+		ThreesCurrentPeak:   uslTracker.ThreesCurrentSeasonPeak,
+		ThreesPreviousPeak:  uslTracker.ThreesPreviousSeasonPeak,
+		ThreesAllTimePeak:   uslTracker.ThreesAllTimePeak,
+		ThreesCurrentGames:  uslTracker.ThreesCurrentSeasonGamesPlayed,
+		ThreesPreviousGames: uslTracker.ThreesPreviousSeasonGamesPlayed,
+	}
+}
+
+// UpdateUserTrueSkill recalculates TrueSkill for a specific user
+func (h *MigrationHandler) UpdateUserTrueSkill(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	// Extract user ID from URL query parameter
+	userIDStr := r.URL.Query().Get("id")
+	if userIDStr == "" {
+		h.handleInvalidID(w, "User ID")
+		return
+	}
+
+	userID, err := h.parseUserID(userIDStr)
+	if err != nil {
+		h.handleParseError(w, "user ID")
+		return
+	}
+
+	// Get user for Discord ID
+	user, err := h.uslRepo.GetUserByID(userID)
+	if err != nil {
+		h.handleDatabaseError(w, "load user", err)
+		return
+	}
+
+	// Update TrueSkill using USL-specific function
+	result := h.updateUSLUserTrueSkillFromTrackers(user.DiscordID)
+
+	// Log the manual TrueSkill update for audit purposes
+	validationLogger.Info("Manual TrueSkill update triggered",
+		"admin_action", "update_trueskill",
+		"target_user_id", userID,
+		"target_discord_id", user.DiscordID,
+		"update_success", result.Success,
+		"had_trackers", result.HadTrackers,
+		"remote_addr", r.RemoteAddr,
+		"user_agent", r.Header.Get("User-Agent"),
+	)
+
+	// Return HTMX-friendly response with update results
+	h.renderTrueSkillUpdateResult(w, r, result, user)
 }
 
 func (h *MigrationHandler) TrackerDetail(w http.ResponseWriter, r *http.Request) {
@@ -727,9 +1220,11 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 	data := struct {
 		Title       string
 		CurrentPage string
+		Errors      map[string]string
 	}{
 		Title:       "New Tracker",
 		CurrentPage: "trackers",
+		Errors:      make(map[string]string), // Empty errors for initial form load
 	}
 
 	h.renderTemplate(w, TemplateUSLTrackerNew, data)
@@ -749,8 +1244,8 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 	// Build tracker from form (using existing helper)
 	tracker := h.buildTrackerFromForm(r)
 
-	// Comprehensive validation
-	validation := h.validateTracker(tracker)
+	// Comprehensive validation with metrics and security monitoring
+	validation := h.validateTrackerWithMetrics(r, tracker)
 	if !validation.IsValid {
 		h.renderFormWithErrors(w, TemplateUSLTrackerNew, tracker, validation.Errors)
 		return
@@ -794,14 +1289,25 @@ func (h *MigrationHandler) EditTrackerForm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Fetch user information for the tracker
+	user, err := h.uslRepo.GetUserByDiscordID(tracker.DiscordID)
+	if err != nil {
+		// If user not found, we'll still show the form but without name
+		user = nil
+	}
+
 	data := struct {
 		Title       string
 		CurrentPage string
 		Tracker     *usl.USLUserTracker
+		User        *usl.USLUser
+		Errors      map[string]string
 	}{
 		Title:       "Edit Tracker",
 		CurrentPage: "trackers",
 		Tracker:     tracker,
+		User:        user,
+		Errors:      make(map[string]string), // Empty errors for initial form load
 	}
 
 	h.renderTemplate(w, TemplateUSLTrackerEdit, data)
@@ -835,8 +1341,8 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 	tracker := h.buildTrackerFromForm(r)
 	tracker.ID = trackerID // Set ID for update operation
 
-	// Comprehensive validation
-	validation := h.validateTracker(tracker)
+	// Comprehensive validation with metrics and security monitoring
+	validation := h.validateTrackerWithMetrics(r, tracker)
 	if !validation.IsValid {
 		h.renderFormWithErrors(w, TemplateUSLTrackerEdit, tracker, validation.Errors)
 		return
@@ -882,11 +1388,26 @@ func (h *MigrationHandler) AdminDashboard(w http.ResponseWriter, r *http.Request
 	data := struct {
 		Title       string
 		CurrentPage string
-		Stats       map[string]interface{}
+		Stats       struct {
+			TotalUsers    int `json:"total_users"`
+			ActiveUsers   int `json:"active_users"`
+			TotalTrackers int `json:"total_trackers"`
+			ValidTrackers int `json:"valid_trackers"`
+		}
 	}{
 		Title:       "Dashboard",
 		CurrentPage: "admin",
-		Stats:       stats,
+		Stats: struct {
+			TotalUsers    int `json:"total_users"`
+			ActiveUsers   int `json:"active_users"`
+			TotalTrackers int `json:"total_trackers"`
+			ValidTrackers int `json:"valid_trackers"`
+		}{
+			TotalUsers:    stats["total_users"].(int),
+			ActiveUsers:   stats["active_users"].(int),
+			TotalTrackers: stats["total_trackers"].(int),
+			ValidTrackers: stats["valid_trackers"].(int),
+		},
 	}
 
 	h.renderTemplate(w, TemplateUSLAdminDashboard, data)
@@ -1014,6 +1535,110 @@ func (h *MigrationHandler) mapUSLTrackerToTrackerData(uslTracker *usl.USLUserTra
 	}
 }
 
+// ValidationMetricsAPI returns current validation metrics for monitoring
+func (h *MigrationHandler) ValidationMetricsAPI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	metrics := getValidationMetrics()
+
+	// Add calculated statistics
+	response := struct {
+		ValidationMetrics
+		SuccessRate   float64 `json:"success_rate"`
+		FailureRate   float64 `json:"failure_rate"`
+		SecurityRate  float64 `json:"security_incident_rate"`
+		TopErrorTypes []struct {
+			Type  string `json:"type"`
+			Count int64  `json:"count"`
+		} `json:"top_error_types"`
+		TopErrorFields []struct {
+			Field string `json:"field"`
+			Count int64  `json:"count"`
+		} `json:"top_error_fields"`
+	}{
+		ValidationMetrics: metrics,
+	}
+
+	// Calculate rates
+	if metrics.TotalValidations > 0 {
+		response.SuccessRate = float64(metrics.SuccessfulValidations) / float64(metrics.TotalValidations) * 100
+		response.FailureRate = float64(metrics.FailedValidations) / float64(metrics.TotalValidations) * 100
+		response.SecurityRate = float64(metrics.SecurityIncidents) / float64(metrics.TotalValidations) * 100
+	}
+
+	// Get top error types (up to 5)
+	for errorType, count := range metrics.ErrorsByType {
+		response.TopErrorTypes = append(response.TopErrorTypes, struct {
+			Type  string `json:"type"`
+			Count int64  `json:"count"`
+		}{Type: errorType, Count: count})
+	}
+
+	// Get top error fields (up to 5)
+	for errorField, count := range metrics.ErrorsByField {
+		response.TopErrorFields = append(response.TopErrorFields, struct {
+			Field string `json:"field"`
+			Count int64  `json:"count"`
+		}{Field: errorField, Count: count})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		validationLogger.Error("Failed to encode validation metrics response", "error", err)
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// renderTrueSkillUpdateResult renders the TrueSkill update result as an HTMX-friendly response
+func (h *MigrationHandler) renderTrueSkillUpdateResult(w http.ResponseWriter, r *http.Request, result *services.TrueSkillUpdateResult, user *usl.USLUser) {
+	// Create response data for the template
+	data := struct {
+		Success         bool   `json:"success"`
+		HadTrackers     bool   `json:"hadTrackers"`
+		Error           string `json:"error,omitempty"`
+		TrueSkillResult *struct {
+			Mu    float64 `json:"mu"`
+			Sigma float64 `json:"sigma"`
+		} `json:"trueSkillResult,omitempty"`
+		UserName  string `json:"userName"`
+		DiscordID string `json:"discordId"`
+	}{
+		Success:     result.Success,
+		HadTrackers: result.HadTrackers,
+		Error:       result.Error,
+		UserName:    user.Name,
+		DiscordID:   user.DiscordID,
+	}
+
+	// Add TrueSkill result if successful
+	if result.Success && result.TrueSkillResult != nil {
+		data.TrueSkillResult = &struct {
+			Mu    float64 `json:"mu"`
+			Sigma float64 `json:"sigma"`
+		}{
+			Mu:    result.TrueSkillResult.Mu,
+			Sigma: result.TrueSkillResult.Sigma,
+		}
+	}
+
+	// For HTMX requests, return just the result fragment
+	if r.Header.Get("HX-Request") != "" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		err := h.templates.ExecuteTemplate(w, "trueskill-update-result", data)
+		if err != nil {
+			validationLogger.Error("Failed to render TrueSkill update result template", "error", err)
+			http.Error(w, "Template rendering error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// For non-HTMX requests, redirect back to user detail page
+	http.Redirect(w, r, fmt.Sprintf("/usl/users/detail?id=%d", user.ID), http.StatusSeeOther)
+}
+
 // NOTE: Authentication methods removed - now handled by unified Discord OAuth system in main.go
 
 func (h *MigrationHandler) renderTemplate(w http.ResponseWriter, templateName TemplateName, data any) {
@@ -1031,4 +1656,182 @@ func (h *MigrationHandler) renderTemplate(w http.ResponseWriter, templateName Te
 	if _, err := buf.WriteTo(w); err != nil {
 		log.Printf("[USL-HANDLER] Failed to write template output: %v", err)
 	}
+}
+
+// NewUserForm displays the form for creating a new user
+func (h *MigrationHandler) NewUserForm(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	data := struct {
+		Title       string
+		User        *usl.USLUser
+		CurrentPage string
+	}{
+		Title:       "Add New User",
+		User:        &usl.USLUser{}, // Empty user for form
+		CurrentPage: "users",
+	}
+
+	h.renderTemplate(w, "user-new-page", data)
+}
+
+// CreateUser handles the creation of a new user
+func (h *MigrationHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		h.handleInvalidFormData(w, err)
+		return
+	}
+
+	// Extract user data from form
+	user := &usl.USLUser{
+		Name:      strings.TrimSpace(r.FormValue("name")),
+		DiscordID: strings.TrimSpace(r.FormValue("discord_id")),
+		Active:    r.FormValue("active") == "on",
+		Banned:    r.FormValue("banned") == "on",
+	}
+
+	// Validate required fields
+	if user.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+	if user.DiscordID == "" {
+		http.Error(w, "Discord ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Create the user
+	createdUser, err := h.uslRepo.CreateUser(user.Name, user.DiscordID, user.Active, user.Banned)
+	if err != nil {
+		h.handleDatabaseError(w, "create user", err)
+		return
+	}
+
+	// Redirect to user detail page
+	http.Redirect(w, r, fmt.Sprintf("/usl/users/detail?id=%d", createdUser.ID), http.StatusSeeOther)
+}
+
+// EditUserForm displays the form for editing an existing user
+func (h *MigrationHandler) EditUserForm(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("id")
+	if userIDStr == "" {
+		h.handleInvalidID(w, "user")
+		return
+	}
+
+	userID, err := h.parseUserID(userIDStr)
+	if err != nil {
+		h.handleParseError(w, "user ID")
+		return
+	}
+
+	user, err := h.uslRepo.GetUserByID(userID)
+	if err != nil {
+		h.handleDatabaseError(w, "fetch user", err)
+		return
+	}
+
+	data := struct {
+		Title       string
+		User        *usl.USLUser
+		CurrentPage string
+	}{
+		Title:       "Edit User",
+		User:        user,
+		CurrentPage: "users",
+	}
+
+	h.renderTemplate(w, "user-edit-page", data)
+}
+
+// UpdateUser handles the update of an existing user
+func (h *MigrationHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		h.handleInvalidFormData(w, err)
+		return
+	}
+
+	userIDStr := r.FormValue("id")
+	userID, err := h.parseUserID(userIDStr)
+	if err != nil {
+		h.handleParseError(w, "user ID")
+		return
+	}
+
+	// Extract user data from form
+	user := &usl.USLUser{
+		ID:        userID,
+		Name:      strings.TrimSpace(r.FormValue("name")),
+		DiscordID: strings.TrimSpace(r.FormValue("discord_id")),
+		Active:    r.FormValue("active") == "on",
+		Banned:    r.FormValue("banned") == "on",
+	}
+
+	// Validate required fields
+	if user.Name == "" {
+		http.Error(w, "Name is required", http.StatusBadRequest)
+		return
+	}
+	if user.DiscordID == "" {
+		http.Error(w, "Discord ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Update the user
+	_, err = h.uslRepo.UpdateUser(userID, user.Name, user.Active, user.Banned)
+	if err != nil {
+		h.handleDatabaseError(w, "update user", err)
+		return
+	}
+
+	// Redirect to user detail page
+	http.Redirect(w, r, fmt.Sprintf("/usl/users/detail?id=%d", userID), http.StatusSeeOther)
+}
+
+// DeleteUser handles the deletion of a user
+func (h *MigrationHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		h.handleMethodNotAllowed(w, r)
+		return
+	}
+
+	userIDStr := r.URL.Path[len("/usl/users/"):]
+	userID, err := h.parseUserID(userIDStr)
+	if err != nil {
+		h.handleParseError(w, "user ID")
+		return
+	}
+
+	err = h.uslRepo.DeleteUser(userID)
+	if err != nil {
+		h.handleDatabaseError(w, "delete user", err)
+		return
+	}
+
+	// For HTMX requests, return success
+	if r.Header.Get("HX-Request") != "" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// For regular requests, redirect to users list
+	http.Redirect(w, r, "/usl/users", http.StatusSeeOther)
 }
