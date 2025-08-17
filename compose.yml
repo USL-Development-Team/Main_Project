@@ -1,0 +1,18 @@
+services:
+  usl-app:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.staging.docker
+    environment:
+      # Override to simulate platform environment
+      RENDER: "true"
+      ENVIRONMENT: "production"
+    
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--timeout=2", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3

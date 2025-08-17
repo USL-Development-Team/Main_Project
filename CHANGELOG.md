@@ -46,21 +46,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * add comprehensive validation safety and security tests ([97db658](https://github.com/USL-Development-Team/Main_Project/commit/97db658a88e581c40385f4576ce1fcbae7a6882d))
 * add comprehensive validation tests and fix client-side validation ([c17ef87](https://github.com/USL-Development-Team/Main_Project/commit/c17ef87840d8eab03546fc4fd15c1aa7c6f572ce))
 
-## [Unreleased]
-
-### ✨ Features
-- Initial USL management system setup
-- Discord OAuth authentication via Supabase
-- User and tracker management interface
-- TrueSkill rating calculations
-- Environment-specific OAuth configuration
-
-### ♻️ Code Refactoring
-- Improved code readability and naming conventions
-- Cleaned up redundant comments
-- Simplified complex authentication functions
-
-### 🔧 Miscellaneous
-- Set up Render deployment configuration
-- Established git flow with develop branch
-- Added automated release and changelog generation
