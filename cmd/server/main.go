@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"log/slog"
@@ -140,42 +139,7 @@ func setupServices(appConfig *config.Config, repos *RepositoryCollection, logger
 }
 
 func createTemplateFunctions() template.FuncMap {
-	return template.FuncMap{
-		"dict": func(values ...any) map[string]any {
-			dict := make(map[string]any)
-			for i := 0; i < len(values); i += 2 {
-				if i+1 < len(values) {
-					dict[values[i].(string)] = values[i+1]
-				}
-			}
-			return dict
-		},
-		"slice": func(values ...any) []any {
-			return values
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-		"sub": func(a, b float64) float64 {
-			return a - b
-		},
-		"mul": func(a, b float64) float64 {
-			return a * b
-		},
-		"printf": func(format string, args ...any) string {
-			return fmt.Sprintf(format, args...)
-		},
-		"lt": func(a, b float64) bool {
-			return a < b
-		},
-		"substr": func(s string, start, length int) string {
-			if start >= len(s) {
-				return ""
-			}
-			end := min(start+length, len(s))
-			return s[start:end]
-		},
-	}
+	return templates.TemplateFunctions()
 }
 
 func loadTemplates(logger *slog.Logger) *template.Template {

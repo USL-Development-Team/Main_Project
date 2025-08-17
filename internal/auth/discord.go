@@ -7,9 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/supabase-community/supabase-go"
 	"usl-server/internal/config"
 	"usl-server/internal/templates"
+
+	"github.com/supabase-community/supabase-go"
 )
 
 const (
