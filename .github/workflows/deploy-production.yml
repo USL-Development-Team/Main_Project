@@ -16,11 +16,13 @@ jobs:
     environment: production
     steps:
       - name: Deploy to Render
-        uses: JorgeLNJunior/render-deploy@v1.4.4
-        with:
-          service_id: ${{ secrets.RENDER_SERVICE_ID }}
-          api_key: ${{ secrets.RENDER_API_KEY }}
-          wait_deploy: true
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -d '{"trigger": "github-release"}' \
+            --fail --silent --show-error
+          echo "✅ Deployment triggered successfully"
 
       - name: Deployment notification
         run: |
