@@ -5,81 +5,69 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/supabase-community/supabase-go"
+	"usl-server/internal/config"
 )
 
-// Discord metadata field names for consistent access
 const (
 	metadataProviderID = "provider_id"
 	metadataSub        = "sub"
 	metadataDiscordID  = "discord_id"
 	userMetadataKey    = "user_metadata"
+
+	// Route constants
+	uslAdminRoute = "/usl/admin"
+	usersRoute    = "/users"
+	uslLoginRoute = "/usl/login"
+	loginRoute    = "/login"
+
+	// Cookie constants
+	accessTokenCookie  = "auth_access_token"
+	refreshTokenCookie = "auth_refresh_token"
+
+	// URL prefixes
+	uslPrefix = "/usl"
 )
 
-// DiscordAuth provides unified Discord OAuth authentication via Supabase Auth
-// This replaces both the main app auth and USL auth systems
 type DiscordAuth struct {
 	supabaseClient  *supabase.Client
 	adminDiscordIDs []string
-	supabaseURL     string // Internal Supabase URL for backend calls
-	publicURL       string // Public Supabase URL for OAuth redirects
-	anonKey         string // Anon key for client-side operations
+	supabaseURL     string
+	publicURL       string
+	anonKey         string
+	envConfig       *config.EnvironmentConfig
 }
 
-func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string) *DiscordAuth {
+func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string, envConfig config.EnvironmentConfig) *DiscordAuth {
 	return &DiscordAuth{
 		supabaseClient:  supabaseClient,
 		adminDiscordIDs: adminDiscordIDs,
 		supabaseURL:     supabaseURL,
 		publicURL:       publicURL,
 		anonKey:         anonKey,
+		envConfig:       &envConfig,
 	}
 }
 
-func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
-
+func (auth *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if a.IsAuthenticated(r) {
-		if strings.HasPrefix(r.URL.Path, "/usl") {
-			http.Redirect(w, r, "/usl/admin", http.StatusSeeOther)
-		} else {
-			http.Redirect(w, r, "/users", http.StatusSeeOther)
-		}
+	if auth.IsAuthenticated(r) {
+		auth.redirectAuthenticated(w, r)
 		return
 	}
 
-	// Get app base URL from environment variables
-	appBaseURL := a.getAppBaseURL()
-
-	var redirectTo string
-	if strings.HasPrefix(r.URL.Path, "/usl") {
-		redirectTo = fmt.Sprintf("%s/auth/callback?redirect=usl", appBaseURL)
-	} else {
-		redirectTo = fmt.Sprintf("%s/auth/callback?redirect=main", appBaseURL)
-	}
-
+	appBaseURL := auth.getAppBaseURL()
+	redirectTo := auth.buildRedirectURL(appBaseURL, r.URL.Path)
 	discordOAuthURL := fmt.Sprintf("%s/auth/v1/authorize?provider=discord&redirect_to=%s",
-		a.publicURL, redirectTo)
+		auth.publicURL, redirectTo)
 
-	isUSL := strings.HasPrefix(r.URL.Path, "/usl")
-	var title, heading, infoText string
-
-	if isUSL {
-		title = "USL Admin Login"
-		heading = "USL Administration"
-		infoText = "Sign in with Discord to access the USL management system."
-	} else {
-		title = "Sign In"
-		heading = "Sign In"
-		infoText = "Sign in with Discord to access the application."
-	}
+	title, heading, infoText := auth.getLoginPageContent(r.URL.Path)
 
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
@@ -155,12 +143,7 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
     </div>
 </body>
 </html>
-`, title, func() string {
-		if isUSL {
-			return "usl-header"
-		}
-		return ""
-	}(), heading, infoText, a.getErrorMessage(r), discordOAuthURL)
+`, title, auth.getHeaderClass(r.URL.Path), heading, infoText, auth.getErrorMessage(r), discordOAuthURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -168,17 +151,17 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
+func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 	redirectParam := r.URL.Query().Get("redirect")
 	var finalRedirect string
 
 	switch redirectParam {
 	case "usl":
-		finalRedirect = "/usl/admin"
+		finalRedirect = uslAdminRoute
 	case "main":
-		finalRedirect = "/users"
+		finalRedirect = usersRoute
 	default:
-		finalRedirect = "/users" // Default to main app
+		finalRedirect = usersRoute
 	}
 
 	// HTML page that extracts tokens from URL fragment and sets session
@@ -256,7 +239,7 @@ func (a *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 // ProcessTokens handles the access token validation and session setup
-func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
+func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -273,48 +256,46 @@ func (a *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := a.validateTokensAndGetUser(req.AccessToken)
+	user, err := auth.validateTokensAndGetUser(req.AccessToken)
 	if err != nil {
 		log.Printf("Error validating tokens: %v", err)
 		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
 	}
 
-	if !a.isUserAuthorized(user) {
+	if !auth.isUserAuthorized(user) {
 		log.Printf("User not authorized: %+v", user)
 		http.Error(w, "Access denied", http.StatusForbidden)
 		return
 	}
 
-	a.setSessionCookies(w, req.AccessToken, req.RefreshToken)
+	auth.setSessionCookies(w, req.AccessToken, req.RefreshToken)
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func (a *DiscordAuth) IsAuthenticated(r *http.Request) bool {
-	cookie, err := r.Cookie("auth_access_token")
+func (auth *DiscordAuth) IsAuthenticated(r *http.Request) bool {
+	cookie, err := r.Cookie(accessTokenCookie)
 	if err != nil {
 		return false
 	}
 
 	// Validate token and get user info
-	user, err := a.validateTokensAndGetUser(cookie.Value)
+	user, err := auth.validateTokensAndGetUser(cookie.Value)
 	if err != nil {
 		return false
 	}
 
-	return a.isUserAuthorized(user)
+	return auth.isUserAuthorized(user)
 }
 
-// RequireAuth middleware that protects routes with Discord OAuth
-// This replaces both the main app auth middleware and USL auth middleware
-func (a *DiscordAuth) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
+func (auth *DiscordAuth) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !a.IsAuthenticated(r) {
-			if strings.HasPrefix(r.URL.Path, "/usl") {
-				http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
+		if !auth.IsAuthenticated(r) {
+			if auth.isUSLPath(r.URL.Path) {
+				http.Redirect(w, r, uslLoginRoute, http.StatusSeeOther)
 			} else {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				http.Redirect(w, r, loginRoute, http.StatusSeeOther)
 			}
 			return
 		}
@@ -322,9 +303,9 @@ func (a *DiscordAuth) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (a *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
+func (auth *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_access_token",
+		Name:     accessTokenCookie,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
@@ -332,27 +313,22 @@ func (a *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_refresh_token",
+		Name:     refreshTokenCookie,
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   -1,
 	})
 
-	// Redirect to appropriate login
-	if strings.HasPrefix(r.URL.Path, "/usl") {
-		http.Redirect(w, r, "/usl/login", http.StatusSeeOther)
+	if auth.isUSLPath(r.URL.Path) {
+		http.Redirect(w, r, uslLoginRoute, http.StatusSeeOther)
 	} else {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		http.Redirect(w, r, loginRoute, http.StatusSeeOther)
 	}
 }
 
-// Helper methods
-
-func (a *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
-	// Use the main Supabase client with the user's access token
-
-	userClient := a.supabaseClient.Auth.WithToken(accessToken)
+func (auth *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
+	userClient := auth.supabaseClient.Auth.WithToken(accessToken)
 
 	user, err := userClient.GetUser()
 	if err != nil {
@@ -369,13 +345,13 @@ func (a *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]i
 	return userInfo, nil
 }
 
-func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
-	discordID := a.extractDiscordID(user)
+func (auth *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
+	discordID := auth.extractDiscordID(user)
 	if discordID == "" {
 		return false
 	}
 
-	for _, adminID := range a.adminDiscordIDs {
+	for _, adminID := range auth.adminDiscordIDs {
 		if discordID == adminID {
 			return true
 		}
@@ -384,14 +360,12 @@ func (a *DiscordAuth) isUserAuthorized(user map[string]interface{}) bool {
 	return false
 }
 
-// extractDiscordID extracts Discord ID from user metadata using multiple fallback fields
-func (a *DiscordAuth) extractDiscordID(user map[string]interface{}) string {
+func (auth *DiscordAuth) extractDiscordID(user map[string]interface{}) string {
 	metadata, ok := user[userMetadataKey].(map[string]interface{})
 	if !ok {
 		return ""
 	}
 
-	// Try multiple possible field names for Discord ID
 	fields := []string{metadataProviderID, metadataSub, metadataDiscordID}
 	for _, field := range fields {
 		if id, exists := metadata[field].(string); exists && id != "" {
@@ -402,31 +376,31 @@ func (a *DiscordAuth) extractDiscordID(user map[string]interface{}) string {
 	return ""
 }
 
-func (a *DiscordAuth) setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string) {
+func (auth *DiscordAuth) setSessionCookies(w http.ResponseWriter, accessToken, refreshToken string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_access_token",
+		Name:     accessTokenCookie,
 		Value:    accessToken,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   3600, // 1 hour
+		MaxAge:   3600,
 	})
 
 	if refreshToken != "" {
 		http.SetCookie(w, &http.Cookie{
-			Name:     "auth_refresh_token",
+			Name:     refreshTokenCookie,
 			Value:    refreshToken,
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   false, // Set to true in production with HTTPS
+			Secure:   false,
 			SameSite: http.SameSiteLaxMode,
-			MaxAge:   86400 * 7, // 7 days
+			MaxAge:   86400 * 7,
 		})
 	}
 }
 
-func (a *DiscordAuth) getErrorMessage(r *http.Request) string {
+func (auth *DiscordAuth) getErrorMessage(r *http.Request) string {
 	errorType := r.URL.Query().Get("error")
 	switch errorType {
 	case "invalid":
@@ -438,13 +412,43 @@ func (a *DiscordAuth) getErrorMessage(r *http.Request) string {
 	}
 }
 
-// getAppBaseURL returns the application base URL from environment variables
-func (a *DiscordAuth) getAppBaseURL() string {
-	// Check for explicit APP_BASE_URL environment variable
-	if appBaseURL := os.Getenv("APP_BASE_URL"); appBaseURL != "" {
-		return appBaseURL
+func (auth *DiscordAuth) getAppBaseURL() string {
+	if auth.envConfig != nil && auth.envConfig.AppBaseURL != "" {
+		return auth.envConfig.AppBaseURL
 	}
 
-	// Fallback to localhost for development
 	return "http://localhost:8080"
+}
+
+func (auth *DiscordAuth) isUSLPath(path string) bool {
+	return strings.HasPrefix(path, uslPrefix)
+}
+
+func (auth *DiscordAuth) redirectAuthenticated(w http.ResponseWriter, r *http.Request) {
+	if auth.isUSLPath(r.URL.Path) {
+		http.Redirect(w, r, uslAdminRoute, http.StatusSeeOther)
+	} else {
+		http.Redirect(w, r, usersRoute, http.StatusSeeOther)
+	}
+}
+
+func (auth *DiscordAuth) buildRedirectURL(appBaseURL, path string) string {
+	if auth.isUSLPath(path) {
+		return fmt.Sprintf("%s/auth/callback?redirect=usl", appBaseURL)
+	}
+	return fmt.Sprintf("%s/auth/callback?redirect=main", appBaseURL)
+}
+
+func (auth *DiscordAuth) getLoginPageContent(path string) (title, heading, infoText string) {
+	if auth.isUSLPath(path) {
+		return "USL Admin Login", "USL Administration", "Sign in with Discord to access the USL management system."
+	}
+	return "Sign In", "Sign In", "Sign in with Discord to access the application."
+}
+
+func (auth *DiscordAuth) getHeaderClass(path string) string {
+	if auth.isUSLPath(path) {
+		return "usl-header"
+	}
+	return ""
 }
