@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/USL-Development-Team/Main_Project/compare/v1.0.1...v1.1.0) (2025-08-17)
+
+
+### ✨ Features
+
+* remove hardcoded placeholder domains and add configuration validation ([5689110](https://github.com/USL-Development-Team/Main_Project/commit/568911040804f5c49f6cbd70fcac159a02e456eb)), closes [#24](https://github.com/USL-Development-Team/Main_Project/issues/24)
+
+
+### 🐛 Bug Fixes
+
+* **oauth:** remove hardcoded placeholder domains in production config ([da79975](https://github.com/USL-Development-Team/Main_Project/commit/da799751da54220290a4c89774346a372b5c8caf)), closes [#24](https://github.com/USL-Development-Team/Main_Project/issues/24)
+
+
+### ♻️ Code Refactoring
+
+* improve code readability and organization ([0fb30c4](https://github.com/USL-Development-Team/Main_Project/commit/0fb30c44d055dbf8ee55b39e1194e6e652e4ea88))
+
 ## [1.0.1](https://github.com/USL-Development-Team/Main_Project/compare/v1.0.0...v1.0.1) (2025-08-17)
 
 
