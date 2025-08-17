@@ -61,6 +61,32 @@ Environment-specific configurations support:
 
 Each environment has its own OAuth redirect configuration and database settings.
 
+### Required Environment Variables
+
+**Core Application:**
+- `APP_BASE_URL` - **Required for staging/production**. Your application's base URL (e.g., `https://rl-league-management.onrender.com`)
+- `ENVIRONMENT` - Deployment environment (`development`, `staging`, `production`)
+- `SERVER_HOST` - Server bind address (default: `0.0.0.0` for production)
+- `SERVER_PORT` or `PORT` - Server port (default: `8080`)
+
+**Database (Supabase):**
+- `SUPABASE_URL` - **Required**. Your Supabase project URL
+- `SUPABASE_ANON_KEY` - **Required**. Supabase anonymous/public key
+- `SUPABASE_SERVICE_ROLE_KEY` - **Required**. Supabase service role key for server operations
+- `DATABASE_URL` - PostgreSQL connection string (optional, uses Supabase by default)
+
+**Discord OAuth:**
+- `DISCORD_CLIENT_ID` - **Required**. Discord application client ID
+- `DISCORD_CLIENT_SECRET` - **Required**. Discord application client secret
+
+**Optional Configuration:**
+- `SUPABASE_PUBLIC_URL` - Override for Supabase public URL (defaults to SUPABASE_URL)
+- `USL_ADMIN_DISCORD_IDS` - Comma-separated Discord IDs for admin access
+- TrueSkill configuration (`TRUESKILL_*`)
+- MMR calculation weights (`MMR_*`)
+
+**⚠️ Important**: Production and staging environments will fail to start if required variables are missing.
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow, commit conventions, and release process.

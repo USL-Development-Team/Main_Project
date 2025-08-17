@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1](https://github.com/USL-Development-Team/Main_Project/compare/v1.0.0...v1.0.1) (2025-08-17)
+
+
+### 🐛 Bug Fixes
+
+* replace hardcoded localhost oauth redirects with environment-aware urls ([431fb5d](https://github.com/USL-Development-Team/Main_Project/commit/431fb5dd16eeaddf44486787859a4305e36f24c4)), closes [#14](https://github.com/USL-Development-Team/Main_Project/issues/14)
+* skip .env file loading in platform environments ([#12](https://github.com/USL-Development-Team/Main_Project/issues/12)) ([ae43255](https://github.com/USL-Development-Team/Main_Project/commit/ae43255f173d62327507b0b57f42b4c7842ff8bf)), closes [#11](https://github.com/USL-Development-Team/Main_Project/issues/11)
+* use render deploy hook for deployments instead of missing api credentials ([07d3327](https://github.com/USL-Development-Team/Main_Project/commit/07d332769504a93895900da72efcd41f1915a2b2))
+
+
+### ♻️ Code Refactoring
+
+* complete oauth appbaseurl integration with centralized config ([f477bd3](https://github.com/USL-Development-Team/Main_Project/commit/f477bd3de1ba6170c3bac637e6d6421821004f25))
+* improve code readability and maintainability ([c6a7509](https://github.com/USL-Development-Team/Main_Project/commit/c6a7509fddb1f77f585895ee4e08eaef20c61836))
+
 ## 1.0.0 (2025-08-17)
 
 
@@ -45,4 +60,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * add comprehensive validation safety and security tests ([97db658](https://github.com/USL-Development-Team/Main_Project/commit/97db658a88e581c40385f4576ce1fcbae7a6882d))
 * add comprehensive validation tests and fix client-side validation ([c17ef87](https://github.com/USL-Development-Team/Main_Project/commit/c17ef87840d8eab03546fc4fd15c1aa7c6f572ce))
-

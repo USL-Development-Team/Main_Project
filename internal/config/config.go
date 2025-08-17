@@ -1,11 +1,12 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds all configuration for the application
@@ -109,7 +110,6 @@ func Load() (*Config, error) {
 	return config, nil
 }
 
-// Utility functions for environment variable parsing
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

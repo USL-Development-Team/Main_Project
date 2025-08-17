@@ -20,6 +20,7 @@ supabase/.branches/
 *.out
 go.work
 go.work.sum
+bin/
 
 # IDE
 .vscode/
