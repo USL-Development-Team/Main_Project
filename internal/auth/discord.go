@@ -19,17 +19,14 @@ const (
 	metadataDiscordID  = "discord_id"
 	userMetadataKey    = "user_metadata"
 
-	// Route constants
 	uslAdminRoute = "/usl/admin"
 	usersRoute    = "/users"
 	uslLoginRoute = "/usl/login"
 	loginRoute    = "/login"
 
-	// Cookie constants
 	accessTokenCookie  = "auth_access_token"
 	refreshTokenCookie = "auth_refresh_token"
 
-	// URL prefixes
 	uslPrefix = "/usl"
 )
 

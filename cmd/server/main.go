@@ -28,22 +28,17 @@ const (
 )
 
 type ApplicationContext struct {
-	// Core Configuration
 	Config *config.Config
 	Logger *slog.Logger
 
-	// Authentication & Authorization
 	Auth *auth.DiscordAuth
 
-	// Data Layer
 	UserRepo    *repositories.UserRepository
 	TrackerRepo *repositories.TrackerRepository
 	GuildRepo   *repositories.GuildRepository
 
-	// Business Logic
 	TrueSkillService *services.UserTrueSkillService
 
-	// Presentation Layer
 	Templates *template.Template
 }
 
