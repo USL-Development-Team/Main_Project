@@ -124,12 +124,19 @@ func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Debug logging for token validation
+	log.Printf("DEBUG: Received access token (first 20 chars): %s...", req.AccessToken[:min(20, len(req.AccessToken))])
+	log.Printf("DEBUG: Token validation starting")
+
 	user, err := auth.validateTokensAndGetUser(req.AccessToken)
 	if err != nil {
 		log.Printf("Error validating tokens: %v", err)
+		log.Printf("DEBUG: Token validation failed - full error: %+v", err)
 		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
 	}
+
+	log.Printf("DEBUG: Token validation successful, user ID: %v", user["id"])
 
 	if !auth.isUserAuthorized(user) {
 		log.Printf("User not authorized: %+v", user)
@@ -196,19 +203,29 @@ func (auth *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
+	log.Printf("DEBUG: Creating anon client with URL: %s", auth.supabaseURL)
+	log.Printf("DEBUG: Using anon key (first 20 chars): %s...", auth.anonKey[:min(20, len(auth.anonKey))])
+
 	// Create anon client for user token validation
 	// Service role clients cannot validate user OAuth tokens
 	anonClient, err := supabase.NewClient(auth.supabaseURL, auth.anonKey, nil)
 	if err != nil {
+		log.Printf("DEBUG: Failed to create anon client: %v", err)
 		return nil, fmt.Errorf("failed to create anon client: %w", err)
 	}
+	log.Printf("DEBUG: Anon client created successfully")
 
+	log.Printf("DEBUG: Creating user client with WithToken")
 	userClient := anonClient.Auth.WithToken(accessToken)
+	log.Printf("DEBUG: User client created, calling GetUser()")
 
 	user, err := userClient.GetUser()
 	if err != nil {
+		log.Printf("DEBUG: GetUser() failed with error: %v", err)
+		log.Printf("DEBUG: Error type: %T", err)
 		return nil, fmt.Errorf("failed to get user from Supabase: %w", err)
 	}
+	log.Printf("DEBUG: GetUser() succeeded, user email: %s", user.Email)
 
 	userInfo := map[string]interface{}{
 		"id":            user.ID,
