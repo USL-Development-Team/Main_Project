@@ -61,23 +61,15 @@ type USLConfig struct {
 
 // Load initializes configuration from environment variables
 func Load() (*Config, error) {
-	// Load environment-specific .env file
-	environment := os.Getenv("ENVIRONMENT")
-	if environment == "" {
-		environment = "development"
-	}
-
-	envFile := ".env"
-	if environment != "development" {
-		envFile = ".env." + environment
-	}
-
-	if err := godotenv.Load(envFile); err != nil {
-		log.Printf("Warning: %s file not found, trying .env: %v", envFile, err)
-		// Fallback to .env if environment-specific file not found
+	// Skip .env file loading if running on a platform that provides environment variables
+	// Check for common platform environment indicators
+	if !isPlatformEnvironment() {
+		// Load .env file for local development
 		if err := godotenv.Load(".env"); err != nil {
 			log.Printf("Warning: .env file not found: %v", err)
 		}
+	} else {
+		log.Printf("Platform environment detected, skipping .env file loading")
 	}
 
 	config := &Config{
@@ -155,6 +147,51 @@ func (c *Config) GetTrueSkillSigmaRange() (float64, float64) {
 
 func (c *Config) GetMMRConfig() MMRConfig {
 	return c.MMR
+}
+
+// isPlatformEnvironment detects if running on a platform that provides environment variables
+func isPlatformEnvironment() bool {
+	// Check for common platform environment indicators
+	platformVars := []string{
+		"RENDER",             // Render.com
+		"HEROKU",             // Heroku
+		"VERCEL",             // Vercel
+		"RAILWAY_PROJECT_ID", // Railway
+		"FLY_APP_NAME",       // Fly.io
+		"CF_INSTANCE_INDEX",  // Cloud Foundry
+	}
+
+	for _, envVar := range platformVars {
+		if os.Getenv(envVar) != "" {
+			return true
+		}
+	}
+
+	// Also check if ENVIRONMENT is explicitly set to production
+	// and key environment variables are already available
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "production" {
+		// Check if critical environment variables are already set
+		requiredVars := []string{
+			"SUPABASE_URL",
+			"SUPABASE_ANON_KEY",
+			"SUPABASE_SERVICE_ROLE_KEY",
+		}
+
+		allPresent := true
+		for _, envVar := range requiredVars {
+			if os.Getenv(envVar) == "" {
+				allPresent = false
+				break
+			}
+		}
+
+		if allPresent {
+			return true
+		}
+	}
+
+	return false
 }
 
 // getEnvStringSlice parses a comma-separated string into a slice
