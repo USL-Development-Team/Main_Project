@@ -9,6 +9,7 @@ import (
 
 	"github.com/supabase-community/supabase-go"
 	"usl-server/internal/config"
+	"usl-server/internal/templates"
 )
 
 const (
@@ -69,81 +70,13 @@ func (auth *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 
 	title, heading, infoText := auth.getLoginPageContent(r.URL.Path)
 
-	html := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>%s</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .login-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            max-width: 400px;
-            width: 100%%;
-            text-align: center;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 20px;
-        }
-        .usl-header {
-            color: #1a365d;
-            margin-bottom: 10px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .discord-btn {
-            display: block;
-            width: 100%%;
-            padding: 15px;
-            background-color: #5865F2;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .discord-btn:hover {
-            background-color: #4752C4;
-        }
-        .info {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-        .error {
-            color: red;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <h2 class="%s">%s</h2>
-        <div class="info">%s</div>
-        %s
-        <a href="%s" class="discord-btn">
-            🎮 Sign in with Discord
-        </a>
-    </div>
-</body>
-</html>
-`, title, auth.getHeaderClass(r.URL.Path), heading, infoText, auth.getErrorMessage(r), discordOAuthURL)
+	html := fmt.Sprintf(templates.LoginFormHTML,
+		title,
+		auth.getHeaderClass(r.URL.Path),
+		heading,
+		infoText,
+		auth.getErrorMessage(r),
+		discordOAuthURL)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if _, err := w.Write([]byte(html)); err != nil {
@@ -164,73 +97,7 @@ func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 		finalRedirect = usersRoute
 	}
 
-	// HTML page that extracts tokens from URL fragment and sets session
-	html := fmt.Sprintf(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Processing Login...</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f5f5f5;
-        }
-        .processing {
-            text-align: center;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-    </style>
-</head>
-<body>
-    <div class="processing">
-        <h2>Processing Login...</h2>
-        <p>Please wait while we complete your authentication.</p>
-    </div>
-    <script>
-        // Extract tokens from URL fragment (Supabase returns them in hash)
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        
-        if (accessToken) {
-            // Send tokens to server for validation and session setup
-            fetch('/auth/process', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    access_token: accessToken,
-                    refresh_token: refreshToken 
-                })
-            }).then(response => {
-                if (response.ok) {
-                    // Successful authentication - redirect to final destination
-                    window.location.href = '%s';
-                } else {
-                    // Authentication failed
-                    window.location.href = '/login?error=unauthorized';
-                }
-            }).catch(error => {
-                console.error('Auth error:', error);
-                window.location.href = '/login?error=invalid';
-            });
-        } else {
-            // No token found - redirect to login with error
-            window.location.href = '/login?error=invalid';
-        }
-    </script>
-</body>
-</html>
-`, finalRedirect)
+	html := fmt.Sprintf(templates.AuthCallbackHTML, finalRedirect)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if _, err := w.Write([]byte(html)); err != nil {

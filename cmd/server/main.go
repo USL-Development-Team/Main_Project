@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
 	"usl-server/internal/auth"
 	"usl-server/internal/config"
 	"usl-server/internal/handlers"
@@ -15,6 +16,7 @@ import (
 	"usl-server/internal/middleware"
 	"usl-server/internal/repositories"
 	"usl-server/internal/services"
+	"usl-server/internal/templates"
 	usl "usl-server/internal/usl"
 	uslHandlers "usl-server/internal/usl/handlers"
 
@@ -24,29 +26,26 @@ import (
 const (
 	templatePattern = "templates/*.html"
 	healthResponse  = `{"status":"healthy","service":"usl-server"}`
-	defaultFallback = "http://localhost:8080"
-
-	notFoundHTML = `<!DOCTYPE html>
-<html>
-<head><title>404 - Page Not Found</title></head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-<h1>404 - Page Not Found</h1>
-<p>The page you're looking for doesn't exist.</p>
-<a href="/" style="color: #007cba;">← Go Home</a> | 
-<a href="/usl/admin" style="color: #007cba;">USL Admin</a>
-</body>
-</html>`
 )
 
 type ApplicationContext struct {
-	Config           *config.Config
-	UserRepo         *repositories.UserRepository
-	TrackerRepo      *repositories.TrackerRepository
-	GuildRepo        *repositories.GuildRepository
+	// Core Configuration
+	Config *config.Config
+	Logger *slog.Logger
+
+	// Authentication & Authorization
+	Auth *auth.DiscordAuth
+
+	// Data Layer
+	UserRepo    *repositories.UserRepository
+	TrackerRepo *repositories.TrackerRepository
+	GuildRepo   *repositories.GuildRepository
+
+	// Business Logic
 	TrueSkillService *services.UserTrueSkillService
-	Templates        *template.Template
-	Logger           *slog.Logger
-	Auth             *auth.DiscordAuth
+
+	// Presentation Layer
+	Templates *template.Template
 }
 
 func main() {
@@ -271,7 +270,7 @@ func render404Page(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if _, err := w.Write([]byte(notFoundHTML)); err != nil {
+	if _, err := w.Write([]byte(templates.NotFoundHTML)); err != nil {
 		log.Printf("Failed to write 404 response: %v", err)
 	}
 }
