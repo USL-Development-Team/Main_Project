@@ -61,9 +61,23 @@ type USLConfig struct {
 
 // Load initializes configuration from environment variables
 func Load() (*Config, error) {
-	// Load .env file if it exists
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Warning: .env file not found: %v", err)
+	// Load environment-specific .env file
+	environment := os.Getenv("ENVIRONMENT")
+	if environment == "" {
+		environment = "development"
+	}
+
+	envFile := ".env"
+	if environment != "development" {
+		envFile = ".env." + environment
+	}
+
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Warning: %s file not found, trying .env: %v", envFile, err)
+		// Fallback to .env if environment-specific file not found
+		if err := godotenv.Load(".env"); err != nil {
+			log.Printf("Warning: .env file not found: %v", err)
+		}
 	}
 
 	config := &Config{
