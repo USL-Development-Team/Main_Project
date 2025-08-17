@@ -196,7 +196,14 @@ func (auth *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
-	userClient := auth.supabaseClient.Auth.WithToken(accessToken)
+	// Create anon client for user token validation
+	// Service role clients cannot validate user OAuth tokens
+	anonClient, err := supabase.NewClient(auth.supabaseURL, auth.anonKey, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create anon client: %w", err)
+	}
+
+	userClient := anonClient.Auth.WithToken(accessToken)
 
 	user, err := userClient.GetUser()
 	if err != nil {
