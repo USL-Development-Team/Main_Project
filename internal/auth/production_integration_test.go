@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/supabase-community/supabase-go"
 	"usl-server/internal/config"
+
+	"github.com/supabase-community/supabase-go"
 )
 
 func TestProductionIntegrationRequirement(t *testing.T) {

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
+
 	"usl-server/internal/auth"
 	"usl-server/internal/config"
 	"usl-server/internal/handlers"
@@ -15,6 +15,7 @@ import (
 	"usl-server/internal/middleware"
 	"usl-server/internal/repositories"
 	"usl-server/internal/services"
+	"usl-server/internal/templates"
 	usl "usl-server/internal/usl"
 	uslHandlers "usl-server/internal/usl/handlers"
 
@@ -24,29 +25,26 @@ import (
 const (
 	templatePattern = "templates/*.html"
 	healthResponse  = `{"status":"healthy","service":"usl-server"}`
-	defaultFallback = "http://localhost:8080"
-
-	notFoundHTML = `<!DOCTYPE html>
-<html>
-<head><title>404 - Page Not Found</title></head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-<h1>404 - Page Not Found</h1>
-<p>The page you're looking for doesn't exist.</p>
-<a href="/" style="color: #007cba;">← Go Home</a> | 
-<a href="/usl/admin" style="color: #007cba;">USL Admin</a>
-</body>
-</html>`
 )
 
 type ApplicationContext struct {
-	Config           *config.Config
-	UserRepo         *repositories.UserRepository
-	TrackerRepo      *repositories.TrackerRepository
-	GuildRepo        *repositories.GuildRepository
+	// Core Configuration
+	Config *config.Config
+	Logger *slog.Logger
+
+	// Authentication & Authorization
+	Auth *auth.DiscordAuth
+
+	// Data Layer
+	UserRepo    *repositories.UserRepository
+	TrackerRepo *repositories.TrackerRepository
+	GuildRepo   *repositories.GuildRepository
+
+	// Business Logic
 	TrueSkillService *services.UserTrueSkillService
-	Templates        *template.Template
-	Logger           *slog.Logger
-	Auth             *auth.DiscordAuth
+
+	// Presentation Layer
+	Templates *template.Template
 }
 
 func main() {
@@ -141,42 +139,7 @@ func setupServices(appConfig *config.Config, repos *RepositoryCollection, logger
 }
 
 func createTemplateFunctions() template.FuncMap {
-	return template.FuncMap{
-		"dict": func(values ...any) map[string]any {
-			dict := make(map[string]any)
-			for i := 0; i < len(values); i += 2 {
-				if i+1 < len(values) {
-					dict[values[i].(string)] = values[i+1]
-				}
-			}
-			return dict
-		},
-		"slice": func(values ...any) []any {
-			return values
-		},
-		"add": func(a, b int) int {
-			return a + b
-		},
-		"sub": func(a, b float64) float64 {
-			return a - b
-		},
-		"mul": func(a, b float64) float64 {
-			return a * b
-		},
-		"printf": func(format string, args ...any) string {
-			return fmt.Sprintf(format, args...)
-		},
-		"lt": func(a, b float64) bool {
-			return a < b
-		},
-		"substr": func(s string, start, length int) string {
-			if start >= len(s) {
-				return ""
-			}
-			end := min(start+length, len(s))
-			return s[start:end]
-		},
-	}
+	return templates.TemplateFunctions()
 }
 
 func loadTemplates(logger *slog.Logger) *template.Template {
@@ -271,7 +234,7 @@ func render404Page(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	if _, err := w.Write([]byte(notFoundHTML)); err != nil {
+	if _, err := w.Write([]byte(templates.NotFoundHTML)); err != nil {
 		log.Printf("Failed to write 404 response: %v", err)
 	}
 }
