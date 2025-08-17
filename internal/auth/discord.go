@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/supabase-community/supabase-go"
+	"usl-server/internal/config"
 )
 
 // Discord metadata field names for consistent access
@@ -24,18 +24,22 @@ const (
 type DiscordAuth struct {
 	supabaseClient  *supabase.Client
 	adminDiscordIDs []string
-	supabaseURL     string // Internal Supabase URL for backend calls
-	publicURL       string // Public Supabase URL for OAuth redirects
-	anonKey         string // Anon key for client-side operations
+	supabaseURL     string                    // Internal Supabase URL for backend calls
+	publicURL       string                    // Public Supabase URL for OAuth redirects
+	anonKey         string                    // Anon key for client-side operations
+	envConfig       *config.EnvironmentConfig // Optional injected config for centralized configuration
 }
 
-func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string) *DiscordAuth {
+// NewDiscordAuth creates a DiscordAuth with centralized EnvironmentConfig
+// This is the preferred constructor that uses dependency injection
+func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string, envConfig config.EnvironmentConfig) *DiscordAuth {
 	return &DiscordAuth{
 		supabaseClient:  supabaseClient,
 		adminDiscordIDs: adminDiscordIDs,
 		supabaseURL:     supabaseURL,
 		publicURL:       publicURL,
 		anonKey:         anonKey,
+		envConfig:       &envConfig,
 	}
 }
 
@@ -438,13 +442,13 @@ func (a *DiscordAuth) getErrorMessage(r *http.Request) string {
 	}
 }
 
-// getAppBaseURL returns the application base URL from environment variables
+// getAppBaseURL returns the application base URL from injected config
 func (a *DiscordAuth) getAppBaseURL() string {
-	// Check for explicit APP_BASE_URL environment variable
-	if appBaseURL := os.Getenv("APP_BASE_URL"); appBaseURL != "" {
-		return appBaseURL
+	// Use injected EnvironmentConfig
+	if a.envConfig != nil && a.envConfig.AppBaseURL != "" {
+		return a.envConfig.AppBaseURL
 	}
 
-	// Fallback to localhost for development
+	// Fallback to localhost for development/testing
 	return "http://localhost:8080"
 }

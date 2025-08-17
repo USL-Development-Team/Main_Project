@@ -48,8 +48,12 @@ func initializeApplication(logger *slog.Logger) *ApplicationContext {
 	services := setupServices(cfg, repositories, logger)
 	templates := loadTemplates(logger)
 
+	// Get environment configuration for centralized settings
+	envConfig := config.GetEnvironmentConfig()
+
+	// Use centralized EnvironmentConfig for dependency injection
 	auth := auth.NewDiscordAuth(supabaseClient, cfg.USL.AdminDiscordIDs,
-		cfg.Supabase.URL, cfg.Supabase.PublicURL, cfg.Supabase.AnonKey)
+		cfg.Supabase.URL, cfg.Supabase.PublicURL, cfg.Supabase.AnonKey, envConfig)
 
 	return &ApplicationContext{
 		Config:           cfg,

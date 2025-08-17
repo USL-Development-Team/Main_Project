@@ -30,6 +30,7 @@ func GetEnvironment() Environment {
 // EnvironmentConfig provides environment-specific configuration
 type EnvironmentConfig struct {
 	Environment         Environment
+	AppBaseURL          string
 	RequireHTTPS        bool
 	AllowedOrigins      []string
 	LogLevel            string
@@ -45,6 +46,7 @@ func GetEnvironmentConfig() EnvironmentConfig {
 	case Production:
 		return EnvironmentConfig{
 			Environment:         Production,
+			AppBaseURL:          getEnv("APP_BASE_URL", "https://your-domain.com"),
 			RequireHTTPS:        true,
 			AllowedOrigins:      []string{"https://your-domain.com"},
 			LogLevel:            "info",
@@ -54,6 +56,7 @@ func GetEnvironmentConfig() EnvironmentConfig {
 	case Staging:
 		return EnvironmentConfig{
 			Environment:         Staging,
+			AppBaseURL:          getEnv("APP_BASE_URL", "https://staging.your-domain.com"),
 			RequireHTTPS:        true,
 			AllowedOrigins:      []string{"https://staging.your-domain.com"},
 			LogLevel:            "debug",
@@ -63,6 +66,7 @@ func GetEnvironmentConfig() EnvironmentConfig {
 	default: // Development
 		return EnvironmentConfig{
 			Environment:         Development,
+			AppBaseURL:          getEnv("APP_BASE_URL", "http://localhost:8080"),
 			RequireHTTPS:        false,
 			AllowedOrigins:      []string{"http://localhost:8080", "http://127.0.0.1:8080"},
 			LogLevel:            "debug",
