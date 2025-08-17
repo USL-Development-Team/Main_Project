@@ -10,10 +10,7 @@ import (
 	"usl-server/internal/config"
 )
 
-// TestProductionIntegrationRequirement verifies that DiscordAuth uses centralized EnvironmentConfig
-// This test should FAIL initially as it validates the production integration requirement
 func TestProductionIntegrationRequirement(t *testing.T) {
-	// Create environment config with AppBaseURL
 	envConfig := config.EnvironmentConfig{
 		Environment:    config.Production,
 		AppBaseURL:     "https://production-app.com",
@@ -21,10 +18,8 @@ func TestProductionIntegrationRequirement(t *testing.T) {
 		AllowedOrigins: []string{"https://production-app.com"},
 	}
 
-	// Create DiscordAuth with environment config injection
 	auth := NewDiscordAuth(nil, []string{"test-admin"}, "supabase-url", "public-url", "anon-key", envConfig)
 
-	// Test that getAppBaseURL uses the injected config, not os.Getenv
 	baseURL := auth.getAppBaseURL()
 	expected := "https://production-app.com"
 
@@ -33,18 +28,12 @@ func TestProductionIntegrationRequirement(t *testing.T) {
 	}
 }
 
-// TestMainGoUsesNewConstructor verifies that main.go uses the new constructor pattern
 func TestMainGoUsesNewConstructor(t *testing.T) {
-	// This test validates by checking that the new constructor works as expected
-	// The fact that this test can run means main.go is using the new constructor
-	// since any compilation/runtime issues would fail the build
-
 	envConfig := config.EnvironmentConfig{
 		Environment: config.Development,
 		AppBaseURL:  "http://test-localhost:8080",
 	}
 
-	// This should work without issues if main.go is properly updated
 	auth := NewDiscordAuth(nil, []string{"test-id"}, "url", "public", "key", envConfig)
 
 	if auth == nil {
