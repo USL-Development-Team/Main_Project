@@ -1220,10 +1220,12 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 	data := struct {
 		Title       string
 		CurrentPage string
+		Tracker     *usl.USLUserTracker
 		Errors      map[string]string
 	}{
 		Title:       "New Tracker",
 		CurrentPage: "trackers",
+		Tracker:     &usl.USLUserTracker{},   // Empty tracker for new forms
 		Errors:      make(map[string]string), // Empty errors for initial form load
 	}
 
