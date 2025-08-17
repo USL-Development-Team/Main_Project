@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/supabase-community/supabase-go"
@@ -54,11 +55,14 @@ func (a *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get app base URL from environment variables
+	appBaseURL := a.getAppBaseURL()
+
 	var redirectTo string
 	if strings.HasPrefix(r.URL.Path, "/usl") {
-		redirectTo = "http://127.0.0.1:8080/auth/callback?redirect=usl"
+		redirectTo = fmt.Sprintf("%s/auth/callback?redirect=usl", appBaseURL)
 	} else {
-		redirectTo = "http://127.0.0.1:8080/auth/callback?redirect=main"
+		redirectTo = fmt.Sprintf("%s/auth/callback?redirect=main", appBaseURL)
 	}
 
 	discordOAuthURL := fmt.Sprintf("%s/auth/v1/authorize?provider=discord&redirect_to=%s",
@@ -432,4 +436,15 @@ func (a *DiscordAuth) getErrorMessage(r *http.Request) string {
 	default:
 		return ""
 	}
+}
+
+// getAppBaseURL returns the application base URL from environment variables
+func (a *DiscordAuth) getAppBaseURL() string {
+	// Check for explicit APP_BASE_URL environment variable
+	if appBaseURL := os.Getenv("APP_BASE_URL"); appBaseURL != "" {
+		return appBaseURL
+	}
+
+	// Fallback to localhost for development
+	return "http://localhost:8080"
 }
