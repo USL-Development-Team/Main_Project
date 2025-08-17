@@ -83,36 +83,6 @@ func (auth *DiscordAuth) LoginForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
-	// RENDER DEBUG: Log all incoming request details at OAuth callback
-	log.Printf("RENDER DEBUG: OAuth callback received")
-	log.Printf("RENDER DEBUG: Request URL: %s", r.URL.String())
-	log.Printf("RENDER DEBUG: Request Method: %s", r.Method)
-	log.Printf("RENDER DEBUG: Request Host: %s", r.Host)
-	log.Printf("RENDER DEBUG: Request RemoteAddr: %s", r.RemoteAddr)
-	log.Printf("RENDER DEBUG: Request Headers:")
-	for name, values := range r.Header {
-		for _, value := range values {
-			log.Printf("RENDER DEBUG:   %s: %s", name, value)
-		}
-	}
-
-	// Log all query parameters
-	log.Printf("RENDER DEBUG: Query Parameters:")
-	for name, values := range r.URL.Query() {
-		for _, value := range values {
-			if name == "access_token" && len(value) > 50 {
-				log.Printf("RENDER DEBUG:   %s: %s... (truncated)", name, value[:50])
-			} else {
-				log.Printf("RENDER DEBUG:   %s: %s", name, value)
-			}
-		}
-	}
-
-	// Log fragment from URL if present
-	if r.URL.Fragment != "" {
-		log.Printf("RENDER DEBUG: URL Fragment: %s", r.URL.Fragment)
-	}
-
 	redirectParam := r.URL.Query().Get("redirect")
 	var finalRedirect string
 
@@ -125,8 +95,6 @@ func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 		finalRedirect = usersRoute
 	}
 
-	log.Printf("RENDER DEBUG: Final redirect destination: %s", finalRedirect)
-
 	html := fmt.Sprintf(templates.AuthCallbackHTML, finalRedirect)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -135,22 +103,8 @@ func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ProcessTokens handles the access token validation and session setup
 func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
-	// RENDER DEBUG: Log incoming token processing request
-	log.Printf("RENDER DEBUG: ProcessTokens called")
-	log.Printf("RENDER DEBUG: Request Method: %s", r.Method)
-	log.Printf("RENDER DEBUG: Request Host: %s", r.Host)
-	log.Printf("RENDER DEBUG: Request RemoteAddr: %s", r.RemoteAddr)
-	log.Printf("RENDER DEBUG: Request Headers:")
-	for name, values := range r.Header {
-		for _, value := range values {
-			log.Printf("RENDER DEBUG:   %s: %s", name, value)
-		}
-	}
-
 	if r.Method != http.MethodPost {
-		log.Printf("RENDER DEBUG: Method not allowed: %s", r.Method)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -161,44 +115,25 @@ func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("RENDER DEBUG: Error decoding token request: %v", err)
 		log.Printf("Error decoding token request: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Debug logging for token validation
-	log.Printf("RENDER DEBUG: Received access token length: %d", len(req.AccessToken))
-	log.Printf("RENDER DEBUG: Access token (first 20 chars): %s...", req.AccessToken[:min(20, len(req.AccessToken))])
-	if req.RefreshToken != "" {
-		log.Printf("RENDER DEBUG: Received refresh token length: %d", len(req.RefreshToken))
-		log.Printf("RENDER DEBUG: Refresh token (first 20 chars): %s...", req.RefreshToken[:min(20, len(req.RefreshToken))])
-	}
-	log.Printf("DEBUG: Token validation starting")
-
 	user, err := auth.validateTokensAndGetUser(req.AccessToken)
 	if err != nil {
-		log.Printf("RENDER DEBUG: Token validation FAILED in production environment")
 		log.Printf("Error validating tokens: %v", err)
-		log.Printf("DEBUG: Token validation failed - full error: %+v", err)
 		http.Error(w, "Authentication failed", http.StatusUnauthorized)
 		return
 	}
 
-	log.Printf("RENDER DEBUG: Token validation SUCCEEDED in production environment")
-	log.Printf("DEBUG: Token validation successful, user ID: %v", user["id"])
-
 	if !auth.isUserAuthorized(user) {
-		log.Printf("RENDER DEBUG: User authorization FAILED")
 		log.Printf("User not authorized: %+v", user)
 		http.Error(w, "Access denied", http.StatusForbidden)
 		return
 	}
 
-	log.Printf("RENDER DEBUG: User authorization SUCCEEDED, setting session cookies")
 	auth.setSessionCookies(w, req.AccessToken, req.RefreshToken)
-
-	log.Printf("RENDER DEBUG: ProcessTokens completed successfully")
 	w.WriteHeader(http.StatusOK)
 }
 
