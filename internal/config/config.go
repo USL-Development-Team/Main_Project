@@ -109,7 +109,6 @@ func Load() (*Config, error) {
 	return config, nil
 }
 
-// Utility functions for environment variable parsing
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

@@ -44,21 +44,29 @@ func GetEnvironmentConfig() EnvironmentConfig {
 
 	switch env {
 	case Production:
+		appBaseURL := getEnv("APP_BASE_URL", "")
+		if appBaseURL == "" {
+			panic("APP_BASE_URL environment variable is required in production")
+		}
 		return EnvironmentConfig{
 			Environment:         Production,
-			AppBaseURL:          getEnv("APP_BASE_URL", "https://your-domain.com"),
+			AppBaseURL:          appBaseURL,
 			RequireHTTPS:        true,
-			AllowedOrigins:      []string{"https://your-domain.com"},
+			AllowedOrigins:      []string{appBaseURL},
 			LogLevel:            "info",
 			SessionCookieSecure: true,
 			EnableDebugLogging:  false,
 		}
 	case Staging:
+		appBaseURL := getEnv("APP_BASE_URL", "")
+		if appBaseURL == "" {
+			panic("APP_BASE_URL environment variable is required in staging")
+		}
 		return EnvironmentConfig{
 			Environment:         Staging,
-			AppBaseURL:          getEnv("APP_BASE_URL", "https://staging.your-domain.com"),
+			AppBaseURL:          appBaseURL,
 			RequireHTTPS:        true,
-			AllowedOrigins:      []string{"https://staging.your-domain.com"},
+			AllowedOrigins:      []string{appBaseURL},
 			LogLevel:            "debug",
 			SessionCookieSecure: true,
 			EnableDebugLogging:  true,

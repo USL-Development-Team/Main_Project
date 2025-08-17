@@ -420,6 +420,10 @@ func (auth *DiscordAuth) getAppBaseURL() string {
 	return "http://localhost:8080"
 }
 
+func (auth *DiscordAuth) GetAppBaseURL() string {
+	return auth.getAppBaseURL()
+}
+
 func (auth *DiscordAuth) isUSLPath(path string) bool {
 	return strings.HasPrefix(path, uslPrefix)
 }

@@ -16,7 +16,7 @@ run:
 	go run ./cmd/server
 
 # Run all tests
-test: test-unit test-integration
+test: test-unit test-integration test-smoke
 
 # Run unit tests
 test-unit:
@@ -39,6 +39,11 @@ test-coverage:
 test-templates:
 	@echo "Testing HTMX templates..."
 	go test -v ./internal/handlers/ -run TestUserHandler
+
+# Run smoke tests for critical functionality
+test-smoke:
+	@echo "Running smoke tests..."
+	go test -v ./test/ -run TestSmoke
 
 # Lint the code
 lint:
