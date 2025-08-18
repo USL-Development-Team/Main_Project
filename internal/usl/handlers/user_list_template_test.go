@@ -57,14 +57,14 @@ func TestUserListTemplatesWithTrueSkill(t *testing.T) {
 
 		output := buf.String()
 
-		// Check that the template includes TrueSkill display
-		if !strings.Contains(output, "TrueSkill μ:") {
-			t.Error("Template should contain TrueSkill μ label")
+		// Check that the template includes TrueSkill value display
+		if !strings.Contains(output, "1567.8") {
+			t.Error("Template should contain TrueSkill value")
 		}
 
-		// Check that the template structure is valid HTML
-		if !strings.Contains(output, "<li>") {
-			t.Error("Template should contain list items")
+		// Check that the template structure is valid HTML table rows
+		if !strings.Contains(output, "<tr") {
+			t.Error("Template should contain table rows")
 		}
 
 		if !strings.Contains(output, testUser.Name) {

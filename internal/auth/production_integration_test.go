@@ -19,7 +19,14 @@ func TestProductionIntegrationRequirement(t *testing.T) {
 		AllowedOrigins: []string{"https://production-app.com"},
 	}
 
-	auth := NewDiscordAuth(nil, []string{"test-admin"}, "supabase-url", "public-url", "anon-key", envConfig)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  nil,
+		AdminDiscordIDs: []string{"test-admin"},
+		SupabaseURL:     "supabase-url",
+		PublicURL:       "public-url",
+		AnonKey:         "anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	baseURL := auth.getAppBaseURL()
 	expected := "https://production-app.com"
@@ -35,7 +42,14 @@ func TestMainGoUsesNewConstructor(t *testing.T) {
 		AppBaseURL:  "http://test-localhost:8080",
 	}
 
-	auth := NewDiscordAuth(nil, []string{"test-id"}, "url", "public", "key", envConfig)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  nil,
+		AdminDiscordIDs: []string{"test-id"},
+		SupabaseURL:     "url",
+		PublicURL:       "public",
+		AnonKey:         "key",
+		EnvConfig:       &envConfig,
+	})
 
 	if auth == nil {
 		t.Error("Expected auth instance, got nil")
@@ -99,14 +113,14 @@ func TestLoginForm_OAuthRedirectURLs(t *testing.T) {
 
 			// Create auth instance with dependency injection
 			supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-			auth := NewDiscordAuth(
-				supabaseClient,
-				[]string{"test-admin-id"},
-				"https://test.supabase.co",
-				"https://test.supabase.co",
-				"test-anon-key",
-				envConfig,
-			)
+			auth := NewDiscordAuth(DiscordAuthConfig{
+				SupabaseClient:  supabaseClient,
+				AdminDiscordIDs: []string{"test-admin-id"},
+				SupabaseURL:     "https://test.supabase.co",
+				PublicURL:       "https://test.supabase.co",
+				AnonKey:         "test-anon-key",
+				EnvConfig:       &envConfig,
+			})
 
 			// Create request
 			req := httptest.NewRequest("GET", tt.requestPath, nil)
@@ -186,14 +200,14 @@ func TestEnvironmentSpecificURLs(t *testing.T) {
 
 			// Create auth instance
 			supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-			auth := NewDiscordAuth(
-				supabaseClient,
-				[]string{"test-admin-id"},
-				"https://test.supabase.co",
-				"https://test.supabase.co",
-				"test-anon-key",
-				envConfig,
-			)
+			auth := NewDiscordAuth(DiscordAuthConfig{
+				SupabaseClient:  supabaseClient,
+				AdminDiscordIDs: []string{"test-admin-id"},
+				SupabaseURL:     "https://test.supabase.co",
+				PublicURL:       "https://test.supabase.co",
+				AnonKey:         "test-anon-key",
+				EnvConfig:       &envConfig,
+			})
 
 			// Test OAuth URL generation
 			baseURL := auth.getAppBaseURL()
@@ -265,14 +279,14 @@ func TestPathSpecificRedirects(t *testing.T) {
 			}
 
 			supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-			auth := NewDiscordAuth(
-				supabaseClient,
-				[]string{"test-admin-id"},
-				"https://test.supabase.co",
-				"https://test.supabase.co",
-				"test-anon-key",
-				envConfig,
-			)
+			auth := NewDiscordAuth(DiscordAuthConfig{
+				SupabaseClient:  supabaseClient,
+				AdminDiscordIDs: []string{"test-admin-id"},
+				SupabaseURL:     "https://test.supabase.co",
+				PublicURL:       "https://test.supabase.co",
+				AnonKey:         "test-anon-key",
+				EnvConfig:       &envConfig,
+			})
 
 			// Create request
 			req := httptest.NewRequest("GET", tc.requestPath, nil)
@@ -312,14 +326,14 @@ func TestHTMLOutputValidation(t *testing.T) {
 	}
 
 	supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-	auth := NewDiscordAuth(
-		supabaseClient,
-		[]string{"test-admin-id"},
-		"https://test.supabase.co",
-		"https://test.supabase.co",
-		"test-anon-key",
-		envConfig,
-	)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  supabaseClient,
+		AdminDiscordIDs: []string{"test-admin-id"},
+		SupabaseURL:     "https://test.supabase.co",
+		PublicURL:       "https://test.supabase.co",
+		AnonKey:         "test-anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	t.Run("USL login HTML structure", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/usl/login", nil)
@@ -388,14 +402,14 @@ func TestErrorConditions(t *testing.T) {
 		}
 
 		supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-		auth := NewDiscordAuth(
-			supabaseClient,
-			[]string{"test-admin-id"},
-			"https://test.supabase.co",
-			"https://test.supabase.co",
-			"test-anon-key",
-			envConfig,
-		)
+		auth := NewDiscordAuth(DiscordAuthConfig{
+			SupabaseClient:  supabaseClient,
+			AdminDiscordIDs: []string{"test-admin-id"},
+			SupabaseURL:     "https://test.supabase.co",
+			PublicURL:       "https://test.supabase.co",
+			AnonKey:         "test-anon-key",
+			EnvConfig:       &envConfig,
+		})
 
 		baseURL := auth.getAppBaseURL()
 		expected := "http://localhost:8080"
@@ -424,14 +438,14 @@ func TestErrorConditions(t *testing.T) {
 		}
 
 		supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-		auth := NewDiscordAuth(
-			supabaseClient,
-			[]string{"test-admin-id"},
-			"https://test.supabase.co",
-			"https://test.supabase.co",
-			"test-anon-key",
-			envConfig,
-		)
+		auth := NewDiscordAuth(DiscordAuthConfig{
+			SupabaseClient:  supabaseClient,
+			AdminDiscordIDs: []string{"test-admin-id"},
+			SupabaseURL:     "https://test.supabase.co",
+			PublicURL:       "https://test.supabase.co",
+			AnonKey:         "test-anon-key",
+			EnvConfig:       &envConfig,
+		})
 
 		// Test POST request (should fail)
 		req := httptest.NewRequest("POST", "/login", nil)
@@ -457,14 +471,14 @@ func TestErrorConditions(t *testing.T) {
 			}
 
 			supabaseClient, _ := supabase.NewClient("https://test.supabase.co", "test-key", nil)
-			auth := NewDiscordAuth(
-				supabaseClient,
-				[]string{"test-admin-id"},
-				"https://test.supabase.co",
-				"https://test.supabase.co",
-				"test-anon-key",
-				envConfig,
-			)
+			auth := NewDiscordAuth(DiscordAuthConfig{
+				SupabaseClient:  supabaseClient,
+				AdminDiscordIDs: []string{"test-admin-id"},
+				SupabaseURL:     "https://test.supabase.co",
+				PublicURL:       "https://test.supabase.co",
+				AnonKey:         "test-anon-key",
+				EnvConfig:       &envConfig,
+			})
 
 			baseURL := auth.getAppBaseURL()
 			expected := "https://test-" + string(env) + ".com"

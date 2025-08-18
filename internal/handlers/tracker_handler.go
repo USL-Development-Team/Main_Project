@@ -18,7 +18,6 @@ type TrackerHandler struct {
 	templates        *template.Template
 }
 
-// NewTrackerHandler creates a new tracker handler
 func NewTrackerHandler(trackerRepo *repositories.TrackerRepository, trueSkillService *services.UserTrueSkillService, templates *template.Template) *TrackerHandler {
 	return &TrackerHandler{
 		trackerRepo:      trackerRepo,

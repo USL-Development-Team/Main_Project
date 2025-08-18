@@ -27,7 +27,6 @@ type PercentileConverter struct {
 	rankOrderCache         map[string]map[string]RankInfo
 }
 
-// NewPercentileConverter creates a new percentile converter
 func NewPercentileConverter(cfg *config.Config) *PercentileConverter {
 	return &PercentileConverter{
 		config:                 cfg,

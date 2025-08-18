@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/USL-Development-Team/Main_Project/compare/v1.1.1...v1.2.0) (2025-08-17)
+
+
+### ✨ Features
+
+* add comprehensive debug logging for oauth token validation ([07bbc25](https://github.com/USL-Development-Team/Main_Project/commit/07bbc2577900a246d9508fbc332d26ed49f4d26c))
+
+
+### 🐛 Bug Fixes
+
+* add comprehensive oauth callback and token processing logging ([c182044](https://github.com/USL-Development-Team/Main_Project/commit/c182044f0508a022c3a9799eb75fcbf6f07bde93))
+
+## [1.1.1](https://github.com/USL-Development-Team/Main_Project/compare/v1.1.0...v1.1.1) (2025-08-17)
+
+
+### 🐛 Bug Fixes
+
+* use anon client for discord oauth token validation ([e1629dd](https://github.com/USL-Development-Team/Main_Project/commit/e1629dd0c963007c23b2faf14e2c35b906ec1896)), closes [#28](https://github.com/USL-Development-Team/Main_Project/issues/28)
+
 ## [1.1.0](https://github.com/USL-Development-Team/Main_Project/compare/v1.0.1...v1.1.0) (2025-08-17)
 
 

@@ -19,19 +19,25 @@ const (
 	metadataDiscordID  = "discord_id"
 	userMetadataKey    = "user_metadata"
 
-	// Route constants
 	uslAdminRoute = "/usl/admin"
 	usersRoute    = "/users"
 	uslLoginRoute = "/usl/login"
 	loginRoute    = "/login"
 
-	// Cookie constants
 	accessTokenCookie  = "auth_access_token"
 	refreshTokenCookie = "auth_refresh_token"
 
-	// URL prefixes
 	uslPrefix = "/usl"
 )
+
+type DiscordAuthConfig struct {
+	SupabaseClient  *supabase.Client
+	AdminDiscordIDs []string
+	SupabaseURL     string
+	PublicURL       string
+	AnonKey         string
+	EnvConfig       *config.EnvironmentConfig
+}
 
 type DiscordAuth struct {
 	supabaseClient  *supabase.Client
@@ -42,14 +48,14 @@ type DiscordAuth struct {
 	envConfig       *config.EnvironmentConfig
 }
 
-func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string, envConfig config.EnvironmentConfig) *DiscordAuth {
+func NewDiscordAuth(cfg DiscordAuthConfig) *DiscordAuth {
 	return &DiscordAuth{
-		supabaseClient:  supabaseClient,
-		adminDiscordIDs: adminDiscordIDs,
-		supabaseURL:     supabaseURL,
-		publicURL:       publicURL,
-		anonKey:         anonKey,
-		envConfig:       &envConfig,
+		supabaseClient:  cfg.SupabaseClient,
+		adminDiscordIDs: cfg.AdminDiscordIDs,
+		supabaseURL:     cfg.SupabaseURL,
+		publicURL:       cfg.PublicURL,
+		anonKey:         cfg.AnonKey,
+		envConfig:       cfg.EnvConfig,
 	}
 }
 
@@ -106,7 +112,6 @@ func (auth *DiscordAuth) AuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ProcessTokens handles the access token validation and session setup
 func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -138,7 +143,6 @@ func (auth *DiscordAuth) ProcessTokens(w http.ResponseWriter, r *http.Request) {
 	}
 
 	auth.setSessionCookies(w, req.AccessToken, req.RefreshToken)
-
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -196,19 +200,27 @@ func (auth *DiscordAuth) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (auth *DiscordAuth) validateTokensAndGetUser(accessToken string) (map[string]interface{}, error) {
-	// Create anon client for user token validation
-	// Service role clients cannot validate user OAuth tokens
+	log.Printf("DEBUG: Creating anon client with URL: %s", auth.supabaseURL)
+	log.Printf("DEBUG: Using anon key (first 20 chars): %s...", auth.anonKey[:min(20, len(auth.anonKey))])
+
 	anonClient, err := supabase.NewClient(auth.supabaseURL, auth.anonKey, nil)
 	if err != nil {
+		log.Printf("DEBUG: Failed to create anon client: %v", err)
 		return nil, fmt.Errorf("failed to create anon client: %w", err)
 	}
+	log.Printf("DEBUG: Anon client created successfully")
 
+	log.Printf("DEBUG: Creating user client with WithToken")
 	userClient := anonClient.Auth.WithToken(accessToken)
+	log.Printf("DEBUG: User client created, calling GetUser()")
 
 	user, err := userClient.GetUser()
 	if err != nil {
+		log.Printf("DEBUG: GetUser() failed with error: %v", err)
+		log.Printf("DEBUG: Error type: %T", err)
 		return nil, fmt.Errorf("failed to get user from Supabase: %w", err)
 	}
+	log.Printf("DEBUG: GetUser() succeeded, user email: %s", user.Email)
 
 	userInfo := map[string]interface{}{
 		"id":            user.ID,

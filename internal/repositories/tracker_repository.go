@@ -19,7 +19,6 @@ type TrackerRepository struct {
 	config *config.Config
 }
 
-// NewTrackerRepository creates a new tracker repository instance
 func NewTrackerRepository(client *supabase.Client, cfg *config.Config) *TrackerRepository {
 	return &TrackerRepository{
 		client: client,

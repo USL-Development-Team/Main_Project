@@ -19,14 +19,14 @@ func TestDiscordAuthIntegration(t *testing.T) {
 	serviceRoleClient, err := supabase.NewClient("https://test.supabase.co", "service-role-key", nil)
 	assert.NoError(t, err)
 
-	auth := NewDiscordAuth(
-		serviceRoleClient,
-		[]string{"admin-discord-123"},
-		"https://test.supabase.co",
-		"https://test.supabase.co",
-		"anon-key",
-		envConfig,
-	)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  serviceRoleClient,
+		AdminDiscordIDs: []string{"admin-discord-123"},
+		SupabaseURL:     "https://test.supabase.co",
+		PublicURL:       "https://test.supabase.co",
+		AnonKey:         "anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	t.Run("Auth instance configured correctly", func(t *testing.T) {
 		assert.NotNil(t, auth.supabaseClient, "Service role client should be set")
@@ -102,14 +102,14 @@ func TestFixImplementationDetails(t *testing.T) {
 			AppBaseURL:  "http://localhost:8080",
 		}
 
-		auth := NewDiscordAuth(
-			nil, // Service role client not needed for this test
-			[]string{},
-			"https://test.supabase.co",
-			"https://test.supabase.co",
-			"test-anon-key",
-			envConfig,
-		)
+		auth := NewDiscordAuth(DiscordAuthConfig{
+			SupabaseClient:  nil, // Service role client not needed for this test
+			AdminDiscordIDs: []string{},
+			SupabaseURL:     "https://test.supabase.co",
+			PublicURL:       "https://test.supabase.co",
+			AnonKey:         "test-anon-key",
+			EnvConfig:       &envConfig,
+		})
 
 		// Test the core of our fix: can we create an anon client?
 		anonClient, err := supabase.NewClient(auth.supabaseURL, auth.anonKey, nil)
@@ -129,14 +129,14 @@ func TestAuthFlowComponents(t *testing.T) {
 	}
 
 	serviceRoleClient, _ := supabase.NewClient("https://test.supabase.co", "service-key", nil)
-	auth := NewDiscordAuth(
-		serviceRoleClient,
-		[]string{"admin-123", "admin-456"},
-		"https://test.supabase.co",
-		"https://test.supabase.co",
-		"anon-key",
-		envConfig,
-	)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  serviceRoleClient,
+		AdminDiscordIDs: []string{"admin-123", "admin-456"},
+		SupabaseURL:     "https://test.supabase.co",
+		PublicURL:       "https://test.supabase.co",
+		AnonKey:         "anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	t.Run("OAuth URL generation", func(t *testing.T) {
 		baseURL := auth.getAppBaseURL()

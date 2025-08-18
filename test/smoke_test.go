@@ -87,14 +87,14 @@ func TestSmokeOAuthURLGeneration(t *testing.T) {
 
 			envConfig := config.GetEnvironmentConfig()
 
-			discordAuth := auth.NewDiscordAuth(
-				nil, // supabase client not needed for URL generation
-				[]string{"test-admin"},
-				tc.supabaseURL,
-				tc.supabaseURL, // publicURL same as URL
-				"test-anon-key",
-				envConfig,
-			)
+			discordAuth := auth.NewDiscordAuth(auth.DiscordAuthConfig{
+				SupabaseClient:  nil, // supabase client not needed for URL generation
+				AdminDiscordIDs: []string{"test-admin"},
+				SupabaseURL:     tc.supabaseURL,
+				PublicURL:       tc.supabaseURL, // publicURL same as URL
+				AnonKey:         "test-anon-key",
+				EnvConfig:       &envConfig,
+			})
 
 			appBaseURL := discordAuth.GetAppBaseURL()
 

@@ -1,18 +1,33 @@
 services:
-  usl-app:
-    build: .
+  rl-league-management-app:
+    build: 
+      context: .
+      # Simulate Render's automatic build args from environment variables
+      args:
+        ENVIRONMENT: production
     ports:
       - "8080:8080"
     env_file:
       - .env.staging.docker
     environment:
-      # Override to simulate platform environment
+      # Render's default environment variables
       RENDER: "true"
-      ENVIRONMENT: "production"
+      RENDER_SERVICE_ID: "srv-local-test"
+      RENDER_SERVICE_NAME: "rl-league-management-app"
+      RENDER_INSTANCE_ID: "local-instance"
+      # Common platform environment indicators
+      NODE_ENV: "production"
     
+    networks:
+      - render-private
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--timeout=2", "http://localhost:8080/health"]
       interval: 30s
       timeout: 3s
       start_period: 5s
       retries: 3
+
+networks:
+  render-private:
+    driver: bridge
+    name: render-isolated-network

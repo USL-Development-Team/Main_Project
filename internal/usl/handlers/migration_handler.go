@@ -19,12 +19,26 @@ import (
 	"usl-server/internal/usl"
 )
 
-// USL-specific constants for type safety
 const (
-	USLDiscordGuildID = "1390537743385231451" // USL Discord Guild ID
+	// USL Configuration
+	USLDiscordGuildID = "1390537743385231451"
+
+	// Rocket League Business Rules
+	MinMMR             = 0
+	MaxMMR             = 3000  // SSL is around 1900-2000, allow buffer for edge cases
+	MaxGames           = 10000 // Reasonable season game limit
+	MinDiscordIDLength = 17
+	MaxDiscordIDLength = 19
+
+	// Validation Error Codes
+	ValidationCodeRequired      = "required"
+	ValidationCodeInvalidFormat = "invalid_format"
+	ValidationCodeOutOfRange    = "out_of_range"
+	ValidationCodeLogicalError  = "logical_error"
+	ValidationCodeInvalidURL    = "invalid_url"
+	ValidationCodeNoData        = "no_data"
 )
 
-// Validation system types and constants
 type ValidationError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
@@ -36,46 +50,33 @@ type ValidationResult struct {
 	Errors  []ValidationError `json:"errors"`
 }
 
-// Business rules for Rocket League MMR validation
-const (
-	MinMMR             = 0
-	MaxMMR             = 3000  // SSL is around 1900-2000, allow buffer for edge cases
-	MaxGames           = 10000 // Reasonable season game limit
-	MinDiscordIDLength = 17
-	MaxDiscordIDLength = 19
-)
-
-// Validation error codes for consistent categorization
-const (
-	ValidationCodeRequired      = "required"
-	ValidationCodeInvalidFormat = "invalid_format"
-	ValidationCodeOutOfRange    = "out_of_range"
-	ValidationCodeLogicalError  = "logical_error"
-	ValidationCodeInvalidURL    = "invalid_url"
-	ValidationCodeNoData        = "no_data"
-)
-
-// FormField represents typed form field names
 type FormField string
 
 const (
-	FormFieldDiscordID           FormField = "discord_id"
-	FormFieldURL                 FormField = "url"
-	FormFieldName                FormField = "name"
-	FormFieldActive              FormField = "active"
-	FormFieldBanned              FormField = "banned"
-	FormFieldValid               FormField = "valid"
-	FormFieldID                  FormField = "id"
-	FormFieldOnesCurrentPeak     FormField = "ones_current_peak"
-	FormFieldOnesPreviousPeak    FormField = "ones_previous_peak"
-	FormFieldOnesAllTimePeak     FormField = "ones_all_time_peak"
-	FormFieldOnesCurrentGames    FormField = "ones_current_games"
-	FormFieldOnesPreviousGames   FormField = "ones_previous_games"
-	FormFieldTwosCurrentPeak     FormField = "twos_current_peak"
-	FormFieldTwosPreviousPeak    FormField = "twos_previous_peak"
-	FormFieldTwosAllTimePeak     FormField = "twos_all_time_peak"
-	FormFieldTwosCurrentGames    FormField = "twos_current_games"
-	FormFieldTwosPreviousGames   FormField = "twos_previous_games"
+	// Basic Entity Fields
+	FormFieldID        FormField = "id"
+	FormFieldDiscordID FormField = "discord_id"
+	FormFieldURL       FormField = "url"
+	FormFieldName      FormField = "name"
+	FormFieldActive    FormField = "active"
+	FormFieldBanned    FormField = "banned"
+	FormFieldValid     FormField = "valid"
+
+	// 1v1 MMR Fields
+	FormFieldOnesCurrentPeak   FormField = "ones_current_peak"
+	FormFieldOnesPreviousPeak  FormField = "ones_previous_peak"
+	FormFieldOnesAllTimePeak   FormField = "ones_all_time_peak"
+	FormFieldOnesCurrentGames  FormField = "ones_current_games"
+	FormFieldOnesPreviousGames FormField = "ones_previous_games"
+
+	// 2v2 MMR Fields
+	FormFieldTwosCurrentPeak   FormField = "twos_current_peak"
+	FormFieldTwosPreviousPeak  FormField = "twos_previous_peak"
+	FormFieldTwosAllTimePeak   FormField = "twos_all_time_peak"
+	FormFieldTwosCurrentGames  FormField = "twos_current_games"
+	FormFieldTwosPreviousGames FormField = "twos_previous_games"
+
+	// 3v3 MMR Fields
 	FormFieldThreesCurrentPeak   FormField = "threes_current_peak"
 	FormFieldThreesPreviousPeak  FormField = "threes_previous_peak"
 	FormFieldThreesAllTimePeak   FormField = "threes_all_time_peak"
@@ -1220,10 +1221,12 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 	data := struct {
 		Title       string
 		CurrentPage string
+		Tracker     *usl.USLUserTracker
 		Errors      map[string]string
 	}{
 		Title:       "New Tracker",
 		CurrentPage: "trackers",
+		Tracker:     &usl.USLUserTracker{},   // Empty tracker for new forms
 		Errors:      make(map[string]string), // Empty errors for initial form load
 	}
 
