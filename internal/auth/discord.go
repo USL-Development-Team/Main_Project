@@ -30,6 +30,15 @@ const (
 	uslPrefix = "/usl"
 )
 
+type DiscordAuthConfig struct {
+	SupabaseClient  *supabase.Client
+	AdminDiscordIDs []string
+	SupabaseURL     string
+	PublicURL       string
+	AnonKey         string
+	EnvConfig       *config.EnvironmentConfig
+}
+
 type DiscordAuth struct {
 	supabaseClient  *supabase.Client
 	adminDiscordIDs []string
@@ -39,14 +48,14 @@ type DiscordAuth struct {
 	envConfig       *config.EnvironmentConfig
 }
 
-func NewDiscordAuth(supabaseClient *supabase.Client, adminDiscordIDs []string, supabaseURL, publicURL, anonKey string, envConfig config.EnvironmentConfig) *DiscordAuth {
+func NewDiscordAuth(cfg DiscordAuthConfig) *DiscordAuth {
 	return &DiscordAuth{
-		supabaseClient:  supabaseClient,
-		adminDiscordIDs: adminDiscordIDs,
-		supabaseURL:     supabaseURL,
-		publicURL:       publicURL,
-		anonKey:         anonKey,
-		envConfig:       &envConfig,
+		supabaseClient:  cfg.SupabaseClient,
+		adminDiscordIDs: cfg.AdminDiscordIDs,
+		supabaseURL:     cfg.SupabaseURL,
+		publicURL:       cfg.PublicURL,
+		anonKey:         cfg.AnonKey,
+		envConfig:       cfg.EnvConfig,
 	}
 }
 

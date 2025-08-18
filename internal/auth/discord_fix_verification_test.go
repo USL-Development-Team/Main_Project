@@ -19,14 +19,14 @@ func TestDiscordAuthFixVerification(t *testing.T) {
 	serviceRoleClient, err := supabase.NewClient("https://test.supabase.co", "service-role-key", nil)
 	assert.NoError(t, err)
 
-	auth := NewDiscordAuth(
-		serviceRoleClient,
-		[]string{"admin-discord-123"},
-		"https://test.supabase.co",
-		"https://test.supabase.co",
-		"anon-key",
-		envConfig,
-	)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  serviceRoleClient,
+		AdminDiscordIDs: []string{"admin-discord-123"},
+		SupabaseURL:     "https://test.supabase.co",
+		PublicURL:       "https://test.supabase.co",
+		AnonKey:         "anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	// Verify the auth instance has all required fields for the fix
 	assert.NotNil(t, auth.supabaseClient, "Service role client should be set")
@@ -79,14 +79,14 @@ func TestValidateTokensUsesCorrectClient(t *testing.T) {
 	}
 
 	// Test that the fix properly constructs anon client for token validation
-	auth := NewDiscordAuth(
-		nil, // Service role client can be nil for this test
-		[]string{},
-		"https://test.supabase.co",
-		"https://test.supabase.co",
-		"test-anon-key",
-		envConfig,
-	)
+	auth := NewDiscordAuth(DiscordAuthConfig{
+		SupabaseClient:  nil, // Service role client can be nil for this test
+		AdminDiscordIDs: []string{},
+		SupabaseURL:     "https://test.supabase.co",
+		PublicURL:       "https://test.supabase.co",
+		AnonKey:         "test-anon-key",
+		EnvConfig:       &envConfig,
+	})
 
 	// The key insight: validateTokensAndGetUser should create its own anon client
 	// instead of using the injected service role client
