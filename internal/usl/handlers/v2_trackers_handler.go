@@ -14,14 +14,12 @@ type V2TrackersHandler struct {
 	trackerRepo *repositories.TrackerRepository
 }
 
-// NewV2TrackersHandler creates a new V2 trackers handler
 func NewV2TrackersHandler(trackerRepo *repositories.TrackerRepository) *V2TrackersHandler {
 	return &V2TrackersHandler{
 		trackerRepo: trackerRepo,
 	}
 }
 
-// HandleTrackers handles the main /api/v2/trackers endpoint
 func (h *V2TrackersHandler) HandleTrackers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:

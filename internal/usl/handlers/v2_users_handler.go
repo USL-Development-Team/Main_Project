@@ -14,14 +14,12 @@ type V2UsersHandler struct {
 	userRepo *repositories.UserRepository
 }
 
-// NewV2UsersHandler creates a new V2 users handler
 func NewV2UsersHandler(userRepo *repositories.UserRepository) *V2UsersHandler {
 	return &V2UsersHandler{
 		userRepo: userRepo,
 	}
 }
 
-// HandleUsers handles the main /api/v2/users endpoint
 func (h *V2UsersHandler) HandleUsers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:

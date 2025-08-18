@@ -28,22 +28,17 @@ const (
 )
 
 type ApplicationContext struct {
-	// Core Configuration
 	Config *config.Config
 	Logger *slog.Logger
 
-	// Authentication & Authorization
 	Auth *auth.DiscordAuth
 
-	// Data Layer
 	UserRepo    *repositories.UserRepository
 	TrackerRepo *repositories.TrackerRepository
 	GuildRepo   *repositories.GuildRepository
 
-	// Business Logic
 	TrueSkillService *services.UserTrueSkillService
 
-	// Presentation Layer
 	Templates *template.Template
 }
 
@@ -65,18 +60,25 @@ func initializeApplication(logger *slog.Logger) *ApplicationContext {
 
 	envConfig := config.GetEnvironmentConfig()
 
-	discordAuth := auth.NewDiscordAuth(supabaseClient, appConfig.USL.AdminDiscordIDs,
-		appConfig.Supabase.URL, appConfig.Supabase.PublicURL, appConfig.Supabase.AnonKey, envConfig)
+	discordAuth := auth.NewDiscordAuth(auth.DiscordAuthConfig{
+		SupabaseClient:  supabaseClient,
+		AdminDiscordIDs: appConfig.USL.AdminDiscordIDs,
+		SupabaseURL:     appConfig.Supabase.URL,
+		PublicURL:       appConfig.Supabase.PublicURL,
+		AnonKey:         appConfig.Supabase.AnonKey,
+		EnvConfig:       &envConfig,
+	})
 
 	return &ApplicationContext{
-		Config:           appConfig,
+		Config:    appConfig,
+		Logger:    logger,
+		Auth:      discordAuth,
+		Templates: templates,
+
 		UserRepo:         repositories.UserRepo,
 		TrackerRepo:      repositories.TrackerRepo,
 		GuildRepo:        repositories.GuildRepo,
 		TrueSkillService: services,
-		Templates:        templates,
-		Logger:           logger,
-		Auth:             discordAuth,
 	}
 }
 
