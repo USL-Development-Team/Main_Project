@@ -1221,7 +1221,6 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 	// Pre-fill Discord ID from URL parameter if provided
 	tracker := &usl.USLUserTracker{}
 	if discordID := r.URL.Query().Get("discord_id"); discordID != "" {
-		// Validate Discord ID format before pre-filling
 		if isValidDiscordID(discordID) {
 			tracker.DiscordID = discordID
 			log.Printf("[USL-HANDLER] Pre-filled Discord ID from URL parameter: %s", discordID)
@@ -1239,7 +1238,7 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 		Title:       "New Tracker",
 		CurrentPage: "trackers",
 		Tracker:     tracker,
-		Errors:      make(map[string]string), // Empty errors for initial form load
+		Errors:      make(map[string]string),
 	}
 
 	h.renderTemplate(w, TemplateUSLTrackerNew, data)
@@ -1288,7 +1287,6 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("[USL-HANDLER] Created tracker for user: %s", createdTracker.DiscordID)
 
-	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", createdTracker.ID), http.StatusSeeOther)
 }
 
