@@ -254,11 +254,11 @@ func TestTrackerCreationTrueSkillFlow(t *testing.T) {
 			}
 
 			// Build tracker from form using existing logic pattern
-			handler := &MigrationHandler{}
-			tracker := handler.buildTrackerFromForm(req)
+			baseHandler := &BaseHandler{}
+			tracker := baseHandler.buildTrackerFromForm(req)
 
 			// Validate tracker (this determines if TrueSkill update should be called)
-			validation := handler.validateTracker(tracker)
+			validation := baseHandler.validateTracker(tracker)
 
 			if tt.expectValid {
 				if !validation.IsValid {
@@ -374,7 +374,7 @@ func TestCompleteTrackerWorkflow(t *testing.T) {
 
 		// Step 3: Form submission validation and workflow (Issue 41 fix #3)
 		// Test that valid form data would trigger the TrueSkill update workflow
-		handler := &MigrationHandler{}
+		baseHandler := &BaseHandler{}
 
 		form := url.Values{}
 		form.Set("discord_id", "123456789012345678")
@@ -390,8 +390,8 @@ func TestCompleteTrackerWorkflow(t *testing.T) {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		req.ParseForm()
 
-		tracker := handler.buildTrackerFromForm(req)
-		validation := handler.validateTracker(tracker)
+		tracker := baseHandler.buildTrackerFromForm(req)
+		validation := baseHandler.validateTracker(tracker)
 
 		if !validation.IsValid {
 			t.Errorf("Valid form submission should pass validation: %v", validation.Errors)

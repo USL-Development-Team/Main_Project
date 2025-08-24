@@ -13,7 +13,7 @@ import (
 // and comprehensive edge case coverage.
 func TestValidationSafety(t *testing.T) {
 	// Arrange: Create a handler instance for validation testing
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	// Define test cases using table-driven test pattern (Go best practice)
 	tests := []struct {
@@ -240,8 +240,8 @@ func TestValidationSafety(t *testing.T) {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			// Act: Build tracker from form data and validate
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Assert: Check validation result matches expectations
 			if validation.IsValid != tt.shouldBeValid {
@@ -294,7 +294,7 @@ func TestValidationSafety(t *testing.T) {
 // This follows Go security testing best practices by testing known attack vectors.
 func TestFormParsingSafety(t *testing.T) {
 	// Arrange: Create handler instance
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	// Define security test cases using table-driven pattern
 	maliciousInputs := []struct {
@@ -341,8 +341,8 @@ func TestFormParsingSafety(t *testing.T) {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			// Act: Parse form data and validate
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Assert: Malicious input should ALWAYS be rejected
 			if validation.IsValid {
@@ -454,11 +454,11 @@ func TestTrackerCreationSecurityFlow(t *testing.T) {
 				t.Fatalf("Failed to parse form: %v", err)
 			}
 
-			handler := &MigrationHandler{}
-			tracker := handler.buildTrackerFromForm(req)
+			baseHandler := &BaseHandler{}
+			tracker := baseHandler.buildTrackerFromForm(req)
 
 			// Use existing validation with security metrics
-			validation := handler.validateTrackerWithMetrics(req, tracker)
+			validation := baseHandler.validateTrackerWithMetrics(req, tracker)
 
 			// Verify security expectations
 			if tt.expectValidationFail {

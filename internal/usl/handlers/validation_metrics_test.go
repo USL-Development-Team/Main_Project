@@ -19,7 +19,7 @@ func TestValidationMetricsCollection(t *testing.T) {
 	}
 	metricsMutex.Unlock()
 
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	t.Run("TestSuccessfulValidationMetrics", func(t *testing.T) {
 		// Create valid form data
@@ -38,8 +38,8 @@ func TestValidationMetricsCollection(t *testing.T) {
 			t.Fatalf("Failed to parse form: %v", err)
 		}
 
-		tracker := handler.buildTrackerFromForm(req)
-		validation := handler.validateTrackerWithMetrics(req, tracker)
+		tracker := baseHandler.buildTrackerFromForm(req)
+		validation := baseHandler.validateTrackerWithMetrics(req, tracker)
 
 		if !validation.IsValid {
 			t.Errorf("Expected valid tracker, got errors: %+v", validation.Errors)
@@ -85,8 +85,8 @@ func TestValidationMetricsCollection(t *testing.T) {
 			t.Fatalf("Failed to parse form: %v", err)
 		}
 
-		tracker := handler.buildTrackerFromForm(req)
-		validation := handler.validateTrackerWithMetrics(req, tracker)
+		tracker := baseHandler.buildTrackerFromForm(req)
+		validation := baseHandler.validateTrackerWithMetrics(req, tracker)
 
 		if validation.IsValid {
 			t.Error("Expected invalid tracker due to empty Discord ID")
@@ -140,8 +140,8 @@ func TestValidationMetricsCollection(t *testing.T) {
 			t.Fatalf("Failed to parse form: %v", err)
 		}
 
-		tracker := handler.buildTrackerFromForm(req)
-		validation := handler.validateTrackerWithMetrics(req, tracker)
+		tracker := baseHandler.buildTrackerFromForm(req)
+		validation := baseHandler.validateTrackerWithMetrics(req, tracker)
 
 		if validation.IsValid {
 			t.Error("Expected invalid tracker due to malicious input")
@@ -176,12 +176,12 @@ func TestValidationMetricsAPI(t *testing.T) {
 	}
 	metricsMutex.Unlock()
 
-	handler := &MigrationHandler{}
+	adminHandler := &AdminHandler{BaseHandler: &BaseHandler{}}
 
 	req := httptest.NewRequest("GET", "/api/validation/metrics", nil)
 	w := httptest.NewRecorder()
 
-	handler.ValidationMetricsAPI(w, req)
+	adminHandler.ValidationMetricsAPI(w, req)
 
 	if w.Code != 200 {
 		t.Errorf("Expected status 200, got %d", w.Code)

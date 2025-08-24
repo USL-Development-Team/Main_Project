@@ -50,7 +50,7 @@ func TestTrackerCreationWithTrueSkillIntegration(t *testing.T) {
 			// Create mock dependencies
 
 			// Test the workflow logic directly (following existing test pattern)
-			handler := &MigrationHandler{}
+			baseHandler := &BaseHandler{}
 
 			// Create form request
 			form := url.Values{}
@@ -66,8 +66,8 @@ func TestTrackerCreationWithTrueSkillIntegration(t *testing.T) {
 				t.Fatalf("Failed to parse form: %v", err)
 			}
 
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Test the workflow logic based on validation results
 			if tt.expectTrackerCreated {
@@ -120,7 +120,7 @@ func TestTrueSkillFailureGracefulDegradation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// Test the graceful degradation workflow (following existing test pattern)
-			handler := &MigrationHandler{}
+			baseHandler := &BaseHandler{}
 
 			// Create valid form data
 			form := url.Values{}
@@ -138,8 +138,8 @@ func TestTrueSkillFailureGracefulDegradation(t *testing.T) {
 				t.Fatalf("Failed to parse form: %v", err)
 			}
 
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Key test: Valid data should pass validation (precondition for both success and failure scenarios)
 			if !validation.IsValid {
