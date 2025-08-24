@@ -1218,6 +1218,18 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Pre-fill Discord ID from URL parameter if provided
+	tracker := &usl.USLUserTracker{}
+	if discordID := r.URL.Query().Get("discord_id"); discordID != "" {
+		// Validate Discord ID format before pre-filling
+		if isValidDiscordID(discordID) {
+			tracker.DiscordID = discordID
+			log.Printf("[USL-HANDLER] Pre-filled Discord ID from URL parameter: %s", discordID)
+		} else {
+			log.Printf("[USL-HANDLER] Invalid Discord ID in URL parameter, ignoring: %s", discordID)
+		}
+	}
+
 	data := struct {
 		Title       string
 		CurrentPage string
@@ -1226,7 +1238,7 @@ func (h *MigrationHandler) NewTrackerForm(w http.ResponseWriter, r *http.Request
 	}{
 		Title:       "New Tracker",
 		CurrentPage: "trackers",
-		Tracker:     &usl.USLUserTracker{},   // Empty tracker for new forms
+		Tracker:     tracker,
 		Errors:      make(map[string]string), // Empty errors for initial form load
 	}
 
@@ -1263,6 +1275,18 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 		h.handleDatabaseError(w, "create tracker", err)
 		return
 	}
+
+	// Auto-update TrueSkill after tracker creation (following TrackerHandler pattern)
+	result := h.updateUSLUserTrueSkillFromTrackers(createdTracker.DiscordID)
+	if !result.Success {
+		log.Printf("[USL-HANDLER] TrueSkill auto-update failed for %s: %s", createdTracker.DiscordID, result.Error)
+		// Continue anyway - don't fail the tracker operation (graceful degradation)
+	} else if result.TrueSkillResult != nil {
+		log.Printf("[USL-HANDLER] Auto-updated TrueSkill for %s: μ=%.1f",
+			createdTracker.DiscordID, result.TrueSkillResult.Mu)
+	}
+
+	log.Printf("[USL-HANDLER] Created tracker for user: %s", createdTracker.DiscordID)
 
 	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", createdTracker.ID), http.StatusSeeOther)
