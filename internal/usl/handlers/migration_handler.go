@@ -134,7 +134,6 @@ var (
 	validationLogger = logger.NewLogger("validation")
 )
 
-// parseIntField safely converts a form field to int, returning 0 for empty or invalid values
 func parseIntField(value string) int {
 	if value == "" {
 		return 0
@@ -145,7 +144,6 @@ func parseIntField(value string) int {
 	return 0
 }
 
-// recordValidationMetrics updates validation metrics in a thread-safe manner
 func recordValidationMetrics(event *ValidationEvent) {
 	metricsMutex.Lock()
 	defer metricsMutex.Unlock()
@@ -157,7 +155,6 @@ func recordValidationMetrics(event *ValidationEvent) {
 		validationMetrics.SuccessfulValidations++
 	case "failure":
 		validationMetrics.FailedValidations++
-		// Count errors by type and field
 		for _, err := range event.Errors {
 			validationMetrics.ErrorsByType[err.Code]++
 			validationMetrics.ErrorsByField[err.Field]++
@@ -168,7 +165,6 @@ func recordValidationMetrics(event *ValidationEvent) {
 	}
 }
 
-// logValidationEvent creates a structured log entry for validation events
 func logValidationEvent(event *ValidationEvent) {
 	baseArgs := []any{
 		"event_type", event.Type,
@@ -176,7 +172,6 @@ func logValidationEvent(event *ValidationEvent) {
 		"timestamp", event.Timestamp,
 	}
 
-	// Add non-sensitive context
 	if event.UserAgent != "" {
 		baseArgs = append(baseArgs, "user_agent", event.UserAgent)
 	}
@@ -184,7 +179,6 @@ func logValidationEvent(event *ValidationEvent) {
 		baseArgs = append(baseArgs, "remote_addr", event.RemoteAddr)
 	}
 
-	// Add validation-specific data
 	if len(event.Errors) > 0 {
 		baseArgs = append(baseArgs, "error_count", len(event.Errors))
 		errorCodes := make([]string, len(event.Errors))
@@ -209,12 +203,10 @@ func logValidationEvent(event *ValidationEvent) {
 	}
 }
 
-// getValidationMetrics returns current validation metrics in a thread-safe manner
 func getValidationMetrics() ValidationMetrics {
 	metricsMutex.RLock()
 	defer metricsMutex.RUnlock()
 
-	// Create a copy to avoid race conditions
 	metrics := ValidationMetrics{
 		TotalValidations:      validationMetrics.TotalValidations,
 		SuccessfulValidations: validationMetrics.SuccessfulValidations,
@@ -225,7 +217,6 @@ func getValidationMetrics() ValidationMetrics {
 		ErrorsByField:         make(map[string]int64),
 	}
 
-	// Copy maps
 	for k, v := range validationMetrics.ErrorsByType {
 		metrics.ErrorsByType[k] = v
 	}
@@ -419,7 +410,6 @@ func (h *MigrationHandler) validateTrackerWithMetrics(r *http.Request, tracker *
 func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) ValidationResult {
 	var errors []ValidationError
 
-	// Validate Discord ID
 	if tracker.DiscordID == "" {
 		errors = append(errors, ValidationError{
 			Field:   "discord_id",
@@ -434,7 +424,6 @@ func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) Validati
 		})
 	}
 
-	// Validate URL
 	if tracker.URL == "" {
 		errors = append(errors, ValidationError{
 			Field:   "url",
@@ -449,17 +438,13 @@ func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) Validati
 		})
 	}
 
-	// Validate MMR values for each playlist with improved structured messages
 	errors = append(errors, h.validatePlaylistMMR("1v1", tracker.OnesCurrentSeasonPeak, tracker.OnesPreviousSeasonPeak, tracker.OnesAllTimePeak)...)
 	errors = append(errors, h.validatePlaylistMMR("2v2", tracker.TwosCurrentSeasonPeak, tracker.TwosPreviousSeasonPeak, tracker.TwosAllTimePeak)...)
 	errors = append(errors, h.validatePlaylistMMR("3v3", tracker.ThreesCurrentSeasonPeak, tracker.ThreesPreviousSeasonPeak, tracker.ThreesAllTimePeak)...)
 
-	// Validate games played for each playlist
 	errors = append(errors, h.validateGamesPlayed("1v1", tracker.OnesCurrentSeasonGamesPlayed, tracker.OnesPreviousSeasonGamesPlayed)...)
 	errors = append(errors, h.validateGamesPlayed("2v2", tracker.TwosCurrentSeasonGamesPlayed, tracker.TwosPreviousSeasonGamesPlayed)...)
 	errors = append(errors, h.validateGamesPlayed("3v3", tracker.ThreesCurrentSeasonGamesPlayed, tracker.ThreesPreviousSeasonGamesPlayed)...)
-
-	// Check if tracker has meaningful data
 	if h.hasNoPlaylistData(tracker) {
 		errors = append(errors, ValidationError{
 			Field:   "general",
@@ -503,7 +488,6 @@ func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previou
 		})
 	}
 
-	// Logical validation: all-time should be >= current and previous
 	if allTime > 0 && current > 0 && allTime < current {
 		errors = append(errors, ValidationError{
 			Field:   fieldPrefix + "_all_time_peak",
@@ -619,7 +603,6 @@ func (h *MigrationHandler) renderFormWithErrors(w http.ResponseWriter, templateN
 	h.renderTemplate(w, templateName, data)
 }
 
-// buildErrorMap creates a map for easy error lookup in templates
 func (h *MigrationHandler) buildErrorMap(errors []ValidationError) map[string]string {
 	errorMap := make(map[string]string)
 	for _, err := range errors {
@@ -628,7 +611,6 @@ func (h *MigrationHandler) buildErrorMap(errors []ValidationError) map[string]st
 	return errorMap
 }
 
-// calculateEffectiveMMR extracts MMR calculation to separate function
 func (h *MigrationHandler) calculateEffectiveMMR(tracker *usl.USLUserTracker) {
 	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
 		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
@@ -1139,7 +1121,6 @@ func (h *MigrationHandler) UpdateUserTrueSkill(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Extract user ID from URL query parameter
 	userIDStr := r.URL.Query().Get("id")
 	if userIDStr == "" {
 		h.handleInvalidID(w, "User ID")
@@ -1152,7 +1133,6 @@ func (h *MigrationHandler) UpdateUserTrueSkill(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Get user for Discord ID
 	user, err := h.uslRepo.GetUserByID(userID)
 	if err != nil {
 		h.handleDatabaseError(w, "load user", err)
@@ -1255,7 +1235,6 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Build tracker from form (using existing helper)
 	tracker := h.buildTrackerFromForm(r)
 
 	// Comprehensive validation with metrics and security monitoring
@@ -1268,14 +1247,12 @@ func (h *MigrationHandler) CreateTracker(w http.ResponseWriter, r *http.Request)
 	// Calculate MMR (using extracted function)
 	h.calculateEffectiveMMR(tracker)
 
-	// Save to database
 	createdTracker, err := h.uslRepo.CreateTracker(tracker)
 	if err != nil {
 		h.handleDatabaseError(w, "create tracker", err)
 		return
 	}
 
-	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", createdTracker.ID), http.StatusSeeOther)
 }
 
@@ -1338,7 +1315,6 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Extract tracker ID
 	trackerIDStr := r.FormValue("id")
 	if trackerIDStr == "" {
 		h.handleInvalidID(w, "Tracker ID")
@@ -1351,7 +1327,6 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Build tracker from form (using existing helper)
 	tracker := h.buildTrackerFromForm(r)
 	tracker.ID = trackerID // Set ID for update operation
 
@@ -1371,7 +1346,6 @@ func (h *MigrationHandler) UpdateTracker(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Success redirect
 	http.Redirect(w, r, fmt.Sprintf("/usl/trackers/detail?id=%d", trackerID), http.StatusSeeOther)
 }
 
@@ -1703,7 +1677,6 @@ func (h *MigrationHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user data from form
 	user := &usl.USLUser{
 		Name:      strings.TrimSpace(r.FormValue("name")),
 		DiscordID: strings.TrimSpace(r.FormValue("discord_id")),
@@ -1721,14 +1694,12 @@ func (h *MigrationHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create the user
 	createdUser, err := h.uslRepo.CreateUser(user.Name, user.DiscordID, user.Active, user.Banned)
 	if err != nil {
 		h.handleDatabaseError(w, "create user", err)
 		return
 	}
 
-	// Redirect to user detail page
 	http.Redirect(w, r, fmt.Sprintf("/usl/users/detail?id=%d", createdUser.ID), http.StatusSeeOther)
 }
 
@@ -1789,7 +1760,6 @@ func (h *MigrationHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract user data from form
 	user := &usl.USLUser{
 		ID:        userID,
 		Name:      strings.TrimSpace(r.FormValue("name")),
@@ -1814,7 +1784,6 @@ func (h *MigrationHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Redirect to user detail page
 	http.Redirect(w, r, fmt.Sprintf("/usl/users/detail?id=%d", userID), http.StatusSeeOther)
 }
 
