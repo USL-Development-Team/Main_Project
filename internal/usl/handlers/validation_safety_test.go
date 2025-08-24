@@ -13,7 +13,7 @@ import (
 // and comprehensive edge case coverage.
 func TestValidationSafety(t *testing.T) {
 	// Arrange: Create a handler instance for validation testing
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	// Define test cases using table-driven test pattern (Go best practice)
 	tests := []struct {
@@ -240,8 +240,8 @@ func TestValidationSafety(t *testing.T) {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			// Act: Build tracker from form data and validate
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Assert: Check validation result matches expectations
 			if validation.IsValid != tt.shouldBeValid {
@@ -294,7 +294,7 @@ func TestValidationSafety(t *testing.T) {
 // This follows Go security testing best practices by testing known attack vectors.
 func TestFormParsingSafety(t *testing.T) {
 	// Arrange: Create handler instance
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	// Define security test cases using table-driven pattern
 	maliciousInputs := []struct {
@@ -341,8 +341,8 @@ func TestFormParsingSafety(t *testing.T) {
 			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 			// Act: Parse form data and validate
-			tracker := handler.buildTrackerFromForm(req)
-			validation := handler.validateTracker(tracker)
+			tracker := baseHandler.buildTrackerFromForm(req)
+			validation := baseHandler.validateTracker(tracker)
 
 			// Assert: Malicious input should ALWAYS be rejected
 			if validation.IsValid {
@@ -355,6 +355,131 @@ func TestFormParsingSafety(t *testing.T) {
 			t.Logf("✅ SECURITY: Malicious input correctly rejected")
 			t.Logf("   Attack type: %s", tt.description)
 			t.Logf("   Validation errors: %d", len(validation.Errors))
+		})
+	}
+}
+
+// TestTrackerCreationSecurityFlow tests security validation during the complete tracker creation workflow
+func TestTrackerCreationSecurityFlow(t *testing.T) {
+	tests := []struct {
+		name                   string
+		formData               map[string]string
+		expectSecurityIncident bool
+		expectValidationFail   bool
+		description            string
+	}{
+		{
+			name: "XSS_in_discord_id_parameter",
+			formData: map[string]string{
+				"discord_id": "<script>alert('xss')</script>",
+				"url":        "https://rocketleague.tracker.network/profile/123",
+				"valid":      "true",
+			},
+			expectSecurityIncident: true,
+			expectValidationFail:   true,
+			description:            "XSS attempt in discord_id should be rejected",
+		},
+		{
+			name: "SQL_injection_in_discord_id_parameter",
+			formData: map[string]string{
+				"discord_id": "'; DROP TABLE users; --",
+				"url":        "https://rocketleague.tracker.network/profile/123",
+				"valid":      "true",
+			},
+			expectSecurityIncident: true,
+			expectValidationFail:   true,
+			description:            "SQL injection attempt in discord_id should be rejected",
+		},
+		{
+			name: "Path_traversal_in_url",
+			formData: map[string]string{
+				"discord_id": "123456789012345678",
+				"url":        "https://rocketleague.tracker.network/../../../etc/passwd",
+				"valid":      "true",
+			},
+			expectSecurityIncident: true,
+			expectValidationFail:   true,
+			description:            "Path traversal attempt in URL should be rejected",
+		},
+		{
+			name: "Buffer_overflow_attempt_discord_id",
+			formData: map[string]string{
+				"discord_id": strings.Repeat("1", 1000), // Very long string
+				"url":        "https://rocketleague.tracker.network/profile/123",
+				"valid":      "true",
+			},
+			expectSecurityIncident: true,
+			expectValidationFail:   true,
+			description:            "Buffer overflow attempt with long discord_id should be rejected",
+		},
+		{
+			name: "URL_with_javascript_protocol",
+			formData: map[string]string{
+				"discord_id": "123456789012345678",
+				"url":        "javascript:alert('xss')",
+				"valid":      "true",
+			},
+			expectSecurityIncident: true,
+			expectValidationFail:   true,
+			description:            "JavaScript protocol in URL should be rejected",
+		},
+		{
+			name: "Valid_data_passes_security",
+			formData: map[string]string{
+				"discord_id":         "123456789012345678",
+				"url":                "https://rocketleague.tracker.network/profile/123",
+				"ones_current_peak":  "1500",
+				"ones_current_games": "10",
+				"valid":              "true",
+			},
+			expectSecurityIncident: false,
+			expectValidationFail:   false,
+			description:            "Valid data should pass all security checks",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create form data (following existing validation pattern)
+			form := url.Values{}
+			for k, v := range tt.formData {
+				form.Set(k, v)
+			}
+
+			req := httptest.NewRequest("POST", "/usl/trackers/create", strings.NewReader(form.Encode()))
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			// Parse form and validate using existing handler methods
+			if err := req.ParseForm(); err != nil {
+				t.Fatalf("Failed to parse form: %v", err)
+			}
+
+			baseHandler := &BaseHandler{}
+			tracker := baseHandler.buildTrackerFromForm(req)
+
+			// Use existing validation with security metrics
+			validation := baseHandler.validateTrackerWithMetrics(req, tracker)
+
+			// Verify security expectations
+			if tt.expectValidationFail {
+				if validation.IsValid {
+					t.Errorf("SECURITY ISSUE: Malicious input was accepted")
+					t.Logf("Attack type: %s", tt.description)
+					t.Logf("Tracker data: %+v", tracker)
+				} else {
+					t.Logf("✅ SECURITY: Malicious input correctly rejected")
+					t.Logf("   Attack type: %s", tt.description)
+					t.Logf("   Validation errors: %d", len(validation.Errors))
+				}
+			} else {
+				if !validation.IsValid {
+					t.Errorf("Valid data should pass security validation: %v", validation.Errors)
+					t.Logf("Description: %s", tt.description)
+				} else {
+					t.Logf("✅ VALID: Legitimate data passed security checks")
+					t.Logf("   Description: %s", tt.description)
+				}
+			}
 		})
 	}
 }

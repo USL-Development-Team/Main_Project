@@ -1,3 +1,4 @@
+
 SET session_replication_role = replica;
 
 --
@@ -24,7 +25,33 @@ SET row_security = off;
 --
 
 INSERT INTO "auth"."audit_log_entries" ("instance_id", "id", "payload", "created_at", "ip_address") VALUES
-	('00000000-0000-0000-0000-000000000000', 'a4d8e62d-3c58-4a84-b3e8-3780549d69b0', '{"action":"user_signedup","actor_id":"32481211-bd29-4581-9b9a-50ce02924dff","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"discord"}}', '2025-08-16 18:27:46.590086+00', '');
+	('00000000-0000-0000-0000-000000000000', '485ea5fb-d69a-40d0-a10c-2cfda99cc0b0', '{"action":"user_signedup","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"discord"}}', '2025-08-16 21:11:51.573142+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'fb7697e8-9ae7-4380-b8e4-d1be2f7a73ef', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-16 21:12:57.367823+00', ''),
+	('00000000-0000-0000-0000-000000000000', '69fba3d6-18c3-4adc-82ab-c49d03671313', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-16 22:27:40.471553+00', ''),
+	('00000000-0000-0000-0000-000000000000', '3e2a3817-6da8-44a5-b746-2e1f3c2cc191', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 00:38:46.703967+00', ''),
+	('00000000-0000-0000-0000-000000000000', '0add2658-86d5-44be-b51f-de85dd59d4f4', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 02:11:47.433172+00', ''),
+	('00000000-0000-0000-0000-000000000000', '90cf0994-52bd-487d-a847-8d8170e7cb2c', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 02:53:55.791488+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'f21b8335-f778-45b4-9f60-f17c2f0f88e7', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 02:58:05.572128+00', ''),
+	('00000000-0000-0000-0000-000000000000', '1c8244c9-5366-449c-b426-ef55c3c858e8', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 08:21:12.117517+00', ''),
+	('00000000-0000-0000-0000-000000000000', '76b5c5e2-3889-4a55-a87a-2a8d55ba3ef6', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 08:37:37.148197+00', ''),
+	('00000000-0000-0000-0000-000000000000', '0ce5632c-11d6-4446-b388-875dfed105f4', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 09:21:57.236562+00', ''),
+	('00000000-0000-0000-0000-000000000000', '7328ee7e-7063-48c3-8ce5-9f94876b18e8', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 09:24:33.836438+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'f6958e32-8ccb-4314-bb9c-223dd9140648', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 09:32:07.693775+00', ''),
+	('00000000-0000-0000-0000-000000000000', '20714513-4793-48c8-af63-347cdf6c1b7a', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 16:29:09.74315+00', ''),
+	('00000000-0000-0000-0000-000000000000', '76dd649a-29e2-4a85-a0d6-77bfaca96ba0', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 16:29:45.599156+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'f12844f4-af54-4909-bae2-1b34b6009491', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 16:49:16.10101+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'f9d0e150-7e7b-4a1e-9852-83830a3a8d0a', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 18:08:00.16107+00', ''),
+	('00000000-0000-0000-0000-000000000000', '66a763bc-b91c-4036-a55b-819a784f0d16', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 18:15:59.794476+00', ''),
+	('00000000-0000-0000-0000-000000000000', '8e065c8c-58fb-4343-8408-dcd17b88af11', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 18:41:00.982772+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'c7990a6d-9c27-4d80-87d5-4e2beb7afd2e', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:08:23.820217+00', ''),
+	('00000000-0000-0000-0000-000000000000', '12754867-bd4b-4b41-a0c3-ee64fd11d234', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:09:45.149233+00', ''),
+	('00000000-0000-0000-0000-000000000000', '018a91ac-ab4e-49f6-9097-c5d7f1f156b7', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:10:49.965824+00', ''),
+	('00000000-0000-0000-0000-000000000000', '84b30081-a030-46c1-85a5-d4bcae3fdaa6', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:38:30.202993+00', ''),
+	('00000000-0000-0000-0000-000000000000', '0716fbcd-c747-44ca-a1a7-5cea286a313b', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:46:01.419024+00', ''),
+	('00000000-0000-0000-0000-000000000000', '0c125264-884e-4195-a906-4cf7b92b45ba', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:48:17.558224+00', ''),
+	('00000000-0000-0000-0000-000000000000', 'aa748310-7d4f-48af-a596-90d216b9a53b', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-17 21:56:57.446128+00', ''),
+	('00000000-0000-0000-0000-000000000000', '0d7cab45-8ce0-46c9-b8b4-9dfc4bc662ef', '{"action":"user_signedup","actor_id":"5c0f44a8-7beb-45fd-81e2-023cdf7cde73","actor_name":"rockytheii","actor_username":"rockohamilton09@gmail.com","actor_via_sso":false,"log_type":"team","traits":{"provider":"discord"}}', '2025-08-18 02:03:09.280604+00', ''),
+	('00000000-0000-0000-0000-000000000000', '1a713c08-43f3-48ce-913a-d99af3d4c6e3', '{"action":"login","actor_id":"38977817-1066-40d9-ab5e-a8a8ab8e667d","actor_name":"mogtron","actor_username":"reilly.kyle101@gmail.com","actor_via_sso":false,"log_type":"account","traits":{"provider":"discord"}}', '2025-08-18 02:37:50.014404+00', '');
 
 
 --
@@ -38,7 +65,8 @@ INSERT INTO "auth"."audit_log_entries" ("instance_id", "id", "payload", "created
 --
 
 INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encrypted_password", "email_confirmed_at", "invited_at", "confirmation_token", "confirmation_sent_at", "recovery_token", "recovery_sent_at", "email_change_token_new", "email_change", "email_change_sent_at", "last_sign_in_at", "raw_app_meta_data", "raw_user_meta_data", "is_super_admin", "created_at", "updated_at", "phone", "phone_confirmed_at", "phone_change", "phone_change_token", "phone_change_sent_at", "email_change_token_current", "email_change_confirm_status", "banned_until", "reauthentication_token", "reauthentication_sent_at", "is_sso_user", "deleted_at", "is_anonymous") VALUES
-	('00000000-0000-0000-0000-000000000000', '32481211-bd29-4581-9b9a-50ce02924dff', 'authenticated', 'authenticated', 'reilly.kyle101@gmail.com', NULL, '2025-08-16 18:27:46.590661+00', NULL, '', NULL, '', NULL, '', '', NULL, '2025-08-16 18:27:46.591902+00', '{"provider": "discord", "providers": ["discord"]}', '{"iss": "https://discord.com/api", "sub": "354474826192388127", "name": "mogtron#0", "email": "reilly.kyle101@gmail.com", "picture": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "full_name": "mogtron", "avatar_url": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "provider_id": "354474826192388127", "custom_claims": {"global_name": "mogtron"}, "email_verified": true, "phone_verified": false}', NULL, '2025-08-16 18:27:46.584892+00', '2025-08-16 18:27:46.594037+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
+	('00000000-0000-0000-0000-000000000000', '38977817-1066-40d9-ab5e-a8a8ab8e667d', 'authenticated', 'authenticated', 'reilly.kyle101@gmail.com', NULL, '2025-08-16 21:11:51.577506+00', NULL, '', NULL, '', NULL, '', '', NULL, '2025-08-18 02:37:50.019355+00', '{"provider": "discord", "providers": ["discord"]}', '{"iss": "https://discord.com/api", "sub": "354474826192388127", "name": "mogtron#0", "email": "reilly.kyle101@gmail.com", "picture": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "full_name": "mogtron", "avatar_url": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "provider_id": "354474826192388127", "custom_claims": {"global_name": "mogtron"}, "email_verified": true, "phone_verified": false}', NULL, '2025-08-16 21:11:51.543303+00', '2025-08-18 02:37:50.039424+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false),
+	('00000000-0000-0000-0000-000000000000', '5c0f44a8-7beb-45fd-81e2-023cdf7cde73', 'authenticated', 'authenticated', 'rockohamilton09@gmail.com', NULL, '2025-08-18 02:03:09.292703+00', NULL, '', NULL, '', NULL, '', '', NULL, '2025-08-18 02:03:09.3026+00', '{"provider": "discord", "providers": ["discord"]}', '{"iss": "https://discord.com/api", "sub": "679038415576104971", "name": "rockytheii#0", "email": "rockohamilton09@gmail.com", "picture": "https://cdn.discordapp.com/avatars/679038415576104971/2da887db42c84e1712cbe1b33a1526f8.png", "full_name": "rockytheii", "avatar_url": "https://cdn.discordapp.com/avatars/679038415576104971/2da887db42c84e1712cbe1b33a1526f8.png", "provider_id": "679038415576104971", "custom_claims": {"global_name": "Edge"}, "email_verified": true, "phone_verified": false}', NULL, '2025-08-18 02:03:09.197113+00', '2025-08-18 02:03:09.351705+00', NULL, NULL, '', '', NULL, '', 0, NULL, '', NULL, false, NULL, false);
 
 
 --
@@ -46,7 +74,8 @@ INSERT INTO "auth"."users" ("instance_id", "id", "aud", "role", "email", "encryp
 --
 
 INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "provider", "last_sign_in_at", "created_at", "updated_at", "id") VALUES
-	('354474826192388127', '32481211-bd29-4581-9b9a-50ce02924dff', '{"iss": "https://discord.com/api", "sub": "354474826192388127", "name": "mogtron#0", "email": "reilly.kyle101@gmail.com", "picture": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "full_name": "mogtron", "avatar_url": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "provider_id": "354474826192388127", "custom_claims": {"global_name": "mogtron"}, "email_verified": true, "phone_verified": false}', 'discord', '2025-08-16 18:27:46.587667+00', '2025-08-16 18:27:46.58769+00', '2025-08-16 18:27:46.58769+00', 'da2b13a8-b077-4ba7-bffd-3c26bd3f74bd');
+	('679038415576104971', '5c0f44a8-7beb-45fd-81e2-023cdf7cde73', '{"iss": "https://discord.com/api", "sub": "679038415576104971", "name": "rockytheii#0", "email": "rockohamilton09@gmail.com", "picture": "https://cdn.discordapp.com/avatars/679038415576104971/2da887db42c84e1712cbe1b33a1526f8.png", "full_name": "rockytheii", "avatar_url": "https://cdn.discordapp.com/avatars/679038415576104971/2da887db42c84e1712cbe1b33a1526f8.png", "provider_id": "679038415576104971", "custom_claims": {"global_name": "Edge"}, "email_verified": true, "phone_verified": false}', 'discord', '2025-08-18 02:03:09.262032+00', '2025-08-18 02:03:09.262102+00', '2025-08-18 02:03:09.262102+00', '503962c2-ce10-41e8-91ca-8548e4e6ee5c'),
+	('354474826192388127', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '{"iss": "https://discord.com/api", "sub": "354474826192388127", "name": "mogtron#0", "email": "reilly.kyle101@gmail.com", "picture": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "full_name": "mogtron", "avatar_url": "https://cdn.discordapp.com/avatars/354474826192388127/c50ea819dfdc72747e00c6f67d4ade97.png", "provider_id": "354474826192388127", "custom_claims": {"global_name": "mogtron"}, "email_verified": true, "phone_verified": false}', 'discord', '2025-08-16 21:11:51.567016+00', '2025-08-16 21:11:51.567073+00', '2025-08-18 02:37:49.995101+00', '41d2270d-7ef8-4b8c-a08f-b25583273e26');
 
 
 --
@@ -60,7 +89,33 @@ INSERT INTO "auth"."identities" ("provider_id", "user_id", "identity_data", "pro
 --
 
 INSERT INTO "auth"."sessions" ("id", "user_id", "created_at", "updated_at", "factor_id", "aal", "not_after", "refreshed_at", "user_agent", "ip", "tag") VALUES
-	('1287365f-bf71-4d8f-abe1-87b7dcbf5649', '32481211-bd29-4581-9b9a-50ce02924dff', '2025-08-16 18:27:46.591934+00', '2025-08-16 18:27:46.591934+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '172.20.0.1', NULL);
+	('cdf3361f-10b3-4c3a-a8e8-b936e380ddf3', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-16 21:11:51.586415+00', '2025-08-16 21:11:51.586415+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('68e2e1af-49e7-4b72-8a66-063be3b747cd', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-16 21:12:57.368696+00', '2025-08-16 21:12:57.368696+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('0b3bf938-5cb0-4d61-bef6-d3c638829b4a', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-16 22:27:40.480343+00', '2025-08-16 22:27:40.480343+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('0f9c65c2-b02e-468b-8767-c579a39ab012', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 00:38:46.72083+00', '2025-08-17 00:38:46.72083+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('d2c10324-150a-4a3c-9eb3-4be9d48ab10b', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 02:11:47.449678+00', '2025-08-17 02:11:47.449678+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('c196da87-c477-4420-bf4e-0a2f98847813', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 02:53:55.797573+00', '2025-08-17 02:53:55.797573+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('1af0f694-dde0-4f6a-bdc3-020e01cb6471', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 02:58:05.579867+00', '2025-08-17 02:58:05.579867+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('b207d6e4-3052-4a9a-94dc-22f4c4adc773', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 08:21:12.127149+00', '2025-08-17 08:21:12.127149+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('07bc4793-461e-4271-b8e0-d90144004f07', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 08:37:37.167128+00', '2025-08-17 08:37:37.167128+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('01afda98-30e4-4392-8d42-f128905c0ae9', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 09:21:57.248318+00', '2025-08-17 09:21:57.248318+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('3892c9b3-c615-4b72-9a01-82cfcbb498f3', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 09:24:33.837313+00', '2025-08-17 09:24:33.837313+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('9b9ad240-2f3a-424a-bd4e-ba51cb344241', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 09:32:07.695954+00', '2025-08-17 09:32:07.695954+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('fe4b839c-2e93-421d-ac8b-05724aaee6fa', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 16:29:09.754+00', '2025-08-17 16:29:09.754+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('62aeb8df-43ec-415b-a939-3620695c4cd5', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 16:29:45.599848+00', '2025-08-17 16:29:45.599848+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('8af87453-0756-4a01-8016-3d41db98f30d', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 16:49:16.110527+00', '2025-08-17 16:49:16.110527+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('3285adf3-807b-4ad6-897b-bb3813627252', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 18:08:00.18013+00', '2025-08-17 18:08:00.18013+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('b8fea0e7-d98f-4d03-a1b4-7ad3e35dc6a4', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 18:15:59.798701+00', '2025-08-17 18:15:59.798701+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('82866f49-a1a9-4fc6-b062-c5202034a3b2', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 18:41:00.995652+00', '2025-08-17 18:41:00.995652+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('7793598e-fd04-411e-bb91-26b84fe2d2f4', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:08:23.838736+00', '2025-08-17 21:08:23.838736+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('e04ed28b-de59-44a8-b1c2-6da78d6b0a3f', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:09:45.150716+00', '2025-08-17 21:09:45.150716+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('b35db76c-528d-4aff-b70e-8384a3a246f9', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:10:49.967288+00', '2025-08-17 21:10:49.967288+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('17b134d2-9c01-4cb3-b06e-a9c5c0740aa0', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:38:30.210116+00', '2025-08-17 21:38:30.210116+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('df7cd37e-0fb7-4233-bac3-44cb8455ef40', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:46:01.423933+00', '2025-08-17 21:46:01.423933+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('b31998bf-d128-4ef0-a0de-dc97866c6147', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:48:17.55908+00', '2025-08-17 21:48:17.55908+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('559e7859-07f8-4713-b7d7-562ad666f0fa', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-17 21:56:57.453065+00', '2025-08-17 21:56:57.453065+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL),
+	('836f28e5-039e-4058-91d0-67d7654e8cfe', '5c0f44a8-7beb-45fd-81e2-023cdf7cde73', '2025-08-18 02:03:09.303736+00', '2025-08-18 02:03:09.303736+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '192.230.137.53', NULL),
+	('58f51ad0-bdce-40fe-83dc-5a86d5a023d4', '38977817-1066-40d9-ab5e-a8a8ab8e667d', '2025-08-18 02:37:50.021182+00', '2025-08-18 02:37:50.021182+00', NULL, 'aal1', NULL, NULL, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36', '24.16.165.99', NULL);
 
 
 --
@@ -68,7 +123,33 @@ INSERT INTO "auth"."sessions" ("id", "user_id", "created_at", "updated_at", "fac
 --
 
 INSERT INTO "auth"."mfa_amr_claims" ("session_id", "created_at", "updated_at", "authentication_method", "id") VALUES
-	('1287365f-bf71-4d8f-abe1-87b7dcbf5649', '2025-08-16 18:27:46.594377+00', '2025-08-16 18:27:46.594377+00', 'oauth', 'aa71d4eb-81cc-4a26-8753-b51d957a8d91');
+	('cdf3361f-10b3-4c3a-a8e8-b936e380ddf3', '2025-08-16 21:11:51.627139+00', '2025-08-16 21:11:51.627139+00', 'oauth', '6f4cc2ed-5d91-43f0-a932-aab894e7e82c'),
+	('68e2e1af-49e7-4b72-8a66-063be3b747cd', '2025-08-16 21:12:57.372019+00', '2025-08-16 21:12:57.372019+00', 'oauth', 'c5cdb168-c9bd-49d4-92a5-d414848849e8'),
+	('0b3bf938-5cb0-4d61-bef6-d3c638829b4a', '2025-08-16 22:27:40.499164+00', '2025-08-16 22:27:40.499164+00', 'oauth', 'd969781c-3379-415d-8c83-558d9ceea6ca'),
+	('0f9c65c2-b02e-468b-8767-c579a39ab012', '2025-08-17 00:38:46.757147+00', '2025-08-17 00:38:46.757147+00', 'oauth', '2f4d57fd-775e-4c33-9737-6f4bc9b880db'),
+	('d2c10324-150a-4a3c-9eb3-4be9d48ab10b', '2025-08-17 02:11:47.488777+00', '2025-08-17 02:11:47.488777+00', 'oauth', 'dce5a873-8cec-40f5-a83e-20d09678bf97'),
+	('c196da87-c477-4420-bf4e-0a2f98847813', '2025-08-17 02:53:55.814549+00', '2025-08-17 02:53:55.814549+00', 'oauth', '2c93a353-aa22-4b11-adb3-f8bb57ed4db5'),
+	('1af0f694-dde0-4f6a-bdc3-020e01cb6471', '2025-08-17 02:58:05.591417+00', '2025-08-17 02:58:05.591417+00', 'oauth', 'c7b59d73-cf6e-48b0-97e6-c3d03d49f917'),
+	('b207d6e4-3052-4a9a-94dc-22f4c4adc773', '2025-08-17 08:21:12.150251+00', '2025-08-17 08:21:12.150251+00', 'oauth', '75b8e4c5-322a-4cca-8959-a6693d6c2aa5'),
+	('07bc4793-461e-4271-b8e0-d90144004f07', '2025-08-17 08:37:37.201237+00', '2025-08-17 08:37:37.201237+00', 'oauth', '4ab897e2-d1f2-404d-9f8f-9ab2e44d59d0'),
+	('01afda98-30e4-4392-8d42-f128905c0ae9', '2025-08-17 09:21:57.272652+00', '2025-08-17 09:21:57.272652+00', 'oauth', 'e2d52455-d604-42b3-8392-c2c2654a2d21'),
+	('3892c9b3-c615-4b72-9a01-82cfcbb498f3', '2025-08-17 09:24:33.841113+00', '2025-08-17 09:24:33.841113+00', 'oauth', '9739404d-3f6e-4e3f-853f-13e9606f18b1'),
+	('9b9ad240-2f3a-424a-bd4e-ba51cb344241', '2025-08-17 09:32:07.701781+00', '2025-08-17 09:32:07.701781+00', 'oauth', 'f1e4f486-b5c0-4ae5-a710-a8e0c766f265'),
+	('fe4b839c-2e93-421d-ac8b-05724aaee6fa', '2025-08-17 16:29:09.791064+00', '2025-08-17 16:29:09.791064+00', 'oauth', '158e1d3d-5d64-457e-a212-331ac3907ade'),
+	('62aeb8df-43ec-415b-a939-3620695c4cd5', '2025-08-17 16:29:45.603633+00', '2025-08-17 16:29:45.603633+00', 'oauth', 'c25a0f74-10ed-4c2d-9b2a-28bc53e55057'),
+	('8af87453-0756-4a01-8016-3d41db98f30d', '2025-08-17 16:49:16.124717+00', '2025-08-17 16:49:16.124717+00', 'oauth', '3bf38ff6-0ab8-4fc5-83dd-543df4c5136d'),
+	('3285adf3-807b-4ad6-897b-bb3813627252', '2025-08-17 18:08:00.220842+00', '2025-08-17 18:08:00.220842+00', 'oauth', '010320ac-b745-4a15-8657-c03cf582f6b1'),
+	('b8fea0e7-d98f-4d03-a1b4-7ad3e35dc6a4', '2025-08-17 18:15:59.815205+00', '2025-08-17 18:15:59.815205+00', 'oauth', '6bab4494-6790-40d9-8067-ad6ed1774b21'),
+	('82866f49-a1a9-4fc6-b062-c5202034a3b2', '2025-08-17 18:41:01.019376+00', '2025-08-17 18:41:01.019376+00', 'oauth', 'f6744854-7c86-4253-bccc-f636572cf57c'),
+	('7793598e-fd04-411e-bb91-26b84fe2d2f4', '2025-08-17 21:08:23.878474+00', '2025-08-17 21:08:23.878474+00', 'oauth', '3f65b1f5-ab58-42a0-a332-6a95d4e7ddc5'),
+	('e04ed28b-de59-44a8-b1c2-6da78d6b0a3f', '2025-08-17 21:09:45.156832+00', '2025-08-17 21:09:45.156832+00', 'oauth', '8c3af26f-e4e0-4911-af3c-e9c6e679eea6'),
+	('b35db76c-528d-4aff-b70e-8384a3a246f9', '2025-08-17 21:10:49.970068+00', '2025-08-17 21:10:49.970068+00', 'oauth', 'af7bb37a-755e-4ae6-8678-515d724b2d57'),
+	('17b134d2-9c01-4cb3-b06e-a9c5c0740aa0', '2025-08-17 21:38:30.220322+00', '2025-08-17 21:38:30.220322+00', 'oauth', 'f04cdb83-6e2f-48e5-b01b-d2e59cb13d30'),
+	('df7cd37e-0fb7-4233-bac3-44cb8455ef40', '2025-08-17 21:46:01.432187+00', '2025-08-17 21:46:01.432187+00', 'oauth', 'e05be537-340a-4702-9d6a-80f0d58f38a8'),
+	('b31998bf-d128-4ef0-a0de-dc97866c6147', '2025-08-17 21:48:17.562691+00', '2025-08-17 21:48:17.562691+00', 'oauth', 'efc6308d-16ce-41a4-8086-c0640aaee911'),
+	('559e7859-07f8-4713-b7d7-562ad666f0fa', '2025-08-17 21:56:57.459914+00', '2025-08-17 21:56:57.459914+00', 'oauth', 'c9758ff7-e767-40ee-a710-60cea887aa4e'),
+	('836f28e5-039e-4058-91d0-67d7654e8cfe', '2025-08-18 02:03:09.35221+00', '2025-08-18 02:03:09.35221+00', 'oauth', '5f0a2dc4-319b-40e2-b1f9-5883df0c19f4'),
+	('58f51ad0-bdce-40fe-83dc-5a86d5a023d4', '2025-08-18 02:37:50.039974+00', '2025-08-18 02:37:50.039974+00', 'oauth', 'febe8405-2337-4292-be9e-c6950adebae4');
 
 
 --
@@ -94,7 +175,33 @@ INSERT INTO "auth"."mfa_amr_claims" ("session_id", "created_at", "updated_at", "
 --
 
 INSERT INTO "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "revoked", "created_at", "updated_at", "parent", "session_id") VALUES
-	('00000000-0000-0000-0000-000000000000', 1, 'en547ij3x7li', '32481211-bd29-4581-9b9a-50ce02924dff', false, '2025-08-16 18:27:46.592977+00', '2025-08-16 18:27:46.592977+00', NULL, '1287365f-bf71-4d8f-abe1-87b7dcbf5649');
+	('00000000-0000-0000-0000-000000000000', 2, 'ielwj3agr4pr', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-16 21:11:51.602781+00', '2025-08-16 21:11:51.602781+00', NULL, 'cdf3361f-10b3-4c3a-a8e8-b936e380ddf3'),
+	('00000000-0000-0000-0000-000000000000', 3, 'jj46okkbifat', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-16 21:12:57.369726+00', '2025-08-16 21:12:57.369726+00', NULL, '68e2e1af-49e7-4b72-8a66-063be3b747cd'),
+	('00000000-0000-0000-0000-000000000000', 4, 'tr27df73snzi', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-16 22:27:40.488847+00', '2025-08-16 22:27:40.488847+00', NULL, '0b3bf938-5cb0-4d61-bef6-d3c638829b4a'),
+	('00000000-0000-0000-0000-000000000000', 5, '5awqcjx6wz35', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 00:38:46.737177+00', '2025-08-17 00:38:46.737177+00', NULL, '0f9c65c2-b02e-468b-8767-c579a39ab012'),
+	('00000000-0000-0000-0000-000000000000', 6, 'wawiwb62g4rk', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 02:11:47.465359+00', '2025-08-17 02:11:47.465359+00', NULL, 'd2c10324-150a-4a3c-9eb3-4be9d48ab10b'),
+	('00000000-0000-0000-0000-000000000000', 7, 'oceu3nkjgohj', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 02:53:55.802049+00', '2025-08-17 02:53:55.802049+00', NULL, 'c196da87-c477-4420-bf4e-0a2f98847813'),
+	('00000000-0000-0000-0000-000000000000', 8, '75trlvt5l67o', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 02:58:05.582691+00', '2025-08-17 02:58:05.582691+00', NULL, '1af0f694-dde0-4f6a-bdc3-020e01cb6471'),
+	('00000000-0000-0000-0000-000000000000', 9, 'cjz4qvymlnru', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 08:21:12.137517+00', '2025-08-17 08:21:12.137517+00', NULL, 'b207d6e4-3052-4a9a-94dc-22f4c4adc773'),
+	('00000000-0000-0000-0000-000000000000', 10, 'aftlps56ex5w', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 08:37:37.174824+00', '2025-08-17 08:37:37.174824+00', NULL, '07bc4793-461e-4271-b8e0-d90144004f07'),
+	('00000000-0000-0000-0000-000000000000', 11, 'bip7wbt4hrqg', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 09:21:57.255611+00', '2025-08-17 09:21:57.255611+00', NULL, '01afda98-30e4-4392-8d42-f128905c0ae9'),
+	('00000000-0000-0000-0000-000000000000', 12, 'htcpalosf2gc', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 09:24:33.838806+00', '2025-08-17 09:24:33.838806+00', NULL, '3892c9b3-c615-4b72-9a01-82cfcbb498f3'),
+	('00000000-0000-0000-0000-000000000000', 13, 'jurbhkjhxosw', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 09:32:07.697044+00', '2025-08-17 09:32:07.697044+00', NULL, '9b9ad240-2f3a-424a-bd4e-ba51cb344241'),
+	('00000000-0000-0000-0000-000000000000', 14, 'tz4735dcv76d', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 16:29:09.767595+00', '2025-08-17 16:29:09.767595+00', NULL, 'fe4b839c-2e93-421d-ac8b-05724aaee6fa'),
+	('00000000-0000-0000-0000-000000000000', 15, 'ldd3g3qeeaxu', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 16:29:45.601864+00', '2025-08-17 16:29:45.601864+00', NULL, '62aeb8df-43ec-415b-a939-3620695c4cd5'),
+	('00000000-0000-0000-0000-000000000000', 16, 'bdebi7tuh2uj', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 16:49:16.116804+00', '2025-08-17 16:49:16.116804+00', NULL, '8af87453-0756-4a01-8016-3d41db98f30d'),
+	('00000000-0000-0000-0000-000000000000', 17, 'omi3ldhbptma', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 18:08:00.19467+00', '2025-08-17 18:08:00.19467+00', NULL, '3285adf3-807b-4ad6-897b-bb3813627252'),
+	('00000000-0000-0000-0000-000000000000', 18, 'pgun5djeeugz', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 18:15:59.801511+00', '2025-08-17 18:15:59.801511+00', NULL, 'b8fea0e7-d98f-4d03-a1b4-7ad3e35dc6a4'),
+	('00000000-0000-0000-0000-000000000000', 19, 'xoozvclprfqe', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 18:41:01.003454+00', '2025-08-17 18:41:01.003454+00', NULL, '82866f49-a1a9-4fc6-b062-c5202034a3b2'),
+	('00000000-0000-0000-0000-000000000000', 20, 'fhduv67x3kl5', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:08:23.850795+00', '2025-08-17 21:08:23.850795+00', NULL, '7793598e-fd04-411e-bb91-26b84fe2d2f4'),
+	('00000000-0000-0000-0000-000000000000', 21, 'muqslrosr52s', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:09:45.153702+00', '2025-08-17 21:09:45.153702+00', NULL, 'e04ed28b-de59-44a8-b1c2-6da78d6b0a3f'),
+	('00000000-0000-0000-0000-000000000000', 22, 'vgrjhk5dv4r7', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:10:49.968325+00', '2025-08-17 21:10:49.968325+00', NULL, 'b35db76c-528d-4aff-b70e-8384a3a246f9'),
+	('00000000-0000-0000-0000-000000000000', 23, 'bqjnede6gfnc', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:38:30.214256+00', '2025-08-17 21:38:30.214256+00', NULL, '17b134d2-9c01-4cb3-b06e-a9c5c0740aa0'),
+	('00000000-0000-0000-0000-000000000000', 24, 'yktx7mx3esay', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:46:01.427597+00', '2025-08-17 21:46:01.427597+00', NULL, 'df7cd37e-0fb7-4233-bac3-44cb8455ef40'),
+	('00000000-0000-0000-0000-000000000000', 25, 'ifbrjfwosgfh', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:48:17.560251+00', '2025-08-17 21:48:17.560251+00', NULL, 'b31998bf-d128-4ef0-a0de-dc97866c6147'),
+	('00000000-0000-0000-0000-000000000000', 26, 'bnkocmn3odly', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-17 21:56:57.455559+00', '2025-08-17 21:56:57.455559+00', NULL, '559e7859-07f8-4713-b7d7-562ad666f0fa'),
+	('00000000-0000-0000-0000-000000000000', 27, 'iz5n4heselu4', '5c0f44a8-7beb-45fd-81e2-023cdf7cde73', false, '2025-08-18 02:03:09.323931+00', '2025-08-18 02:03:09.323931+00', NULL, '836f28e5-039e-4058-91d0-67d7654e8cfe'),
+	('00000000-0000-0000-0000-000000000000', 28, 's5yoeegiqdhi', '38977817-1066-40d9-ab5e-a8a8ab8e667d', false, '2025-08-18 02:37:50.027734+00', '2025-08-18 02:37:50.027734+00', NULL, '58f51ad0-bdce-40fe-83dc-5a86d5a023d4');
 
 
 --
@@ -126,7 +233,7 @@ INSERT INTO "auth"."refresh_tokens" ("instance_id", "id", "token", "user_id", "r
 --
 
 INSERT INTO "public"."guilds" ("id", "discord_guild_id", "name", "active", "config", "created_at", "updated_at") VALUES
-	(1, '1390537743385231451', 'Underrated Soccer League (USL)', true, '{"discord": {"bot_command_prefix": "!usl", "leaderboard_channel_id": null, "announcement_channel_id": null}, "permissions": {"admin_role_ids": [], "moderator_role_ids": []}}', '2025-08-16 17:34:28.088855+00', '2025-08-16 17:34:28.088855+00');
+	(1, '1390537743385231451', 'Underrated Soccer League (USL)', true, '{"discord": {"bot_command_prefix": "!usl", "leaderboard_channel_id": null, "announcement_channel_id": null}, "permissions": {"admin_role_ids": [], "moderator_role_ids": []}}', '2025-08-14 21:03:23.287436+00', '2025-08-14 21:03:23.287436+00');
 
 
 --
@@ -165,7 +272,6 @@ INSERT INTO "public"."guilds" ("id", "discord_guild_id", "name", "active", "conf
 
 INSERT INTO "public"."usl_users" ("id", "name", "discord_id", "active", "banned", "mmr", "trueskill_mu", "trueskill_sigma", "trueskill_last_updated", "created_at", "updated_at") VALUES
 	(1, 'oay', '544209988931944479', true, false, 0, 1998.650000, 7.632000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
-	(2, 'ayejoshy', '837466622670667776', true, false, 0, 1998.540000, 5.082000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
 	(3, 'yousif', '1159876823023353937', true, false, 0, 1997.490000, 6.617000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
 	(4, 'Haiku', '753368582053953549', true, false, 0, 1995.240000, 6.767000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
 	(5, 'Colt', '253702175530811394', true, false, 0, 1989.720000, 7.989000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
@@ -213,7 +319,10 @@ INSERT INTO "public"."usl_users" ("id", "name", "discord_id", "active", "banned"
 	(47, 'Zapdos', '1029063532945350777', true, false, 0, 182.510000, 8.291000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
 	(49, 'IodineOdin', '1082059903155327036', true, false, 0, 1854.400000, 5.563000, '2025-08-13', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:25:56.836511+00'),
 	(50, 'eppflow', '1152631991284547625', true, false, 0, 1000.000000, 8.333333, NULL, '2025-08-16 18:27:05.360662+00', '2025-08-16 18:27:05.360662+00'),
-	(48, 'i8rawnuggies', '996987225050992710', true, false, 0, 1000.000000, 8.330000, '2025-08-16', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:32:31.317642+00');
+	(48, 'i8rawnuggies', '996987225050992710', true, false, 0, 1000.000000, 8.330000, '2025-08-16', '2025-08-16 18:25:56.836511+00', '2025-08-16 18:32:31.317642+00'),
+	(51, 'feed', '318171715744169986', true, false, 0, 1000.000000, 8.333000, NULL, '2025-08-17 18:46:04.162513+00', '2025-08-17 18:46:04.162513+00'),
+	(52, 'Jee', '647194725090066438', true, false, 0, 1000.000000, 8.333000, NULL, '2025-08-17 21:17:42.492023+00', '2025-08-17 21:17:42.492023+00'),
+	(2, 'ayejoshy', '837466622670667776', true, false, 0, 1998.660000, 6.778000, '2025-08-18', '2025-08-16 18:25:56.836511+00', '2025-08-18 02:05:05.822681+00');
 
 
 --
@@ -286,12 +395,6 @@ INSERT INTO "public"."usl_user_trackers" ("id", "discord_id", "url", "ones_curre
 
 
 --
--- Data for Name: prefixes; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
---
-
-
-
---
 -- Data for Name: s3_multipart_uploads; Type: TABLE DATA; Schema: storage; Owner: supabase_storage_admin
 --
 
@@ -304,16 +407,10 @@ INSERT INTO "public"."usl_user_trackers" ("id", "discord_id", "url", "ones_curre
 
 
 --
--- Data for Name: hooks; Type: TABLE DATA; Schema: supabase_functions; Owner: supabase_functions_admin
---
-
-
-
---
 -- Name: refresh_tokens_id_seq; Type: SEQUENCE SET; Schema: auth; Owner: supabase_auth_admin
 --
 
-SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 1, true);
+SELECT pg_catalog.setval('"auth"."refresh_tokens_id_seq"', 28, true);
 
 
 --
@@ -369,14 +466,7 @@ SELECT pg_catalog.setval('"public"."usl_user_trackers_id_seq"', 100, true);
 -- Name: usl_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('"public"."usl_users_id_seq"', 50, true);
-
-
---
--- Name: hooks_id_seq; Type: SEQUENCE SET; Schema: supabase_functions; Owner: supabase_functions_admin
---
-
-SELECT pg_catalog.setval('"supabase_functions"."hooks_id_seq"', 1, false);
+SELECT pg_catalog.setval('"public"."usl_users_id_seq"', 52, true);
 
 
 --

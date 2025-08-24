@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1](https://github.com/USL-Development-Team/Main_Project/compare/v1.2.0...v1.2.1) (2025-08-18)
+
+
+### 🐛 Bug Fixes
+
+* add missing tracker field to newtracker form handler data structure ([42a9c12](https://github.com/USL-Development-Team/Main_Project/commit/42a9c129c55ae0e09bf48d65e304eb08c91aa11f))
+
+
+### ♻️ Code Refactoring
+
+* improve code readability with constructor pattern ([2207386](https://github.com/USL-Development-Team/Main_Project/commit/22073860625bbc1ff04fb90c77906f007a05d653))
+
 ## [1.2.0](https://github.com/USL-Development-Team/Main_Project/compare/v1.1.1...v1.2.0) (2025-08-17)
 
 
