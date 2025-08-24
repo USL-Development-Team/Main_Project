@@ -56,7 +56,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Profile URL is required"},
+			expectedErrors: []string{"Tracker URL is required"},
 			description:    "Tests required URL field validation",
 		},
 		{
@@ -68,7 +68,7 @@ func TestValidationSafety(t *testing.T) {
 				// No MMR or games data provided
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Must provide MMR data for at least one playlist"},
+			expectedErrors: []string{"Tracker must have data for at least one playlist"},
 			description:    "Tests business rule requiring at least one playlist",
 		},
 		{
@@ -80,7 +80,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Must be a valid Rocket League tracker URL"},
+			expectedErrors: []string{"Invalid tracker URL format"},
 			description:    "Tests URL domain whitelist security",
 		},
 		{
@@ -92,7 +92,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Current peak must be between 0 and 3000"},
+			expectedErrors: []string{"1v1 current season MMR must be between 0 and 3000"},
 			description:    "Tests MMR upper bound validation",
 		},
 		{
@@ -105,7 +105,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":              "true",
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Current games must be between 0 and 10000"},
+			expectedErrors: []string{"1v1 current season games must be between 0 and 10000"},
 			description:    "Tests games played upper bound validation",
 		},
 		{
@@ -141,7 +141,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false, // strconv.Atoi fails on decimal values
-			expectedErrors: []string{"Must provide MMR data for at least one playlist"},
+			expectedErrors: []string{"Tracker must have data for at least one playlist"},
 			description:    "Tests decimal number parsing behavior",
 		},
 		{
@@ -153,7 +153,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false,
-			expectedErrors: []string{"Must provide MMR data for at least one playlist"}, // Treated as 0
+			expectedErrors: []string{"Tracker must have data for at least one playlist"}, // Treated as 0
 			description:    "Tests non-numeric input handling",
 		},
 		{
@@ -199,7 +199,7 @@ func TestValidationSafety(t *testing.T) {
 				"valid":             "true",
 			},
 			shouldBeValid:  false, // Current implementation is case sensitive
-			expectedErrors: []string{"Must be a valid Rocket League tracker URL"},
+			expectedErrors: []string{"Invalid tracker URL format"},
 			description:    "Tests case sensitivity in URL validation",
 		},
 		{

@@ -70,7 +70,7 @@ func TestValidateTracker(t *testing.T) {
 				URL:       "https://example.com/profile/123",
 			},
 			expectValid: false,
-			expectError: "Must be a valid Rocket League tracker URL",
+			expectError: "Invalid tracker URL format",
 		},
 		{
 			name: "Valid URL - ballchasing",
@@ -98,7 +98,7 @@ func TestValidateTracker(t *testing.T) {
 				OnesCurrentSeasonPeak: 5000, // Way too high
 			},
 			expectValid: false,
-			expectError: "Current peak must be between 0 and 3000",
+			expectError: "1v1 current season MMR must be between 0 and 3000",
 		},
 		{
 			name: "Invalid MMR - negative (treated as no data)",
@@ -108,7 +108,7 @@ func TestValidateTracker(t *testing.T) {
 				OnesCurrentSeasonPeak: -100, // Negative - treated as no data
 			},
 			expectValid: false,
-			expectError: "Must provide MMR data for at least one playlist",
+			expectError: "Tracker must have data for at least one playlist",
 		},
 		{
 			name: "Invalid games - too high",
@@ -119,7 +119,7 @@ func TestValidateTracker(t *testing.T) {
 				OnesCurrentSeasonGamesPlayed: 15000, // Too many games
 			},
 			expectValid: false,
-			expectError: "Current games must be between 0 and 10000",
+			expectError: "1v1 current season games must be between 0 and 10000",
 		},
 		{
 			name: "Invalid case - no playlist data",
@@ -131,7 +131,7 @@ func TestValidateTracker(t *testing.T) {
 				ThreesCurrentSeasonPeak: 0,
 			},
 			expectValid: false,
-			expectError: "Must provide MMR data for at least one playlist",
+			expectError: "Tracker must have data for at least one playlist",
 		},
 		{
 			name: "Invalid case - URL required",
@@ -141,7 +141,7 @@ func TestValidateTracker(t *testing.T) {
 				OnesCurrentSeasonPeak: 1000,
 			},
 			expectValid: false,
-			expectError: "Profile URL is required",
+			expectError: "Tracker URL is required",
 		},
 		{
 			name: "Valid edge case - max values",

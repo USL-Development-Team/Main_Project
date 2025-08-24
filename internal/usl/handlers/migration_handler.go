@@ -415,10 +415,11 @@ func (h *MigrationHandler) validateTrackerWithMetrics(r *http.Request, tracker *
 	return validation
 }
 
+// validateTracker performs comprehensive validation of tracker data with improved structured errors
 func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) ValidationResult {
 	var errors []ValidationError
 
-	// Required field validation
+	// Validate Discord ID
 	if tracker.DiscordID == "" {
 		errors = append(errors, ValidationError{
 			Field:   "discord_id",
@@ -433,35 +434,36 @@ func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) Validati
 		})
 	}
 
+	// Validate URL
 	if tracker.URL == "" {
 		errors = append(errors, ValidationError{
 			Field:   "url",
-			Message: "Profile URL is required",
+			Message: "Tracker URL is required",
 			Code:    ValidationCodeRequired,
 		})
 	} else if !isValidTrackerURL(tracker.URL) {
 		errors = append(errors, ValidationError{
 			Field:   "url",
-			Message: "Must be a valid Rocket League tracker URL",
+			Message: "Invalid tracker URL format",
 			Code:    ValidationCodeInvalidURL,
 		})
 	}
 
-	// MMR validation for each playlist
-	errors = append(errors, h.validatePlaylistMMR("ones", tracker.OnesCurrentSeasonPeak, tracker.OnesPreviousSeasonPeak, tracker.OnesAllTimePeak)...)
-	errors = append(errors, h.validatePlaylistMMR("twos", tracker.TwosCurrentSeasonPeak, tracker.TwosPreviousSeasonPeak, tracker.TwosAllTimePeak)...)
-	errors = append(errors, h.validatePlaylistMMR("threes", tracker.ThreesCurrentSeasonPeak, tracker.ThreesPreviousSeasonPeak, tracker.ThreesAllTimePeak)...)
+	// Validate MMR values for each playlist with improved structured messages
+	errors = append(errors, h.validatePlaylistMMR("1v1", tracker.OnesCurrentSeasonPeak, tracker.OnesPreviousSeasonPeak, tracker.OnesAllTimePeak)...)
+	errors = append(errors, h.validatePlaylistMMR("2v2", tracker.TwosCurrentSeasonPeak, tracker.TwosPreviousSeasonPeak, tracker.TwosAllTimePeak)...)
+	errors = append(errors, h.validatePlaylistMMR("3v3", tracker.ThreesCurrentSeasonPeak, tracker.ThreesPreviousSeasonPeak, tracker.ThreesAllTimePeak)...)
 
-	// Games played validation
-	errors = append(errors, h.validateGamesPlayed("ones", tracker.OnesCurrentSeasonGamesPlayed, tracker.OnesPreviousSeasonGamesPlayed)...)
-	errors = append(errors, h.validateGamesPlayed("twos", tracker.TwosCurrentSeasonGamesPlayed, tracker.TwosPreviousSeasonGamesPlayed)...)
-	errors = append(errors, h.validateGamesPlayed("threes", tracker.ThreesCurrentSeasonGamesPlayed, tracker.ThreesPreviousSeasonGamesPlayed)...)
+	// Validate games played for each playlist
+	errors = append(errors, h.validateGamesPlayed("1v1", tracker.OnesCurrentSeasonGamesPlayed, tracker.OnesPreviousSeasonGamesPlayed)...)
+	errors = append(errors, h.validateGamesPlayed("2v2", tracker.TwosCurrentSeasonGamesPlayed, tracker.TwosPreviousSeasonGamesPlayed)...)
+	errors = append(errors, h.validateGamesPlayed("3v3", tracker.ThreesCurrentSeasonGamesPlayed, tracker.ThreesPreviousSeasonGamesPlayed)...)
 
-	// Business rule: Must have data in at least one playlist
+	// Check if tracker has meaningful data
 	if h.hasNoPlaylistData(tracker) {
 		errors = append(errors, ValidationError{
 			Field:   "general",
-			Message: "Must provide MMR data for at least one playlist",
+			Message: "Tracker must have data for at least one playlist",
 			Code:    ValidationCodeNoData,
 		})
 	}
@@ -472,42 +474,48 @@ func (h *MigrationHandler) validateTracker(tracker *usl.USLUserTracker) Validati
 	}
 }
 
-// validatePlaylistMMR validates MMR values for a specific playlist
+// validatePlaylistMMR validates MMR values for a specific playlist with improved error messages
 func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previous, allTime int) []ValidationError {
 	var errors []ValidationError
+	fieldPrefix := strings.ToLower(playlist)
 
-	// Range validation for current peak (only validate if non-zero)
 	if current > 0 && (current < MinMMR || current > MaxMMR) {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_current_peak", playlist),
-			Message: fmt.Sprintf("Current peak must be between %d and %d", MinMMR, MaxMMR),
+			Field:   fieldPrefix + "_current_peak",
+			Message: fmt.Sprintf("%s current season MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
 			Code:    ValidationCodeOutOfRange,
 		})
 	}
 
-	// Range validation for previous peak
 	if previous > 0 && (previous < MinMMR || previous > MaxMMR) {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_previous_peak", playlist),
-			Message: fmt.Sprintf("Previous peak must be between %d and %d", MinMMR, MaxMMR),
+			Field:   fieldPrefix + "_previous_peak",
+			Message: fmt.Sprintf("%s previous season MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
 			Code:    ValidationCodeOutOfRange,
 		})
 	}
 
-	// Range validation for all-time peak
 	if allTime > 0 && (allTime < MinMMR || allTime > MaxMMR) {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_all_time_peak", playlist),
-			Message: fmt.Sprintf("All-time peak must be between %d and %d", MinMMR, MaxMMR),
+			Field:   fieldPrefix + "_all_time_peak",
+			Message: fmt.Sprintf("%s all-time MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
 			Code:    ValidationCodeOutOfRange,
 		})
 	}
 
-	// Logical validation: all-time >= previous (if both have values)
+	// Logical validation: all-time should be >= current and previous
+	if allTime > 0 && current > 0 && allTime < current {
+		errors = append(errors, ValidationError{
+			Field:   fieldPrefix + "_all_time_peak",
+			Message: fmt.Sprintf("%s all-time MMR should not be less than current season MMR", playlist),
+			Code:    ValidationCodeLogicalError,
+		})
+	}
+
 	if allTime > 0 && previous > 0 && allTime < previous {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_all_time_peak", playlist),
-			Message: "All-time peak cannot be lower than previous season peak",
+			Field:   fieldPrefix + "_all_time_peak",
+			Message: fmt.Sprintf("%s all-time MMR should not be less than previous season MMR", playlist),
 			Code:    ValidationCodeLogicalError,
 		})
 	}
@@ -515,24 +523,23 @@ func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previou
 	return errors
 }
 
-// validateGamesPlayed validates games played counts for a playlist
+// validateGamesPlayed validates games played values for a specific playlist with improved error messages
 func (h *MigrationHandler) validateGamesPlayed(playlist string, current, previous int) []ValidationError {
 	var errors []ValidationError
+	fieldPrefix := strings.ToLower(playlist)
 
-	// Range validation for current games
 	if current < 0 || current > MaxGames {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_current_games", playlist),
-			Message: fmt.Sprintf("Current games must be between 0 and %d", MaxGames),
+			Field:   fieldPrefix + "_current_games",
+			Message: fmt.Sprintf("%s current season games must be between 0 and %d", playlist, MaxGames),
 			Code:    ValidationCodeOutOfRange,
 		})
 	}
 
-	// Range validation for previous games
 	if previous < 0 || previous > MaxGames {
 		errors = append(errors, ValidationError{
-			Field:   fmt.Sprintf("%s_previous_games", playlist),
-			Message: fmt.Sprintf("Previous games must be between 0 and %d", MaxGames),
+			Field:   fieldPrefix + "_previous_games",
+			Message: fmt.Sprintf("%s previous season games must be between 0 and %d", playlist, MaxGames),
 			Code:    ValidationCodeOutOfRange,
 		})
 	}
@@ -540,11 +547,15 @@ func (h *MigrationHandler) validateGamesPlayed(playlist string, current, previou
 	return errors
 }
 
-// hasNoPlaylistData checks if tracker has no meaningful data
+// hasNoPlaylistData checks if the tracker has any meaningful playlist data
+// Considers both MMR and games played. Negative values are treated as "no data" (equivalent to 0)
 func (h *MigrationHandler) hasNoPlaylistData(tracker *usl.USLUserTracker) bool {
-	hasOnesData := tracker.OnesCurrentSeasonPeak > 0 || tracker.OnesCurrentSeasonGamesPlayed > 0
-	hasTwosData := tracker.TwosCurrentSeasonPeak > 0 || tracker.TwosCurrentSeasonGamesPlayed > 0
-	hasThreesData := tracker.ThreesCurrentSeasonPeak > 0 || tracker.ThreesCurrentSeasonGamesPlayed > 0
+	hasOnesData := tracker.OnesCurrentSeasonPeak > 0 || tracker.OnesPreviousSeasonPeak > 0 || tracker.OnesAllTimePeak > 0 ||
+		tracker.OnesCurrentSeasonGamesPlayed > 0 || tracker.OnesPreviousSeasonGamesPlayed > 0
+	hasTwosData := tracker.TwosCurrentSeasonPeak > 0 || tracker.TwosPreviousSeasonPeak > 0 || tracker.TwosAllTimePeak > 0 ||
+		tracker.TwosCurrentSeasonGamesPlayed > 0 || tracker.TwosPreviousSeasonGamesPlayed > 0
+	hasThreesData := tracker.ThreesCurrentSeasonPeak > 0 || tracker.ThreesPreviousSeasonPeak > 0 || tracker.ThreesAllTimePeak > 0 ||
+		tracker.ThreesCurrentSeasonGamesPlayed > 0 || tracker.ThreesPreviousSeasonGamesPlayed > 0
 
 	return !hasOnesData && !hasTwosData && !hasThreesData
 }
