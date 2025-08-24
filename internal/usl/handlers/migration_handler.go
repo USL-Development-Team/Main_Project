@@ -464,30 +464,12 @@ func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previou
 	var errors []ValidationError
 	fieldPrefix := strings.ToLower(playlist)
 
-	if current > 0 && (current < MinMMR || current > MaxMMR) {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix + "_current_peak",
-			Message: fmt.Sprintf("%s current season MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
-			Code:    ValidationCodeOutOfRange,
-		})
-	}
+	// Validate MMR ranges for each time period
+	errors = append(errors, h.validateMMRRange(playlist, fieldPrefix+"_current_peak", current, "current season")...)
+	errors = append(errors, h.validateMMRRange(playlist, fieldPrefix+"_previous_peak", previous, "previous season")...)
+	errors = append(errors, h.validateMMRRange(playlist, fieldPrefix+"_all_time_peak", allTime, "all-time")...)
 
-	if previous > 0 && (previous < MinMMR || previous > MaxMMR) {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix + "_previous_peak",
-			Message: fmt.Sprintf("%s previous season MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
-			Code:    ValidationCodeOutOfRange,
-		})
-	}
-
-	if allTime > 0 && (allTime < MinMMR || allTime > MaxMMR) {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix + "_all_time_peak",
-			Message: fmt.Sprintf("%s all-time MMR must be between %d and %d", playlist, MinMMR, MaxMMR),
-			Code:    ValidationCodeOutOfRange,
-		})
-	}
-
+	// Validate logical relationships between time periods
 	if allTime > 0 && current > 0 && allTime < current {
 		errors = append(errors, ValidationError{
 			Field:   fieldPrefix + "_all_time_peak",
@@ -507,41 +489,67 @@ func (h *MigrationHandler) validatePlaylistMMR(playlist string, current, previou
 	return errors
 }
 
+func (h *MigrationHandler) validateMMRRange(playlist, fieldName string, value int, timePeriod string) []ValidationError {
+	if value > 0 && (value < MinMMR || value > MaxMMR) {
+		return []ValidationError{{
+			Field:   fieldName,
+			Message: fmt.Sprintf("%s %s MMR must be between %d and %d", playlist, timePeriod, MinMMR, MaxMMR),
+			Code:    ValidationCodeOutOfRange,
+		}}
+	}
+	return nil
+}
+
 // validateGamesPlayed validates games played values for a specific playlist with improved error messages
 func (h *MigrationHandler) validateGamesPlayed(playlist string, current, previous int) []ValidationError {
 	var errors []ValidationError
 	fieldPrefix := strings.ToLower(playlist)
 
-	if current < 0 || current > MaxGames {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix + "_current_games",
-			Message: fmt.Sprintf("%s current season games must be between 0 and %d", playlist, MaxGames),
-			Code:    ValidationCodeOutOfRange,
-		})
-	}
-
-	if previous < 0 || previous > MaxGames {
-		errors = append(errors, ValidationError{
-			Field:   fieldPrefix + "_previous_games",
-			Message: fmt.Sprintf("%s previous season games must be between 0 and %d", playlist, MaxGames),
-			Code:    ValidationCodeOutOfRange,
-		})
-	}
+	errors = append(errors, h.validateGamesRange(playlist, fieldPrefix+"_current_games", current, "current season")...)
+	errors = append(errors, h.validateGamesRange(playlist, fieldPrefix+"_previous_games", previous, "previous season")...)
 
 	return errors
+}
+
+func (h *MigrationHandler) validateGamesRange(playlist, fieldName string, value int, timePeriod string) []ValidationError {
+	if value < 0 || value > MaxGames {
+		return []ValidationError{{
+			Field:   fieldName,
+			Message: fmt.Sprintf("%s %s games must be between 0 and %d", playlist, timePeriod, MaxGames),
+			Code:    ValidationCodeOutOfRange,
+		}}
+	}
+	return nil
 }
 
 // hasNoPlaylistData checks if the tracker has any meaningful playlist data
 // Considers both MMR and games played. Negative values are treated as "no data" (equivalent to 0)
 func (h *MigrationHandler) hasNoPlaylistData(tracker *usl.USLUserTracker) bool {
-	hasOnesData := tracker.OnesCurrentSeasonPeak > 0 || tracker.OnesPreviousSeasonPeak > 0 || tracker.OnesAllTimePeak > 0 ||
-		tracker.OnesCurrentSeasonGamesPlayed > 0 || tracker.OnesPreviousSeasonGamesPlayed > 0
-	hasTwosData := tracker.TwosCurrentSeasonPeak > 0 || tracker.TwosPreviousSeasonPeak > 0 || tracker.TwosAllTimePeak > 0 ||
-		tracker.TwosCurrentSeasonGamesPlayed > 0 || tracker.TwosPreviousSeasonGamesPlayed > 0
-	hasThreesData := tracker.ThreesCurrentSeasonPeak > 0 || tracker.ThreesPreviousSeasonPeak > 0 || tracker.ThreesAllTimePeak > 0 ||
-		tracker.ThreesCurrentSeasonGamesPlayed > 0 || tracker.ThreesPreviousSeasonGamesPlayed > 0
+	type playlistStats struct {
+		currentPeak   int
+		previousPeak  int
+		allTimePeak   int
+		currentGames  int
+		previousGames int
+	}
 
-	return !hasOnesData && !hasTwosData && !hasThreesData
+	playlists := []playlistStats{
+		{tracker.OnesCurrentSeasonPeak, tracker.OnesPreviousSeasonPeak, tracker.OnesAllTimePeak,
+			tracker.OnesCurrentSeasonGamesPlayed, tracker.OnesPreviousSeasonGamesPlayed},
+		{tracker.TwosCurrentSeasonPeak, tracker.TwosPreviousSeasonPeak, tracker.TwosAllTimePeak,
+			tracker.TwosCurrentSeasonGamesPlayed, tracker.TwosPreviousSeasonGamesPlayed},
+		{tracker.ThreesCurrentSeasonPeak, tracker.ThreesPreviousSeasonPeak, tracker.ThreesAllTimePeak,
+			tracker.ThreesCurrentSeasonGamesPlayed, tracker.ThreesPreviousSeasonGamesPlayed},
+	}
+
+	for _, playlist := range playlists {
+		if playlist.currentPeak > 0 || playlist.previousPeak > 0 || playlist.allTimePeak > 0 ||
+			playlist.currentGames > 0 || playlist.previousGames > 0 {
+			return false // Has data
+		}
+	}
+
+	return true // No data found in any playlist
 }
 
 // isValidDiscordID validates Discord ID format (17-19 digit snowflake)
@@ -612,11 +620,22 @@ func (h *MigrationHandler) buildErrorMap(errors []ValidationError) map[string]st
 }
 
 func (h *MigrationHandler) calculateEffectiveMMR(tracker *usl.USLUserTracker) {
-	weightedSum := (tracker.OnesCurrentSeasonPeak * tracker.OnesCurrentSeasonGamesPlayed) +
-		(tracker.TwosCurrentSeasonPeak * tracker.TwosCurrentSeasonGamesPlayed) +
-		(tracker.ThreesCurrentSeasonPeak * tracker.ThreesCurrentSeasonGamesPlayed)
+	type playlistData struct {
+		mmr   int
+		games int
+	}
 
-	totalGames := tracker.OnesCurrentSeasonGamesPlayed + tracker.TwosCurrentSeasonGamesPlayed + tracker.ThreesCurrentSeasonGamesPlayed
+	playlists := []playlistData{
+		{tracker.OnesCurrentSeasonPeak, tracker.OnesCurrentSeasonGamesPlayed},
+		{tracker.TwosCurrentSeasonPeak, tracker.TwosCurrentSeasonGamesPlayed},
+		{tracker.ThreesCurrentSeasonPeak, tracker.ThreesCurrentSeasonGamesPlayed},
+	}
+
+	var weightedSum, totalGames int
+	for _, playlist := range playlists {
+		weightedSum += playlist.mmr * playlist.games
+		totalGames += playlist.games
+	}
 
 	if totalGames > 0 {
 		tracker.MMR = weightedSum / totalGames
