@@ -149,8 +149,8 @@ func isValidTrackerURL(url string) bool {
 // buildTrackerFromForm constructs a USLUserTracker from form data
 func (h *BaseHandler) buildTrackerFromForm(r *http.Request) *USLUserTracker {
 	tracker := &USLUserTracker{
-		DiscordID: strings.TrimSpace(h.getFormValue(r, FormFieldDiscordID)),
-		URL:       strings.TrimSpace(h.getFormValue(r, FormFieldURL)),
+		DiscordID: h.getFormValue(r, FormFieldDiscordID),
+		URL:       h.getFormValue(r, FormFieldURL),
 		Valid:     h.getFormBoolValue(r, FormFieldValid),
 
 		OnesCurrentSeasonPeak:         h.getFormIntValue(r, FormFieldOnesCurrentPeak),
@@ -377,10 +377,14 @@ func (h *BaseHandler) validateGamesPlayed(playlist string, current, previous int
 }
 
 // hasNoPlaylistData checks if the tracker has any meaningful playlist data
+// Treats negative values as "no data" (equivalent to 0)
 func (h *BaseHandler) hasNoPlaylistData(tracker *USLUserTracker) bool {
-	return tracker.OnesCurrentSeasonPeak == 0 && tracker.OnesPreviousSeasonPeak == 0 && tracker.OnesAllTimePeak == 0 &&
-		tracker.TwosCurrentSeasonPeak == 0 && tracker.TwosPreviousSeasonPeak == 0 && tracker.TwosAllTimePeak == 0 &&
-		tracker.ThreesCurrentSeasonPeak == 0 && tracker.ThreesPreviousSeasonPeak == 0 && tracker.ThreesAllTimePeak == 0
+	return tracker.OnesCurrentSeasonPeak <= 0 && tracker.OnesPreviousSeasonPeak <= 0 && tracker.OnesAllTimePeak <= 0 &&
+		tracker.OnesCurrentSeasonGamesPlayed <= 0 && tracker.OnesPreviousSeasonGamesPlayed <= 0 &&
+		tracker.TwosCurrentSeasonPeak <= 0 && tracker.TwosPreviousSeasonPeak <= 0 && tracker.TwosAllTimePeak <= 0 &&
+		tracker.TwosCurrentSeasonGamesPlayed <= 0 && tracker.TwosPreviousSeasonGamesPlayed <= 0 &&
+		tracker.ThreesCurrentSeasonPeak <= 0 && tracker.ThreesPreviousSeasonPeak <= 0 && tracker.ThreesAllTimePeak <= 0 &&
+		tracker.ThreesCurrentSeasonGamesPlayed <= 0 && tracker.ThreesPreviousSeasonGamesPlayed <= 0
 }
 
 // renderFormWithErrors renders a form template with validation errors displayed
@@ -505,7 +509,18 @@ func (h *BaseHandler) isValidTrackerURL(trackerURL string) bool {
 		return false
 	}
 
-	return parsedURL.Scheme == "http" || parsedURL.Scheme == "https"
+	// Must be HTTPS only for security
+	if parsedURL.Scheme != "https" {
+		return false
+	}
+
+	// Must have a host
+	if parsedURL.Host == "" {
+		return false
+	}
+
+	// Only accept the official Rocket League tracker domain
+	return parsedURL.Host == "rocketleague.tracker.network"
 }
 
 func (h *BaseHandler) getErrorCodes(errors []ValidationError) []string {

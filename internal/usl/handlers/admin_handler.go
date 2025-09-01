@@ -173,11 +173,13 @@ func (h *AdminHandler) ValidationMetricsAPI(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	metricsMutex.RLock()
-	defer metricsMutex.RUnlock()
+	metrics := getValidationMetrics()
 
 	response := struct {
-		Metrics       *ValidationMetrics `json:"metrics"`
+		*ValidationMetrics
+		SuccessRate   float64 `json:"success_rate"`
+		FailureRate   float64 `json:"failure_rate"`
+		SecurityRate  float64 `json:"security_incident_rate"`
 		TopErrorTypes []struct {
 			Type  string `json:"type"`
 			Count int64  `json:"count"`
@@ -187,11 +189,18 @@ func (h *AdminHandler) ValidationMetricsAPI(w http.ResponseWriter, r *http.Reque
 			Count int64  `json:"count"`
 		} `json:"top_error_fields"`
 	}{
-		Metrics: validationMetrics,
+		ValidationMetrics: metrics,
+	}
+
+	// Calculate rates
+	if metrics.TotalValidations > 0 {
+		response.SuccessRate = float64(metrics.SuccessfulValidations) / float64(metrics.TotalValidations) * 100
+		response.FailureRate = float64(metrics.FailedValidations) / float64(metrics.TotalValidations) * 100
+		response.SecurityRate = float64(metrics.SecurityIncidents) / float64(metrics.TotalValidations) * 100
 	}
 
 	// Get top error types
-	for errorType, count := range validationMetrics.ErrorsByType {
+	for errorType, count := range metrics.ErrorsByType {
 		response.TopErrorTypes = append(response.TopErrorTypes, struct {
 			Type  string `json:"type"`
 			Count int64  `json:"count"`
@@ -202,7 +211,7 @@ func (h *AdminHandler) ValidationMetricsAPI(w http.ResponseWriter, r *http.Reque
 	}
 
 	// Get top error fields
-	for errorField, count := range validationMetrics.ErrorsByField {
+	for errorField, count := range metrics.ErrorsByField {
 		response.TopErrorFields = append(response.TopErrorFields, struct {
 			Field string `json:"field"`
 			Count int64  `json:"count"`

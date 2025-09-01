@@ -12,7 +12,8 @@ permissions:
 jobs:
   enforce-develop-only:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.ref != 'develop' && !startsWith(github.head_ref, 'release-please--')
+    # Only run this check if the target branch is main
+    if: github.base_ref == 'main' && github.event.pull_request.head.ref != 'develop' && !startsWith(github.head_ref, 'release-please--')
     steps:
       - name: Block PR from non-develop branch
         run: |
@@ -29,7 +30,8 @@ jobs:
 
   validate-develop-pr:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.ref == 'develop' || startsWith(github.head_ref, 'release-please--')
+    # Only run this check if the target branch is main
+    if: github.base_ref == 'main' && (github.event.pull_request.head.ref == 'develop' || startsWith(github.head_ref, 'release-please--'))
     steps:
       - name: Validate develop to main PR
         run: |
@@ -39,6 +41,8 @@ jobs:
   # This job always runs and passes only for valid branches
   branch-policy-check:
     runs-on: ubuntu-latest
+    # Only run this check if the target branch is main
+    if: github.base_ref == 'main'
     steps:
       - name: Enforce branch policy
         run: |
