@@ -138,12 +138,22 @@
 </div>
 
 <!-- User Trackers -->
-{{if .UserTrackers}}
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">Associated Trackers</h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">Rocket League tracker profiles for this user.</p>
+    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+        <div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Associated Trackers</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Rocket League tracker profiles for this user.</p>
+        </div>
+        <div>
+            <a href="/usl/trackers/new?discord_id={{.User.DiscordID}}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add Tracker
+            </a>
+        </div>
     </div>
+    {{if .UserTrackers}}
     <div class="border-t border-gray-200">
         <ul class="divide-y divide-gray-200">
             {{range .UserTrackers}}
@@ -175,20 +185,12 @@
             {{end}}
         </ul>
     </div>
-</div>
-{{else}}
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <div class="px-4 py-5 sm:px-6 text-center">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">No Trackers</h3>
-        <p class="mt-1 text-sm text-gray-500">This user doesn't have any associated tracker profiles yet.</p>
-        <div class="mt-4">
-            <a href="/usl/trackers/new?discord_id={{.User.DiscordID}}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                Add Tracker
-            </a>
-        </div>
+    {{else}}
+    <div class="border-t border-gray-200 px-4 py-8 text-center">
+        <p class="text-sm text-gray-500">This user doesn't have any associated tracker profiles yet.</p>
     </div>
+    {{end}}
 </div>
-{{end}}
     </main>
     
     <!-- HTMX Configuration -->

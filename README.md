@@ -1,97 +1,183 @@
-# USL Management System
+# Supabase CLI
 
-A comprehensive Discord-based management system for competitive gaming leagues, featuring TrueSkill rating calculations, user tracking, and automated workflows.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## Features
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-### Core Functionality
-- **Discord OAuth Authentication** - Secure login via Supabase Auth
-- **User Management** - Track players and their gaming profiles
-- **TrueSkill Rating System** - Advanced skill rating calculations
-- **Tracker Integration** - Link external tracking platforms
-- **Web Interface** - Clean, responsive UI for management tasks
+This repository contains all the functionality for Supabase CLI.
 
-### Development & Deployment
-- **Automated Releases** - Semantic versioning with conventional commits
-- **Environment Management** - Development, staging, and production configs
-- **Docker Support** - Containerized deployment ready for Render
-- **Branch Protection** - Enforced git flow with develop → main workflow
-- **Professional Templates** - GitHub issue and PR templates
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-## Quick Start
+## Getting started
 
-### Local Development
+### Install the CLI
 
-1. **Clone and setup:**
-   ```bash
-   git clone https://github.com/USL-Development-Team/Main_Project.git
-   cd Main_Project
-   cp .env.develop .env
-   ```
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-2. **Start services:**
-   ```bash
-   supabase start
-   go run cmd/server/main.go
-   ```
+```bash
+npm i supabase --save-dev
+```
 
-3. **Access the application:**
-   - Local: `http://localhost:8080`
-   - Health check: `http://localhost:8080/health`
+To install the beta release channel:
 
-### Production Deployment
+```bash
+npm i supabase@beta --save-dev
+```
 
-The application automatically deploys to Render when releases are published from the main branch.
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-## Tech Stack
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
 
-- **Backend**: Go with Gin framework
-- **Database**: PostgreSQL via Supabase
-- **Authentication**: Discord OAuth through Supabase Auth
-- **Frontend**: HTML templates with Tailwind CSS
-- **Deployment**: Docker containers on Render
-- **CI/CD**: GitHub Actions with automated versioning
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-## Environment Configuration
+<details>
+  <summary><b>macOS</b></summary>
 
-Environment-specific configurations support:
-- Development (`localhost:8080`)
-- Staging (`staging-usl.render.com`)
-- Production (`usl.render.com`)
+  Available via [Homebrew](https://brew.sh). To install:
 
-Each environment has its own OAuth redirect configuration and database settings.
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-### Required Environment Variables
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-**Core Application:**
-- `APP_BASE_URL` - **Required for staging/production**. Your application's base URL (e.g., `https://rl-league-management.onrender.com`)
-- `ENVIRONMENT` - Deployment environment (`development`, `staging`, `production`)
-- `SERVER_HOST` - Server bind address (default: `0.0.0.0` for production)
-- `SERVER_PORT` or `PORT` - Server port (default: `8080`)
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-**Database (Supabase):**
-- `SUPABASE_URL` - **Required**. Your Supabase project URL
-- `SUPABASE_ANON_KEY` - **Required**. Supabase anonymous/public key
-- `SUPABASE_SERVICE_ROLE_KEY` - **Required**. Supabase service role key for server operations
-- `DATABASE_URL` - PostgreSQL connection string (optional, uses Supabase by default)
+<details>
+  <summary><b>Windows</b></summary>
 
-**Discord OAuth:**
-- `DISCORD_CLIENT_ID` - **Required**. Discord application client ID
-- `DISCORD_CLIENT_SECRET` - **Required**. Discord application client secret
+  Available via [Scoop](https://scoop.sh). To install:
 
-**Optional Configuration:**
-- `SUPABASE_PUBLIC_URL` - Override for Supabase public URL (defaults to SUPABASE_URL)
-- `USL_ADMIN_DISCORD_IDS` - Comma-separated Discord IDs for admin access
-- TrueSkill configuration (`TRUESKILL_*`)
-- MMR calculation weights (`MMR_*`)
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-**⚠️ Important**: Production and staging environments will fail to start if required variables are missing.
+  To upgrade:
 
-## Contributing
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow, commit conventions, and release process.
+<details>
+  <summary><b>Linux</b></summary>
 
-## License
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+  #### via Homebrew
 
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```

@@ -42,13 +42,13 @@ func TestUSLTrueSkillIntegration(t *testing.T) {
 	}
 
 	// Create mock handler
-	handler := &MigrationHandler{
+	baseHandler := &BaseHandler{
 		config: cfg,
 	}
 
 	t.Run("TestUSLTrackerToTrackerDataMapping", func(t *testing.T) {
 		// Test the data transformation
-		trackerData := handler.mapUSLTrackerToTrackerData(testTracker)
+		trackerData := baseHandler.transformUSLTrackerToTrackerData(testTracker)
 
 		// Verify transformation
 		if trackerData.DiscordID != testTracker.DiscordID {
@@ -98,7 +98,7 @@ func TestUSLTrueSkillIntegration(t *testing.T) {
 		trackerWithNilTime := *testTracker
 		trackerWithNilTime.LastUpdated = nil
 
-		trackerData := handler.mapUSLTrackerToTrackerData(&trackerWithNilTime)
+		trackerData := baseHandler.transformUSLTrackerToTrackerData(&trackerWithNilTime)
 
 		if trackerData.LastUpdated.IsZero() {
 			t.Error("LastUpdated should be set to current time when nil")
@@ -111,7 +111,7 @@ func TestUSLTrueSkillIntegration(t *testing.T) {
 		trackerWithInvalidTime := *testTracker
 		trackerWithInvalidTime.LastUpdated = &invalidTime
 
-		trackerData := handler.mapUSLTrackerToTrackerData(&trackerWithInvalidTime)
+		trackerData := baseHandler.transformUSLTrackerToTrackerData(&trackerWithInvalidTime)
 
 		if trackerData.LastUpdated.IsZero() {
 			t.Error("LastUpdated should be set to current time when invalid")

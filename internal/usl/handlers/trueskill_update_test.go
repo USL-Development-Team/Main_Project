@@ -693,12 +693,12 @@ func TestParseUserID_Security(t *testing.T) {
 
 // Test the actual MigrationHandler.parseUserID method for compatibility
 func TestMigrationHandler_ParseUserID(t *testing.T) {
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	validInputs := []string{"1", "123", "999999"}
 	for _, input := range validInputs {
 		t.Run(fmt.Sprintf("valid_%s", input), func(t *testing.T) {
-			result, err := handler.parseUserID(input)
+			result, err := baseHandler.parseUserID(input)
 			if err != nil {
 				t.Errorf("parseUserID(%q) should not return error for valid input", input)
 			}

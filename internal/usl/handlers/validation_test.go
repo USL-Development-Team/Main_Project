@@ -7,7 +7,7 @@ import (
 
 func TestValidateTracker(t *testing.T) {
 	// Create a handler instance (we don't need real dependencies for validation tests)
-	handler := &MigrationHandler{}
+	baseHandler := &BaseHandler{}
 
 	tests := []struct {
 		name        string
@@ -161,7 +161,7 @@ func TestValidateTracker(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := handler.validateTracker(tt.tracker)
+			result := baseHandler.validateTracker(tt.tracker)
 
 			if result.IsValid != tt.expectValid {
 				t.Errorf("Expected valid=%v, got valid=%v", tt.expectValid, result.IsValid)
@@ -221,14 +221,14 @@ func TestIsValidTrackerURL(t *testing.T) {
 	}{
 		{"https://rocketleague.tracker.network/profile/123", true},
 		{"https://www.rocketleague.tracker.network/profile/123", true},
-		{"http://rocketleague.tracker.network/profile/123", true},
+		{"http://rocketleague.tracker.network/profile/123", false}, // HTTP not allowed
 		{"https://ballchasing.com/player/123", true},
 		{"https://rltracker.pro/player/123", true},
 		{"https://example.com/profile/123", false},
 		{"not-a-url", false},
 		{"", false},
 		{"https://google.com", false},
-		{"ftp://rocketleague.tracker.network/profile/123", true}, // Still contains valid host
+		{"ftp://rocketleague.tracker.network/profile/123", false}, // FTP not allowed
 	}
 
 	for _, tt := range tests {
