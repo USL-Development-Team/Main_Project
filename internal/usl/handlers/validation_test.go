@@ -73,22 +73,24 @@ func TestValidateTracker(t *testing.T) {
 			expectError: "Invalid tracker URL format",
 		},
 		{
-			name: "Valid URL - ballchasing",
+			name: "Invalid URL - ballchasing (wrong domain)",
 			tracker: &usl.USLUserTracker{
 				DiscordID:             "123456789012345678",
 				URL:                   "https://ballchasing.com/player/123",
-				OnesCurrentSeasonPeak: 1000, // Need at least one playlist data
+				OnesCurrentSeasonPeak: 1000,
 			},
-			expectValid: true,
+			expectValid: false,
+			expectError: "Invalid tracker URL format",
 		},
 		{
-			name: "Valid URL - rltracker.pro",
+			name: "Invalid URL - rltracker.pro (wrong domain)",
 			tracker: &usl.USLUserTracker{
 				DiscordID:             "123456789012345678",
 				URL:                   "https://rltracker.pro/player/123",
-				TwosCurrentSeasonPeak: 1000, // Need at least one playlist data
+				TwosCurrentSeasonPeak: 1000,
 			},
-			expectValid: true,
+			expectValid: false,
+			expectError: "Invalid tracker URL format",
 		},
 		{
 			name: "Invalid MMR - too high",
@@ -220,10 +222,10 @@ func TestIsValidTrackerURL(t *testing.T) {
 		expected bool
 	}{
 		{"https://rocketleague.tracker.network/profile/123", true},
-		{"https://www.rocketleague.tracker.network/profile/123", true},
-		{"http://rocketleague.tracker.network/profile/123", false}, // HTTP not allowed
-		{"https://ballchasing.com/player/123", true},
-		{"https://rltracker.pro/player/123", true},
+		{"https://www.rocketleague.tracker.network/profile/123", false}, // Wrong subdomain
+		{"http://rocketleague.tracker.network/profile/123", false},      // HTTP not allowed
+		{"https://ballchasing.com/player/123", false},                   // Wrong domain
+		{"https://rltracker.pro/player/123", false},                     // Wrong domain
 		{"https://example.com/profile/123", false},
 		{"not-a-url", false},
 		{"", false},

@@ -149,8 +149,8 @@ func isValidTrackerURL(url string) bool {
 // buildTrackerFromForm constructs a USLUserTracker from form data
 func (h *BaseHandler) buildTrackerFromForm(r *http.Request) *USLUserTracker {
 	tracker := &USLUserTracker{
-		DiscordID: strings.TrimSpace(h.getFormValue(r, FormFieldDiscordID)),
-		URL:       strings.TrimSpace(h.getFormValue(r, FormFieldURL)),
+		DiscordID: h.getFormValue(r, FormFieldDiscordID),
+		URL:       h.getFormValue(r, FormFieldURL),
 		Valid:     h.getFormBoolValue(r, FormFieldValid),
 
 		OnesCurrentSeasonPeak:         h.getFormIntValue(r, FormFieldOnesCurrentPeak),
@@ -519,21 +519,8 @@ func (h *BaseHandler) isValidTrackerURL(trackerURL string) bool {
 		return false
 	}
 
-	// Check against approved tracker domains
-	validHosts := []string{
-		"rocketleague.tracker.network",
-		"www.rocketleague.tracker.network",
-		"ballchasing.com",
-		"rltracker.pro",
-	}
-
-	for _, validHost := range validHosts {
-		if parsedURL.Host == validHost {
-			return true
-		}
-	}
-
-	return false
+	// Only accept the official Rocket League tracker domain
+	return parsedURL.Host == "rocketleague.tracker.network"
 }
 
 func (h *BaseHandler) getErrorCodes(errors []ValidationError) []string {

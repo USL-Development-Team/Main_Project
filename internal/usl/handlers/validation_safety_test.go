@@ -180,15 +180,16 @@ func TestValidationSafety(t *testing.T) {
 			description:   "Tests URL with complex path and query parameters",
 		},
 		{
-			name: "URL with different valid subdomain",
+			name: "URL with different subdomain should be rejected",
 			formData: map[string]string{
 				"discord_id":        "123456789012345678",
-				"url":               "https://api.rocketleague.tracker.network/profile/123", // Different subdomain
+				"url":               "https://api.rocketleague.tracker.network/profile/123", // Wrong subdomain
 				"ones_current_peak": "1500",
 				"valid":             "true",
 			},
-			shouldBeValid: true, // Should work with contains() logic
-			description:   "Tests subdomain variation acceptance",
+			shouldBeValid:  false, // Only exact domain match allowed
+			expectedErrors: []string{"Invalid tracker URL format"},
+			description:    "Tests that subdomains are rejected",
 		},
 		{
 			name: "Mixed case in URL domain should be rejected",

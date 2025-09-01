@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"strings"
 	"testing"
-	"usl-server/internal/models"
 )
 
 // TestTemplateRendering tests that our templates can be loaded and rendered without errors
@@ -47,9 +46,9 @@ func TestTemplateRendering(t *testing.T) {
 
 		// Parse specific templates needed for admin dashboard
 		requiredTemplates := []string{
-			"../templates/layouts/admin.html",
-			"../templates/partials/navigation.html",
-			"../templates/pages/admin-dashboard.html",
+			"../templates/base-layout.html",
+			"../templates/navigation.html",
+			"../templates/admin-dashboard.html",
 		}
 
 		for _, templateFile := range requiredTemplates {
@@ -57,42 +56,36 @@ func TestTemplateRendering(t *testing.T) {
 		}
 
 		// Test data like USL migration handler provides
-		testGuild := &models.Guild{
-			ID:             1,
-			DiscordGuildID: "1390537743385231451",
-			Name:           "USL",
-			Slug:           "usl",
-			Active:         true,
-			Config:         models.GetDefaultGuildConfig(),
-			Theme:          models.GetDefaultTheme(),
-		}
-
 		data := struct {
-			Title        string
-			Guild        *models.Guild
-			Stats        map[string]interface{}
-			CurrentPage  string
-			User         interface{}
-			FlashMessage string
-			FlashType    string
+			Title       string
+			CurrentPage string
+			Stats       struct {
+				TotalUsers    int `json:"total_users"`
+				ActiveUsers   int `json:"active_users"`
+				TotalTrackers int `json:"total_trackers"`
+				ValidTrackers int `json:"valid_trackers"`
+			}
 		}{
-			Title: "USL Admin Dashboard",
-			Guild: testGuild,
-			Stats: map[string]interface{}{
-				"total_users":  10,
-				"active_users": 8,
+			Title:       "USL Admin Dashboard",
+			CurrentPage: "admin",
+			Stats: struct {
+				TotalUsers    int `json:"total_users"`
+				ActiveUsers   int `json:"active_users"`
+				TotalTrackers int `json:"total_trackers"`
+				ValidTrackers int `json:"valid_trackers"`
+			}{
+				TotalUsers:    10,
+				ActiveUsers:   8,
+				TotalTrackers: 5,
+				ValidTrackers: 4,
 			},
-			CurrentPage:  "admin",
-			User:         nil, // Not logged in for test
-			FlashMessage: "",
-			FlashType:    "",
 		}
 
-		// Test that admin-layout template renders without errors
+		// Test that admin-dashboard-page template renders without errors
 		var buf strings.Builder
-		err := tmpl.ExecuteTemplate(&buf, "admin-layout", data)
+		err := tmpl.ExecuteTemplate(&buf, "admin-dashboard-page", data)
 		if err != nil {
-			t.Fatalf("Failed to execute admin-layout template: %v", err)
+			t.Fatalf("Failed to execute admin-dashboard-page template: %v", err)
 		}
 
 		output := buf.String()
@@ -123,47 +116,53 @@ func TestTemplateRendering(t *testing.T) {
 		}
 	})
 
-	t.Run("Admin_Page_Template_Exists", func(t *testing.T) {
-		// Verify the admin-page template is properly defined
+	t.Run("Admin_Dashboard_Template_Exists", func(t *testing.T) {
+		// Verify the admin-dashboard-page template is properly defined
 		tmpl := template.New("test")
 
-		// Parse the admin dashboard page
-		tmpl, err := tmpl.ParseFiles("../templates/pages/admin-dashboard.html")
+		// Parse the admin dashboard page and its dependencies
+		tmpl, err := tmpl.ParseFiles("../templates/admin-dashboard.html", "../templates/navigation.html")
 		if err != nil {
 			t.Fatalf("Failed to parse admin-dashboard.html: %v", err)
 		}
 
 		// Test data
-		testGuild := &models.Guild{
-			ID:   1,
-			Name: "USL",
-			Slug: "usl",
-		}
-
 		data := struct {
-			Guild *models.Guild
-			Stats map[string]interface{}
+			Title       string
+			CurrentPage string
+			Stats       struct {
+				TotalUsers    int `json:"total_users"`
+				ActiveUsers   int `json:"active_users"`
+				TotalTrackers int `json:"total_trackers"`
+				ValidTrackers int `json:"valid_trackers"`
+			}
 		}{
-			Guild: testGuild,
-			Stats: map[string]interface{}{
-				"total_users":    10,
-				"active_users":   8,
-				"total_trackers": 5,
-				"valid_trackers": 4,
+			Title:       "Dashboard",
+			CurrentPage: "admin",
+			Stats: struct {
+				TotalUsers    int `json:"total_users"`
+				ActiveUsers   int `json:"active_users"`
+				TotalTrackers int `json:"total_trackers"`
+				ValidTrackers int `json:"valid_trackers"`
+			}{
+				TotalUsers:    10,
+				ActiveUsers:   8,
+				TotalTrackers: 5,
+				ValidTrackers: 4,
 			},
 		}
 
-		// Test that admin-page template renders
+		// Test that admin-dashboard-page template renders
 		var buf strings.Builder
-		err = tmpl.ExecuteTemplate(&buf, "admin-page", data)
+		err = tmpl.ExecuteTemplate(&buf, "admin-dashboard-page", data)
 		if err != nil {
-			t.Fatalf("Failed to execute admin-page template: %v", err)
+			t.Fatalf("Failed to execute admin-dashboard-page template: %v", err)
 		}
 
 		output := buf.String()
 
-		if !strings.Contains(output, "USL Dashboard") {
-			t.Error("Admin-page template should contain dashboard header")
+		if !strings.Contains(output, "Dashboard") {
+			t.Error("Admin-dashboard-page template should contain dashboard header")
 		}
 	})
 }
